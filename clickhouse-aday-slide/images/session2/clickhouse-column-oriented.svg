@@ -1,0 +1,113 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#ffffff"/>
+  
+  <!-- Title -->
+  <text x="400" y="50" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">
+    ClickHouse: Why Column-Oriented Queries Are Faster
+  </text>
+
+  <!-- Main sections background -->
+  <rect x="50" y="80" width="700" height="230" rx="10" fill="#e6f7ff" stroke="#1890ff" stroke-width="2"/>
+  <rect x="50" y="330" width="700" height="230" rx="10" fill="#fff7e6" stroke="#fa8c16" stroke-width="2"/>
+
+  <!-- Section titles -->
+  <text x="400" y="100" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle" fill="#1890ff">
+    Row-Oriented Database
+  </text>
+  <text x="400" y="350" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle" fill="#fa8c16">
+    Column-Oriented Database (ClickHouse)
+  </text>
+
+  <!-- Row-oriented database illustration -->
+  <rect x="100" y="120" width="600" height="30" fill="#bae7ff" stroke="#1890ff"/>
+  <rect x="100" y="150" width="600" height="30" fill="#bae7ff" stroke="#1890ff"/>
+  <rect x="100" y="180" width="600" height="30" fill="#bae7ff" stroke="#1890ff"/>
+  <rect x="100" y="210" width="600" height="30" fill="#bae7ff" stroke="#1890ff"/>
+  <rect x="100" y="240" width="600" height="30" fill="#bae7ff" stroke="#1890ff"/>
+
+  <!-- Row-oriented cells -->
+  <rect x="100" y="120" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="250" y="120" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+  <rect x="400" y="120" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="550" y="120" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+  
+  <rect x="100" y="150" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="250" y="150" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+  <rect x="400" y="150" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="550" y="150" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+  
+  <rect x="100" y="180" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="250" y="180" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+  <rect x="400" y="180" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="550" y="180" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+  
+  <rect x="100" y="210" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="250" y="210" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+  <rect x="400" y="210" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="550" y="210" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+  
+  <rect x="100" y="240" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="250" y="240" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+  <rect x="400" y="240" width="150" height="30" fill="#69c0ff" stroke="#1890ff"/>
+  <rect x="550" y="240" width="150" height="30" fill="#91d5ff" stroke="#1890ff"/>
+
+  <!-- Row-oriented labels -->
+  <text x="175" y="110" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">ID</text>
+  <text x="325" y="110" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">Name</text>
+  <text x="475" y="110" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">Date</text>
+  <text x="625" y="110" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">Amount</text>
+
+  <!-- Row-oriented query highlight -->
+  <rect x="100" y="120" width="600" height="30" fill="none" stroke="#ff4d4f" stroke-width="3" stroke-dasharray="5,5"/>
+  <rect x="100" y="150" width="600" height="30" fill="none" stroke="#ff4d4f" stroke-width="3" stroke-dasharray="5,5"/>
+  <rect x="100" y="180" width="600" height="30" fill="none" stroke="#ff4d4f" stroke-width="3" stroke-dasharray="5,5"/>
+  <rect x="100" y="210" width="600" height="30" fill="none" stroke="#ff4d4f" stroke-width="3" stroke-dasharray="5,5"/>
+  <rect x="100" y="240" width="600" height="30" fill="none" stroke="#ff4d4f" stroke-width="3" stroke-dasharray="5,5"/>
+
+  <!-- Column-oriented database illustration -->
+  <rect x="100" y="370" width="150" height="150" fill="#ffe7ba" stroke="#fa8c16"/>
+  <rect x="250" y="370" width="150" height="150" fill="#ffd591" stroke="#fa8c16"/>
+  <rect x="400" y="370" width="150" height="150" fill="#ffe7ba" stroke="#fa8c16"/>
+  <rect x="550" y="370" width="150" height="150" fill="#ffd591" stroke="#fa8c16"/>
+
+  <!-- Column-oriented labels -->
+  <text x="175" y="360" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">ID</text>
+  <text x="325" y="360" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">Name</text>
+  <text x="475" y="360" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">Date</text>
+  <text x="625" y="360" font-family="Arial" font-size="12" text-anchor="middle" fill="#333">Amount</text>
+
+  <!-- Column-oriented query highlight -->
+  <rect x="550" y="370" width="150" height="150" fill="none" stroke="#52c41a" stroke-width="3"/>
+
+  <!-- Query -->
+  <rect x="50" y="120" width="35" height="150" fill="#ff4d4f" rx="5"/>
+  <text x="67.5" y="195" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="white" transform="rotate(-90, 67.5, 195)">
+    SELECT Amount
+  </text>
+  
+  <rect x="715" y="370" width="35" height="150" fill="#52c41a" rx="5"/>
+  <text x="732.5" y="445" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="white" transform="rotate(90, 732.5, 445)">
+    SELECT Amount
+  </text>
+
+  <!-- Key points for Row-Oriented -->
+  <rect x="60" y="280" width="680" height="30" rx="5" fill="#1890ff" opacity="0.1"/>
+  <text x="70" y="300" font-family="Arial" font-size="14" fill="#333">
+    ✗ Must read entire rows (all columns) even when only a few columns are needed
+  </text>
+
+  <!-- Key points for Column-Oriented -->
+  <rect x="60" y="530" width="680" height="30" rx="5" fill="#fa8c16" opacity="0.1"/>
+  <text x="70" y="550" font-family="Arial" font-size="14" fill="#333">
+    ✓ Only reads the specific columns needed for the query
+  </text>
+
+  <!-- Benefits -->
+  <g>
+    <rect x="50" y="570" width="700" height="20" rx="5" fill="#52c41a" opacity="0.1"/>
+    <text x="400" y="585" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">
+      ClickHouse Benefits: Less I/O, Better Compression, Vectorized Operations
+    </text>
+  </g>
+</svg>
