@@ -1,7 +1,4 @@
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 theme: default
 background: https://source.unsplash.com/collection/94734566/1920x1080
 class: text-center
@@ -16,10 +13,6 @@ transition: slide-left
 title: Introduction to ClickHouse
 layout: default
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
 <style>
 .slidev-layout::before {
   content: '';
@@ -88,7 +81,9 @@ layout: section
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
+
 # Session 1: Introduction
+
 ---
 layout: image-right
 image: ./images/session1/clickhouse_an_open_source_column_oriented_database_management_system.jpeg
@@ -111,6 +106,7 @@ image: ./images/session1/clickhouse_an_open_source_column_oriented_database_mana
 ---
 layout: default
 ---
+
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
@@ -123,11 +119,10 @@ layout: default
 ---
 layout: default
 ---
+
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
-
-
 
 <div style="display: flex; justify-content: center; align-items: center; margin: 2rem auto;">
   <img src="./images/session1/cloudflare-citus-to-clickhouse.svg" style="width: 90%; height: 480px;" />
@@ -136,6 +131,7 @@ layout: default
 ---
 layout: default
 ---
+
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
@@ -148,6 +144,7 @@ layout: default
 ---
 layout: default
 ---
+
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
@@ -198,7 +195,6 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-</div>
   <img src="./images/session1/clickhouse-architecture.svg" style="width: 90%; height: 450px;" />
 
 ---
@@ -1319,7 +1315,6 @@ layout: two-cols
 
 
 
-
 # CollapsingMergeTree
 
 <div class="text-sm">
@@ -2245,19 +2240,19 @@ INSERT INTO table_name
 VALUES (value1, value2, ...);
 
 -- Insert into messages table
-INSERT INTO messages 
+INSERT INTO chat_payments.messages 
 (message_id, chat_id, user_id, sent_timestamp, 
  message_type, content, has_attachment,sign)
 VALUES 
 (generateUUIDv4(), 100, 1001, now(), 
- 'text', 'Let me send you the invoice later', 0, a);
+ 'text', 'Let me send you the invoice later', 0, 1);
 
 -- Insert multiple rows
-INSERT INTO messages VALUES
-(generateUUIDv4(), 100, 1001, now(), 'invoice', 'April Invoice', 1, 1),
-(generateUUIDv4(), 100, 1002, now(), 'text', 'Got it, thanks!', 0, 1),
-(generateUUIDv4(), 101, 1003, now(), 'receipt', 'Payment receipt', 1, 1),
-(generateUUIDv4(), 101, 1001, now(), 'text', 'Payment confirmed', 0, 1);
+INSERT INTO chat_payments.messages VALUES
+    (generateUUIDv4(), 100, 1001, now(), 'invoice', 'April Invoice', 1, 1),
+    (generateUUIDv4(), 100, 1002, now(), 'text', 'Got it, thanks!', 0, 1),
+    (generateUUIDv4(), 101, 1003, now(), 'receipt', 'Payment receipt', 1, 1),
+    (generateUUIDv4(), 101, 1001, now(), 'text', 'Payment confirmed', 0, 1);
 ```
 
 ::right::
@@ -2294,21 +2289,10 @@ layout: default
 <div style="height:500px; overflow-y:auto">
 
 ```sql{all|1-11|13-22|all}
--- Insert payment attachment records
-INSERT INTO payment_attachments (
-    attachment_id, message_id, payment_amount, payment_currency,
-    invoice_date, payment_status, file_path, file_size, uploaded_at, sign
-) VALUES (
-    generateUUIDv4(), 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    1250.00, 'USD', '2023-04-01', 'pending',
-    '/storage/invoices/inv_12345.pdf', 
-    128000, 
-    parseDateTimeBestEffort('2023-04-02 14:30:00'),
-    1
-);
+
 
 -- Insert multiple payment records
-INSERT INTO payment_attachments VALUES
+INSERT INTO chat_payments.attachments VALUES
 (generateUUIDv4(), 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 1250.00, 'USD', 
  '2023-04-01', 'pending', '/storage/invoices/inv_12345.pdf', 128000, '2023-04-02 14:30:00' ,1),
 (generateUUIDv4(), 'b1ffc999-7d1a-4ef8-bb6d-6bb9bd380a12', 750.50, 'EUR', 
@@ -2330,8 +2314,7 @@ INSERT INTO payment_attachments VALUES
 
 ### Loading from Files
 ```sql
-INSERT INTO payment_attachments FROM INFILE 'payments.csv'
-FORMAT CSV;
+clickhouse-client -q "INSERT INTO chat_payments.attachments FORMAT CSVWithNames" < /data/output.csv
 ```
 
 </div>
@@ -2372,7 +2355,7 @@ SELECT
     message_type,
     sent_timestamp
 FROM messages
-LIMIT 10;
+LIMIT 2,1;
 ```
 
 </div>
@@ -2441,7 +2424,7 @@ SELECT
     payment_amount,
     payment_currency,
     payment_status
-FROM payment_attachments;
+FROM attachments limit 10;
 ```
 
 </div>
@@ -2495,11 +2478,12 @@ layout: default
 <div>
 
 ```sql{all|2|3|4|6-14|all}
-SELECT * FROM payment_attachments
+SELECT * FROM attachments 
 WHERE payment_status = 'paid'
   AND payment_amount > 500
-  AND uploaded_at >= '2023-04-01';
-
+  AND uploaded_at >= '2023-04-01'
+  limit 100;
+ 
 -- Using date functions in filters
 SELECT 
     attachment_id,
@@ -2507,9 +2491,10 @@ SELECT
     payment_currency,
     payment_status,
     uploaded_at
-FROM payment_attachments
+FROM attachments
 WHERE toYYYYMM(uploaded_at) = 202304
-  AND payment_currency = 'USD';
+  AND payment_currency = 'USD'
+  limit 100;
 ```
 
 </div>
@@ -2520,18 +2505,17 @@ WHERE toYYYYMM(uploaded_at) = 202304
 SELECT * FROM messages
 WHERE message_type IN ('invoice', 'receipt')
   AND sent_timestamp BETWEEN 
-    '2023-04-01 00:00:00' AND '2023-04-30 23:59:59';
+    '2025-04-01 00:00:00' AND '2025-04-30 23:59:59';
 
 -- String pattern matching
 SELECT * FROM messages
 WHERE content LIKE '%invoice%'
-  OR content LIKE '%payment%';
+OR content LIKE '%payment%';
 
 -- Using functions in filters
-SELECT * FROM payment_attachments
-WHERE formatDateTime(uploaded_at, '%Y-%m-%d') = '2023-04-15'
-  AND (payment_status = 'pending' 
-       OR payment_status = 'paid');
+SELECT * FROM attachments
+WHERE formatDateTime(uploaded_at, '%Y-%m-%d') = '2023-04-15' AND (payment_status = 'pending' 
+OR payment_status = 'paid') limit 100;
 ```
 
 </div>
@@ -2558,25 +2542,26 @@ layout: two-cols
 
 ```sql{all|1-5|7-12|14-20|all}
 -- Finding large payments
-SELECT * FROM payment_attachments
+SELECT * FROM attachments
 WHERE payment_amount > 1000
   AND payment_status = 'pending'
-ORDER BY payment_amount DESC;
+ORDER BY payment_amount DESC limit 100;
 
 -- Time-based filtering with chat context
 SELECT m.*, p.payment_amount, p.payment_currency
 FROM messages m
-LEFT JOIN payment_attachments p ON m.message_id = p.message_id
+LEFT JOIN attachments p ON m.message_id = p.message_id
 WHERE m.chat_id = 100
-  AND toDate(m.sent_timestamp) = today();
+  AND toDate(m.sent_timestamp) = today()
+   limit 100;
 
 -- Finding specific file types
 SELECT *
-FROM payment_attachments
+FROM attachments
 WHERE file_path LIKE '%.pdf'
   AND file_size > 100000
   AND payment_status != 'canceled'
-ORDER BY file_size DESC;
+ORDER BY file_size DESC limit 100;
 ```
 
 ::right::
@@ -2652,7 +2637,7 @@ SELECT
     payment_currency,
     payment_status
 FROM payment_attachments
-ORDER BY payment_amount * 1.1 DESC;
+ORDER BY payment_amount DESC;
 ```
 
 </div>
@@ -2696,7 +2681,7 @@ LIMIT 100;
 ### Effective for top-N queries
 ```sql
 -- Find top 10 largest payments
-SELECT * FROM payment_attachments
+SELECT * FROM attachments
 ORDER BY payment_amount DESC
 LIMIT 10;
 ```
@@ -2709,7 +2694,7 @@ LIMIT 10;
 ```sql
 -- Get 10 random payments for review
 SELECT *
-FROM payment_attachments
+FROM attachments
 ORDER BY rand()
 LIMIT 10;
 ```
@@ -2722,7 +2707,7 @@ SELECT
     payment_currency,
     max(payment_amount) AS max_amount,
     sum(payment_amount) AS total
-FROM payment_attachments
+FROM attachments
 GROUP BY payment_currency
 ORDER BY total DESC;
 ```
@@ -2759,7 +2744,7 @@ SELECT
     count() AS total_payments,
     sum(payment_amount) AS total_amount,
     avg(payment_amount) AS average_amount
-FROM payment_attachments;
+FROM attachments;
 
 -- Min, max, statistics
 SELECT
@@ -2767,7 +2752,7 @@ SELECT
     max(payment_amount) AS max_amount,
     stddevPop(payment_amount) AS std_deviation,
     median(payment_amount) AS median_amount
-FROM payment_attachments
+FROM attachments
 WHERE payment_status = 'paid';
 
 -- Group by with multiple aggregates
@@ -2778,7 +2763,7 @@ SELECT
     avg(payment_amount) AS average,
     min(payment_amount) AS minimum,
     max(payment_amount) AS maximum
-FROM payment_attachments
+FROM attachments
 GROUP BY payment_currency;
 ```
 </div>
@@ -2824,7 +2809,7 @@ layout: default
 SELECT 
     payment_status,
     count() AS count
-FROM payment_attachments
+FROM attachments
 GROUP BY payment_status;
 
 -- Monthly payment totals
@@ -2835,7 +2820,7 @@ SELECT
     count() AS payment_count,
     sum(payment_amount) AS monthly_total,
     round(avg(payment_amount), 2) AS avg_payment
-FROM payment_attachments
+FROM attachments
 GROUP BY year, month, payment_currency
 ORDER BY year, month, payment_currency;
 ```
@@ -2851,7 +2836,7 @@ SELECT
     sum(p.payment_amount) AS total_spent,
     avg(p.payment_amount) AS avg_payment
 FROM messages m
-JOIN payment_attachments p ON m.message_id = p.message_id
+JOIN attachments p ON m.message_id = p.message_id
 GROUP BY m.user_id
 ORDER BY total_spent DESC;
 
@@ -2862,7 +2847,7 @@ SELECT
             payment_amount < 1000, 'Large',
             'Very Large') AS payment_category,
     count() AS count
-FROM payment_attachments
+FROM attachments
 GROUP BY payment_category;
 ```
 
@@ -2897,7 +2882,7 @@ SELECT
     payment_currency,
     count() AS num_payments,
     sum(payment_amount) AS daily_total
-FROM payment_attachments
+FROM attachments
 GROUP BY date, payment_currency
 ORDER BY date DESC, payment_currency;
 
@@ -2907,7 +2892,7 @@ SELECT
     payment_currency,
     count() AS payment_count,
     sum(payment_amount) AS weekly_total
-FROM payment_attachments
+FROM attachments
 GROUP BY week_start, payment_currency
 ORDER BY week_start DESC, payment_currency;
 ```
@@ -2924,7 +2909,7 @@ SELECT
     countIf(payment_status = 'pending') AS pending_payments,
     countIf(payment_status = 'canceled') AS canceled_payments,
     round(countIf(payment_status = 'paid') / count() * 100, 2) AS success_rate
-FROM payment_attachments
+FROM attachments
 WHERE uploaded_at >= '2023-01-01'
 GROUP BY month
 ORDER BY month;
@@ -2937,7 +2922,7 @@ SELECT
         (PARTITION BY payment_currency 
          ORDER BY toDate(uploaded_at) 
          ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_7day
-FROM payment_attachments
+FROM attachments
 WHERE payment_status = 'paid'
 ORDER BY payment_currency, date;
 ```
@@ -2967,7 +2952,7 @@ SELECT
     payment_currency,
     toYear(uploaded_at) AS year,
     sum(payment_amount) AS total
-FROM payment_attachments
+FROM attachments
 GROUP BY payment_currency, year
 WITH ROLLUP
 ORDER BY 
@@ -2987,10 +2972,10 @@ SELECT
     payment_status,
     count() AS count,
     sum(payment_amount) AS total
-FROM payment_attachments
+FROM attachments
 GROUP BY payment_currency, payment_status
-HAVING count > 5 
-   AND total > 1000
+HAVING count > 40000 
+   AND total > 10000
 ORDER BY 
     payment_currency, 
     payment_status;
@@ -3041,7 +3026,7 @@ SELECT
     count() AS payment_count,
     sum(payment_amount) AS monthly_total,
     round(avg(payment_amount), 2) AS average_payment
-FROM payment_attachments
+FROM attachments
 GROUP BY month, payment_currency
 ORDER BY month DESC, payment_currency;
 ```
@@ -3062,7 +3047,7 @@ SELECT
     min(p.uploaded_at) AS first_payment,
     max(p.uploaded_at) AS last_payment
 FROM messages m
-JOIN payment_attachments p ON m.message_id = p.message_id
+JOIN attachments p ON m.message_id = p.message_id
 GROUP BY m.user_id
 HAVING payment_count > 0
 ORDER BY total_amount DESC;
@@ -3092,7 +3077,7 @@ SELECT
     payment_status,
     count() AS count,
     round(count() / sum(count()) OVER (PARTITION BY month) * 100, 2) AS percentage
-FROM payment_attachments
+FROM attachments
 GROUP BY month, payment_status
 ORDER BY month DESC, payment_status;
 ```
@@ -3113,7 +3098,7 @@ SELECT
     p.payment_status,
     p.uploaded_at,
     p.file_path
-FROM payment_attachments p
+FROM attachments p
 JOIN messages m ON p.message_id = m.message_id
 WHERE p.payment_amount > 5000
   AND p.payment_status = 'pending'
@@ -3264,73 +3249,6 @@ layout: default
 </div>
 </div>
 
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Our Data Model
-
-<div class="grid grid-cols-2 gap-4">
-<div>
-
-## Messages Table
-```sql
-CREATE TABLE messages (
-    message_id UUID,
-    chat_id UInt64,
-    user_id UInt32,
-    sent_timestamp DateTime,
-    message_type Enum8('text'=1, 'image'=2, 
-                       'invoice'=3, 'receipt'=4),
-    content String,
-    has_attachment UInt8
-) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(sent_timestamp)
-ORDER BY (chat_id, sent_timestamp);
-```
-
-</div>
-<div>
-
-## Payment Attachments Table
-```sql
-CREATE TABLE payment_attachments (
-    attachment_id UUID,
-    message_id UUID,
-    payment_amount Decimal64(2),
-    payment_currency LowCardinality(String),
-    invoice_date Date,
-    payment_status Enum8('pending'=1, 'paid'=2, 
-                         'canceled'=3),
-    file_path String,
-    file_size UInt32,
-    uploaded_at DateTime
-) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(uploaded_at)
-ORDER BY (message_id, uploaded_at);
-```
-
-</div>
-</div>
-
-<div class="mt-4">
-
-## Users Table
-```sql
-CREATE TABLE users (
-    user_id UInt32,
-    username String,
-    email String,
-    company_id UInt16,
-    created_at DateTime
-) ENGINE = MergeTree()
-ORDER BY user_id;
-```
-
-</div>
 
 ---
 layout: section
@@ -3359,7 +3277,7 @@ layout: default
 SELECT m.message_id, m.chat_id, m.user_id, 
        p.payment_amount, p.payment_currency
 FROM messages m
-INNER JOIN payment_attachments p 
+INNER JOIN attachments p 
 ON m.message_id = p.message_id;
 ```
 
@@ -3369,7 +3287,7 @@ ON m.message_id = p.message_id;
 SELECT m.message_id, m.content, 
        p.payment_amount, p.payment_status
 FROM messages m
-LEFT JOIN payment_attachments p 
+LEFT JOIN attachments p 
 ON m.message_id = p.message_id;
 ```
 
@@ -3382,8 +3300,9 @@ ON m.message_id = p.message_id;
 SELECT m.message_id, m.content, 
        p.payment_amount, p.payment_status
 FROM messages m
-RIGHT JOIN payment_attachments p 
-ON m.message_id = p.message_id;
+RIGHT JOIN attachments p 
+ON m.message_id = p.message_id
+Limit 100;
 ```
 
 ## FULL JOIN
@@ -3392,8 +3311,10 @@ ON m.message_id = p.message_id;
 SELECT m.message_id, m.content, 
        p.attachment_id, p.payment_amount
 FROM messages m
-FULL JOIN payment_attachments p 
-ON m.message_id = p.message_id;
+FULL JOIN attachments p 
+ON m.message_id = p.message_id
+Limit 100
+;
 ```
 
 </div>
@@ -3411,6 +3332,8 @@ layout: two-cols
 </div>
 
 # Multi-Table JOINs
+
+<div style="height:400px;overflow-y:auto;">
 
 ```sql{all|1-2|4-10|12-14|all}
 -- Payment data with message and user information
@@ -3430,15 +3353,19 @@ SELECT
     p.payment_currency,
     p.payment_status
 FROM messages m
-JOIN payment_attachments p 
+JOIN attachments p 
     ON m.message_id = p.message_id
 JOIN users u 
     ON m.user_id = u.user_id
 WHERE p.payment_status = 'paid'
-  AND m.sent_timestamp >= '2023-04-01 00:00:00'
-  AND m.sent_timestamp < '2023-05-01 00:00:00'
-ORDER BY p.payment_amount DESC;
+  AND m.sent_timestamp >= '2024-04-01 00:00:00'
+  AND m.sent_timestamp < '2024-05-01 00:00:00'
+ORDER BY p.payment_amount DESC
+LIMIT 100
+;
 ```
+
+</div>
 
 ::right::
 
@@ -3480,7 +3407,7 @@ layout: default
 SELECT u.user_id, u.username, c.currency_code
 FROM 
 (SELECT distinct payment_currency AS currency_code
- FROM payment_attachments) AS c
+ FROM attachments) AS c
 CROSS JOIN 
 (SELECT user_id, username FROM users LIMIT 10) AS u;
 ```
@@ -3490,7 +3417,7 @@ CROSS JOIN
 -- Simplified join syntax when column names match
 SELECT m.chat_id, m.user_id, p.payment_amount
 FROM messages m
-JOIN payment_attachments p
+JOIN attachments p
 USING (message_id);
 ```
 
@@ -3500,9 +3427,9 @@ USING (message_id);
 ## JOIN with Complex Conditions
 ```sql{all|4-6|all}
 -- Matching payments within a time window
-SELECT m.message_id, m.content, p.payment_amount
+SELECT m.message_id,m.sent_timestamp, m.content, p.payment_amount,  p.uploaded_at
 FROM messages m
-JOIN payment_attachments p
+JOIN attachments p
 ON p.message_id = m.message_id
    AND p.uploaded_at > m.sent_timestamp
    AND p.uploaded_at < m.sent_timestamp + INTERVAL 1 DAY;
@@ -3544,7 +3471,7 @@ SELECT
     count() AS payment_count,
     sum(p.payment_amount) AS total_amount
     
-FROM payment_attachments p
+FROM attachments p
 JOIN messages m 
     ON p.message_id = m.message_id
 JOIN users u 
@@ -3572,7 +3499,7 @@ SELECT
 FROM users u
 JOIN messages m 
     ON u.user_id = m.user_id
-JOIN payment_attachments p 
+JOIN attachments p 
     ON m.message_id = p.message_id
     
 WHERE u.user_id = 1001
@@ -3604,32 +3531,31 @@ layout: two-cols
 
 # Window Functions Basics
 
-```sql{all|1-10|12-13|15-16|18-19|all}
+```sql{all|6-9|11-14|16-18|20|all}
 -- Basic window function example
 SELECT 
     payment_currency,
     uploaded_at,
     payment_amount,
-    
-    -- Running total by currency
     sum(payment_amount) OVER (
         PARTITION BY payment_currency 
         ORDER BY uploaded_at
-    ) AS running_total
-    
-    -- Row number within each currency group
+    ) AS running_total,
+   
     row_number() OVER (
-        PARTITION BY payment_currency) AS row_num,
+        PARTITION BY payment_currency
+        ORDER BY uploaded_at  -- Added ORDER BY clause
+    ) AS row_num,
         
-    -- Average in the currency group
     avg(payment_amount) OVER (
-        PARTITION BY payment_currency) AS currency_avg,
+        PARTITION BY payment_currency
+    ) AS currency_avg,
         
-    -- Overall average
     avg(payment_amount) OVER () AS overall_avg
     
-FROM payment_attachments
+FROM chat_payments.attachments
 WHERE payment_status = 'paid'
+and date(uploaded_at) = '2024-04-15'
 ORDER BY payment_currency, uploaded_at;
 ```
 
@@ -3664,7 +3590,7 @@ layout: default
 
 # Ranking and Row Position Window Functions
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height: 300px; overflow-y: auto;">
 <div>
 
 ## Ranking Functions
@@ -3690,8 +3616,8 @@ SELECT
         ORDER BY payment_amount
     ) AS percentile
     
-FROM payment_attachments
-WHERE payment_status = 'paid';
+FROM attachments
+WHERE payment_status = 'paid' and  date(uploaded_at) = '2024-04-15';
 ```
 
 </div>
@@ -3708,20 +3634,25 @@ SELECT
         ORDER BY uploaded_at
     ) AS row_num,
     
-    -- Access previous row's value
-    lag(payment_amount) OVER (
+    -- Previous row's value (instead of lag)
+    anyLast(payment_amount) OVER (
         PARTITION BY payment_currency 
         ORDER BY uploaded_at
+        ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
     ) AS previous_payment,
     
-    -- Access next row's value
-    lead(payment_amount) OVER (
+    -- Next row's value (instead of lead)
+    any(payment_amount) OVER (
         PARTITION BY payment_currency 
         ORDER BY uploaded_at
+        ROWS BETWEEN 1 FOLLOWING AND 1 FOLLOWING
     ) AS next_payment
     
-FROM payment_attachments
-WHERE payment_status = 'paid';
+    
+FROM attachments
+WHERE payment_status = 'paid' 
+  AND date(uploaded_at) = '2024-04-15'
+ORDER BY payment_currency, uploaded_at;
 ```
 
 </div>
@@ -3734,13 +3665,14 @@ WHERE payment_status = 'paid';
 ---
 layout: default
 ---
+
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
 # Window Functions for Time Series Analysis
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:300px;overflow-y:auto;">
 <div>
 
 ## Running Aggregates
@@ -3748,6 +3680,7 @@ layout: default
 SELECT 
     toDate(uploaded_at) AS date,
     payment_currency,
+    payment_amount,
     -- Running sum (cumulative total)
     sum(payment_amount) OVER (
         PARTITION BY payment_currency 
@@ -3759,9 +3692,10 @@ SELECT
         PARTITION BY payment_currency, toDate(uploaded_at)
     ) AS daily_total
     
-FROM payment_attachments
-WHERE payment_status = 'paid'
+FROM attachments
+WHERE payment_status = 'paid' AND date(uploaded_at) = '2023-01-01' 
 ORDER BY payment_currency, date;
+
 ```
 
 </div>
@@ -3772,22 +3706,25 @@ ORDER BY payment_currency, date;
 SELECT 
     toDate(uploaded_at) AS date,
     payment_currency,
-    -- 7-day moving average
+    payment_amount,
+    -- 7-day moving average using ROWS
     avg(payment_amount) OVER (
         PARTITION BY payment_currency 
         ORDER BY toDate(uploaded_at)
         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
     ) AS moving_avg_7day,
     
-    -- Moving average with range
+    -- Alternative moving average also using ROWS
     avg(payment_amount) OVER (
         PARTITION BY payment_currency 
         ORDER BY toDate(uploaded_at)
-        RANGE BETWEEN INTERVAL 7 DAY PRECEDING AND CURRENT ROW
-    ) AS moving_avg_7day_range
-    
-FROM payment_attachments
-WHERE payment_status = 'paid'
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) AS moving_avg_7day_alt
+
+FROM attachments
+WHERE payment_status = 'paid' 
+  AND toDate(uploaded_at) >= '2023-01-01'
+  AND toDate(uploaded_at) <= '2023-01-07'
 ORDER BY payment_currency, date;
 ```
 
@@ -3801,13 +3738,14 @@ ORDER BY payment_currency, date;
 ---
 layout: default
 ---
+
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
 # Practical Window Function Examples for Payment Analysis
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4"  style="height:400px;overflow-y:auto;">
 <div>
 
 ## Payment Trend Analysis
@@ -3818,21 +3756,26 @@ SELECT
     count() AS payment_count,
     sum(p.payment_amount) AS daily_total,
     
-    -- 7-day moving average
-    avg(sum(p.payment_amount)) OVER (
+    -- 7-day moving average of daily totals
+    avg(daily_total) OVER (
         PARTITION BY p.payment_currency 
-        ORDER BY toDate(p.uploaded_at)
+        ORDER BY date
         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
     ) AS moving_avg_7day,
     
     -- Month-to-date running total
-    sum(p.payment_amount) OVER (
-        PARTITION BY p.payment_currency, toStartOfMonth(p.uploaded_at)
-        ORDER BY toDate(p.uploaded_at)
+    sum(daily_total) OVER (
+        PARTITION BY p.payment_currency, toStartOfMonth(date)
+        ORDER BY date
     ) AS month_to_date_total
     
-FROM payment_attachments p
-GROUP BY date, p.payment_currency
+FROM attachments p
+WHERE payment_status = 'paid' 
+  AND toDate(uploaded_at) >= '2023-01-01'
+  AND toDate(uploaded_at) <= '2023-01-07'
+GROUP BY 
+    date,
+    p.payment_currency
 ORDER BY p.payment_currency, date;
 ```
 
@@ -3845,28 +3788,33 @@ SELECT
     u.user_id,
     u.username,
     p.payment_amount,
-    
-    -- Current payment amount vs user average
+    p.uploaded_at,
+    -- Difference from user's average
     p.payment_amount - avg(p.payment_amount) OVER (
         PARTITION BY u.user_id
     ) AS diff_from_user_avg,
     
-    -- Rank of payment amount for this user
+    -- Rank of payments per user
     rank() OVER (
-        PARTITION BY u.user_id
+        PARTITION BY u.user_id 
         ORDER BY p.payment_amount DESC
     ) AS payment_rank_for_user,
     
-    -- Time since previous payment
-    dateDiff('day', 
-        lag(p.uploaded_at) OVER (
-            PARTITION BY u.user_id ORDER BY p.uploaded_at
-        ), p.uploaded_at) AS days_since_previous
-        
-FROM payment_attachments p
+    -- Days since previous payment using anyLast
+    dateDiff('day',
+        anyLast(p.uploaded_at) OVER (
+            PARTITION BY u.user_id 
+            ORDER BY p.uploaded_at
+            ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
+        ),
+        p.uploaded_at
+    ) AS days_since_previous
+
+FROM attachments p
 JOIN messages m ON p.message_id = m.message_id
 JOIN users u ON m.user_id = u.user_id
-WHERE p.payment_status = 'paid'
+WHERE p.payment_status = 'paid' 
+  AND toDate(p.uploaded_at) >= '2023-01-01'
 ORDER BY u.user_id, p.uploaded_at;
 ```
 
@@ -3894,16 +3842,16 @@ layout: two-cols
 ```sql{all|2-5|7-11|13-16|all}
 -- Subquery in WHERE clause
 SELECT *
-FROM payment_attachments
+FROM attachments
 WHERE payment_amount > (
-    SELECT avg(payment_amount) FROM payment_attachments
-);
+    SELECT avg(payment_amount) FROM attachments
+) limit 100;
 
 -- Subquery in FROM clause
 SELECT currency, avg_amount
 FROM (
     SELECT payment_currency AS currency, avg(payment_amount) AS avg_amount
-    FROM payment_attachments
+    FROM attachments
     GROUP BY payment_currency
 ) AS currency_avgs;
 
@@ -3911,8 +3859,8 @@ FROM (
 SELECT 
     payment_currency,
     payment_amount,
-    payment_amount / (SELECT avg(payment_amount) FROM payment_attachments) AS relative_to_avg
-FROM payment_attachments;
+    payment_amount / (SELECT avg(payment_amount) FROM attachments) AS relative_to_avg
+FROM attachments limit 100;
 ```
 
 ::right::
@@ -3933,10 +3881,6 @@ FROM payment_attachments;
 - **Table**: Returns multiple columns and rows
 - **Correlated**: References columns from outer query
 
-<div class="mt-6 bg-blue-50 p-4 rounded">
-<strong>ClickHouse Note:</strong> Subqueries in ClickHouse are generally well-optimized. The query planner often flattens and optimizes nested subqueries.
-</div>
-
 </div>
 
 ---
@@ -3948,37 +3892,39 @@ layout: default
 
 # Advanced Subquery Techniques
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Correlated Subqueries
 ```sql{all|5-9|all}
 -- Find payments above average for their currency
 SELECT 
-    payment_currency,
-    payment_amount
-FROM payment_attachments p1
-WHERE payment_amount > (
-    SELECT avg(payment_amount) 
-    FROM payment_attachments p2
-    WHERE p2.payment_currency = p1.payment_currency
-)
-ORDER BY payment_currency, payment_amount DESC;
+    p1.payment_currency,
+    p1.payment_amount
+FROM attachments p1
+JOIN (
+    SELECT 
+        payment_currency,
+        avg(payment_amount) as avg_amount
+    FROM attachments 
+    GROUP BY payment_currency
+) p2 ON p1.payment_currency = p2.payment_currency
+WHERE p1.payment_amount > p2.avg_amount
+ORDER BY p1.payment_currency, p1.payment_amount DESC
+LIMIT 100;
+
 ```
 
 ## Subqueries with EXISTS
 ```sql{all|5-9|all}
 -- Find users who have made payments
-SELECT 
-    user_id,
-    username
+SELECT DISTINCT
+    u.user_id,
+    u.username
 FROM users u
-WHERE EXISTS (
-    SELECT 1 
-    FROM messages m
-    JOIN payment_attachments p ON m.message_id = p.message_id
-    WHERE m.user_id = u.user_id
-);
+JOIN messages m ON m.user_id = u.user_id
+JOIN attachments p ON m.message_id = p.message_id
+ORDER BY u.user_id;
 ```
 
 </div>
@@ -3993,7 +3939,7 @@ SELECT
 FROM messages
 WHERE message_id IN (
     SELECT message_id
-    FROM payment_attachments
+    FROM attachments
     WHERE payment_status = 'paid'
     AND payment_amount > 1000
 );
@@ -4005,12 +3951,12 @@ WHERE message_id IN (
 SELECT 
     payment_currency,
     payment_amount
-FROM payment_attachments
+FROM attachments
 WHERE payment_amount > ANY (
     SELECT payment_amount
-    FROM payment_attachments
+    FROM attachments
     WHERE payment_currency = 'USD'
-);
+) LIMIT 100;
 ```
 
 </div>
@@ -4029,7 +3975,7 @@ layout: default
 
 # Practical Subquery Examples for Payment Analysis
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Top Paying Users by Currency
@@ -4043,14 +3989,14 @@ SELECT
 FROM (
     SELECT 
         p.payment_currency,
-        u.user_id,
+        u.user_id as user_id,
         u.username,
         sum(p.payment_amount) AS total_amount,
         row_number() OVER (
             PARTITION BY p.payment_currency 
             ORDER BY sum(p.payment_amount) DESC
         ) AS currency_rank
-    FROM payment_attachments p
+    FROM attachments p
     JOIN messages m ON p.message_id = m.message_id
     JOIN users u ON m.user_id = u.user_id
     WHERE p.payment_status = 'paid'
@@ -4058,6 +4004,7 @@ FROM (
 ) AS currency_ranking
 WHERE currency_ranking.currency_rank <= 3
 ORDER BY currency_ranking.payment_currency, currency_ranking.currency_rank;
+
 ```
 
 </div>
@@ -4066,21 +4013,27 @@ ORDER BY currency_ranking.payment_currency, currency_ranking.currency_rank;
 ## Payments Above Daily Average
 ```sql{all|1-8|10-16|all}
 -- Find payments that exceed the daily average by 50%+
-SELECT 
-    toDate(p1.uploaded_at) AS date,
-    p1.payment_currency,
-    p1.payment_amount,
-    p1.payment_status,
+SELECT p1.*,
     m.user_id
-FROM payment_attachments p1
-JOIN messages m ON p1.message_id = m.message_id
-WHERE p1.payment_amount > (
-    SELECT avg(p2.payment_amount) * 1.5
-    FROM payment_attachments p2
-    WHERE toDate(p2.uploaded_at) = toDate(p1.uploaded_at)
-    AND p2.payment_currency = p1.payment_currency
-)
-ORDER BY date DESC, p1.payment_currency, p1.payment_amount DESC;
+FROM (
+        SELECT toDate(uploaded_at) AS date,
+            payment_currency,
+            payment_amount,
+            payment_status,
+            message_id
+        FROM attachments
+    ) p1
+    JOIN messages m ON p1.message_id = m.message_id
+    JOIN (
+        select avg(payment_amount) * 1.5 as payment_amount,
+            payment_currency,
+            toDate(uploaded_at) AS date
+        from attachments
+        group by payment_currency,
+            date
+    ) p2 On p1.date = p2.date
+Where p1.payment_amount > p2.payment_amount
+
 ```
 
 </div>
@@ -4112,7 +4065,7 @@ layout: two-cols
 -- Basic WITH clause example
 WITH avg_by_currency AS (
     SELECT payment_currency, avg(payment_amount) AS avg_amount
-    FROM payment_attachments
+    FROM attachments
     GROUP BY payment_currency
 )
 
@@ -4121,7 +4074,7 @@ SELECT
     p.payment_amount,
     a.avg_amount,
     p.payment_amount - a.avg_amount AS diff_from_avg
-FROM payment_attachments p
+FROM attachments p
 JOIN avg_by_currency a ON p.payment_currency = a.payment_currency
 WHERE p.payment_status = 'paid'
 
@@ -4160,7 +4113,7 @@ layout: default
 
 # Multiple CTEs and CTE Chaining
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Multiple CTEs
@@ -4168,7 +4121,7 @@ layout: default
 -- Calculate daily totals
 WITH daily_totals AS (
     SELECT toDate(uploaded_at) AS date, sum(payment_amount) AS total
-    FROM payment_attachments
+    FROM attachments
     GROUP BY date
 ),
 
@@ -4189,7 +4142,7 @@ SELECT
 FROM daily_totals d
 JOIN daily_users u ON d.date = u.date
 WHERE d.date >= '2023-04-01'
-  AND d.date <= '2023-04-30'
+  AND d.date <= '2025-04-30'
 ORDER BY d.date;
 ```
 
@@ -4202,7 +4155,7 @@ ORDER BY d.date;
 WITH user_payments AS (
     SELECT m.user_id, p.payment_amount, p.payment_currency
     FROM messages m
-    JOIN payment_attachments p ON m.message_id = p.message_id
+    JOIN attachments p ON m.message_id = p.message_id
     WHERE p.payment_status = 'paid'
 ),
 
@@ -4246,7 +4199,7 @@ layout: default
 
 # Real-World CTE Examples for Payment Analytics
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Monthly Payment Trends
@@ -4259,12 +4212,12 @@ WITH monthly_by_currency AS (
         count() AS payment_count,
         sum(payment_amount) AS monthly_total,
         avg(payment_amount) AS avg_payment
-    FROM payment_attachments
+    FROM attachments
     WHERE payment_status = 'paid'
     GROUP BY month, payment_currency
 ),
 
--- Step 2: Calculate previous month metrics
+-- Step 2: Calculate previous month metrics using anyLast
 monthly_with_previous AS (
     SELECT 
         m1.month,
@@ -4272,21 +4225,37 @@ monthly_with_previous AS (
         m1.payment_count,
         m1.monthly_total,
         m1.avg_payment,
-        lag(m1.monthly_total) OVER (PARTITION BY m1.payment_currency ORDER BY m1.month) AS prev_month_total,
-        lag(m1.payment_count) OVER (PARTITION BY m1.payment_currency ORDER BY m1.month) AS prev_month_count
+        anyLast(m1.monthly_total) OVER (
+            PARTITION BY m1.payment_currency 
+            ORDER BY m1.month
+            ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
+        ) AS prev_month_total,
+        anyLast(m1.payment_count) OVER (
+            PARTITION BY m1.payment_currency 
+            ORDER BY m1.month
+            ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
+        ) AS prev_month_count
     FROM monthly_by_currency m1
     ORDER BY m1.month, m1.payment_currency
 )
 
--- Step 3: Calculate growth rates
+-- Step 3: Calculate growth rates with null checks
 SELECT 
     month,
     payment_currency,
     payment_count,
     monthly_total,
     prev_month_total,
-    round((monthly_total - prev_month_total) / prev_month_total * 100, 1) AS month_over_month_growth,
-    round((payment_count - prev_month_count) / prev_month_count * 100, 1) AS count_growth
+    CASE 
+        WHEN prev_month_total > 0 
+        THEN round((monthly_total - prev_month_total) / prev_month_total * 100, 1)
+        ELSE NULL
+    END AS month_over_month_growth,
+    CASE 
+        WHEN prev_month_count > 0 
+        THEN round((payment_count - prev_month_count) / prev_month_count * 100, 1)
+        ELSE NULL
+    END AS count_growth
 FROM monthly_with_previous
 WHERE prev_month_total IS NOT NULL
 ORDER BY month DESC, payment_currency;
@@ -4303,7 +4272,7 @@ WITH user_first_payment AS (
         m.user_id,
         min(toStartOfMonth(p.uploaded_at)) AS first_payment_month
     FROM messages m
-    JOIN payment_attachments p ON m.message_id = p.message_id
+    JOIN attachments p ON m.message_id = p.message_id
     WHERE p.payment_status = 'paid'
     GROUP BY m.user_id
 ),
@@ -4315,7 +4284,7 @@ user_payments_by_month AS (
         toStartOfMonth(p.uploaded_at) AS payment_month,
         count(DISTINCT m.user_id) AS user_count,
         sum(p.payment_amount) AS total_amount
-    FROM payment_attachments p
+    FROM attachments p
     JOIN messages m ON p.message_id = m.message_id
     JOIN user_first_payment ufp ON m.user_id = ufp.user_id
     WHERE p.payment_status = 'paid'
@@ -4355,6 +4324,8 @@ layout: two-cols
 
 # Understanding ClickHouse Query Execution
 
+<div style="height:400px;overflow-y:auto;">
+
 ```sql{all}
 -- Examine query execution plan
 EXPLAIN
@@ -4363,7 +4334,7 @@ SELECT
     toDate(p.uploaded_at) AS date,
     sum(p.payment_amount) AS total_amount
 FROM messages m
-JOIN payment_attachments p ON m.message_id = p.message_id
+JOIN attachments p ON m.message_id = p.message_id
 WHERE m.chat_id IN (100, 101, 102)
   AND p.payment_status = 'paid'
   AND p.uploaded_at >= '2023-04-01'
@@ -4378,6 +4349,8 @@ ORDER BY m.chat_id, date;
 - Filter application order
 - Sorting method
 - Aggregation approach
+
+</div>
 
 ::right::
 
@@ -4400,6 +4373,7 @@ ORDER BY m.chat_id, date;
 
 </div>
 
+
 ---
 layout: default
 ---
@@ -4415,24 +4389,21 @@ layout: default
 ## Leverage the Primary Key
 ```sql{all|3-4|all}
 -- Efficient: Uses primary key for data skipping
-SELECT *
-FROM messages
-WHERE chat_id = 100
-  AND sent_timestamp >= '2023-04-01 00:00:00'
-  AND sent_timestamp < '2023-04-02 00:00:00';
+select count(*) from chat_payments.messages 
+where sent_timestamp > '2023-04-01' 
+and sent_timestamp < '2025-04-02';
 
 -- Less efficient: Cannot use primary key effectively
-SELECT *
-FROM messages
-WHERE content LIKE '%invoice%';
+select count(*) from chat_payments.messages 
+where content like '%content%';
 ```
 
 ## Use Partition Pruning
 ```sql{all|3|all}
 -- Efficient: Scans only April 2023 partition
-SELECT *
-FROM payment_attachments
-WHERE toYYYYMM(uploaded_at) = 202304;
+SELECT count(*)
+FROM messages
+WHERE toYYYYMM(sent_timestamp) = 202304;
 ```
 
 </div>
@@ -4441,12 +4412,12 @@ WHERE toYYYYMM(uploaded_at) = 202304;
 ## Avoid Transforming Filtered Columns
 ```sql{all|3|7|all}
 -- Bad: Function on column prevents index use
-SELECT *
+SELECT count(*)
 FROM messages
 WHERE toString(chat_id) = '100';
 
 -- Good: Keep indexed column as is
-SELECT *
+SELECT count(*)
 FROM messages
 WHERE chat_id = 100;
 ```
@@ -4454,14 +4425,12 @@ WHERE chat_id = 100;
 ## Using Secondary Indexes
 ```sql{all|7-8|all}
 -- Create a secondary index
-ALTER TABLE payment_attachments
-ADD INDEX payment_status_idx payment_status TYPE set(0) GRANULARITY 1;
+ALTER TABLE chat_payments.messages
+ADD INDEX idx_user_id user_id TYPE minmax GRANULARITY 8192;
 
 -- Query using the index
-SELECT *
-FROM payment_attachments
-WHERE payment_status = 'paid'
-  AND payment_amount > 1000;
+select * from chat_payments.messages 
+where   user_id = 1000;
 ```
 
 </div>
@@ -4480,7 +4449,7 @@ layout: default
 
 # JOIN Optimization Strategies
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;" >
 <div>
 
 ## Choose the Right JOIN Type
@@ -4488,7 +4457,7 @@ layout: default
 -- Use JOIN HINTS to control execution
 SELECT m.chat_id, p.payment_amount
 FROM messages m
-JOIN /* LOCAL */  payment_attachments p 
+JOIN /* LOCAL */  attachments p 
 ON m.message_id = p.message_id
 WHERE m.chat_id = 100;
 ```
@@ -4498,18 +4467,27 @@ WHERE m.chat_id = 100;
 -- Less efficient: Join then filter
 SELECT m.chat_id, p.payment_amount
 FROM messages m
-JOIN payment_attachments p 
+JOIN attachments p 
 ON m.message_id = p.message_id
-WHERE m.chat_id = 100
-  AND p.payment_status = 'paid';
+WHERE m.chat_id = 197319
+  AND p.payment_status = 'paid'
+  --LIMIT 100;
 
 -- More efficient: Filter then join
-SELECT m.chat_id, p.payment_amount
-FROM messages m
-WHERE m.chat_id = 100
-JOIN payment_attachments p 
+SELECT 
+    m.chat_id, 
+    p.payment_amount
+FROM 
+    (SELECT message_id, chat_id 
+     FROM messages 
+     WHERE chat_id = 197319 ) m
+JOIN 
+    (SELECT message_id, payment_amount 
+     FROM attachments 
+     WHERE payment_status = 'paid') p
 ON m.message_id = p.message_id
-WHERE p.payment_status = 'paid';
+--Limit 100
+;
 ```
 
 </div>
@@ -4520,7 +4498,7 @@ WHERE p.payment_status = 'paid';
 -- Put smaller filtered result sets first in joins
 SELECT u.username, COUNT(p.attachment_id)
 FROM (
-    SELECT * FROM payment_attachments
+    SELECT  * FROM attachments
     WHERE payment_status = 'paid'
     AND uploaded_at > '2023-04-01'
 ) AS p
@@ -4534,7 +4512,7 @@ GROUP BY u.username;
 -- Simplified join syntax
 SELECT m.chat_id, p.payment_amount
 FROM messages m
-JOIN payment_attachments p USING (message_id)
+JOIN attachments p USING (message_id)
 WHERE m.chat_id = 100;
 ```
 
@@ -4554,7 +4532,7 @@ layout: default
 
 # Aggregation and GROUP BY Optimization
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Pre-filter Data
@@ -4599,17 +4577,19 @@ SELECT
     toDate(uploaded_at) AS date,
     payment_currency,
     sum(payment_amount) AS daily_total
-FROM payment_attachments
+FROM attachments
 GROUP BY date, payment_currency;
 
 -- Query the materialized view (much faster)
 SELECT
-    date,
+    month
     payment_currency,
     sum(daily_total) AS monthly_total
 FROM payment_daily_mv
 WHERE toYYYYMM(date) = 202304
 GROUP BY toStartOfMonth(date) AS month, payment_currency;
+
+
 ```
 
 </div>
@@ -4628,20 +4608,25 @@ layout: default
 
 # Optimizing Complex Queries
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Break Down Complex Queries
 ```sql{all|1-6|8-14|16-21|all}
 -- Step 1: Create a temporary table for filtered data
-CREATE TEMPORARY TABLE filtered_payments AS
+CREATE TABLE filtered_payments 
+ENGINE = Memory
+AS
 SELECT *
-FROM payment_attachments
+FROM attachments
 WHERE payment_status = 'paid'
   AND uploaded_at >= '2023-01-01';
 
+
 -- Step 2: Create a temporary table for aggregated data
-CREATE TEMPORARY TABLE payment_summary AS
+CREATE TABLE payment_summary 
+Engine = Memory
+AS
 SELECT
     toStartOfMonth(uploaded_at) AS month,
     payment_currency,
@@ -4656,17 +4641,18 @@ SELECT
     total_amount
 FROM payment_summary
 ORDER BY month, payment_currency;
+
 ```
 
 </div>
-<div>
+<div style="height:400px;overflow-y:auto;">
 
 ## Use CTEs for Better Readability and Optimization
 ```sql{all|1-7|9-17|19-28|all}
 -- Clear structure helps the optimizer
 WITH filtered_data AS (
     SELECT *
-    FROM payment_attachments
+    FROM attachments
     WHERE payment_status = 'paid'
       AND uploaded_at >= '2023-01-01'
       AND payment_amount > 100
@@ -4728,7 +4714,7 @@ FROM system.query_log
 WHERE type = 'QueryFinish'
   AND query_duration_ms > 1000
   AND event_time > now() - INTERVAL 1 DAY
-  AND has(query, 'payment_attachments')
+  AND query LIKE '%attachments%'
 ORDER BY query_duration_ms DESC
 LIMIT 10;
 ```
@@ -4738,8 +4724,8 @@ LIMIT 10;
 
 ## Configuration Settings for Optimization
 ```sql{all|2|5|8|11|all}
--- Adjust max memory usage per query
-SET max_memory_usage = 20000000000;
+-- Adjust max memory usage per query (in bytes)
+SET max_memory_usage = 20000000000; -- 20 GB
 
 -- Control parallel processing
 SET max_threads = 8;
@@ -4777,12 +4763,44 @@ layout: default
 
 # Real-World Optimization Example: Chat Payment Analysis
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Original Slow Query
 ```sql{all}
 -- Complex, inefficient query
+
+SELECT 
+    u.username,
+    m.chat_id,
+    p.month,
+    count() AS payment_count,
+    sum(p.payment_amount) AS total_amount
+FROM (
+    SELECT 
+        message_id,
+        payment_amount,
+        toStartOfMonth(uploaded_at) AS month
+    FROM attachments
+    WHERE uploaded_at BETWEEN 
+        '2023-01-01 00:00:00' AND '2023-12-31 23:59:59'
+) p
+JOIN messages m ON p.message_id = m.message_id
+JOIN users u ON m.user_id = u.user_id
+GROUP BY u.username, m.chat_id, p.month
+ORDER BY total_amount DESC;
+
+```
+- Execution time: 0.65 seconds
+- Full table scan on customers
+- Temporary table for join results
+
+</div>
+<div>
+
+## Optimized Query
+```sql{all|1-7|9-16|18-29|all}
+
 SELECT 
     u.username,
     m.chat_id,
@@ -4791,61 +4809,38 @@ SELECT
     sum(p.payment_amount) AS total_amount
 FROM users u
 JOIN messages m ON u.user_id = m.user_id
-JOIN payment_attachments p ON m.message_id = p.message_id
+JOIN attachments p ON m.message_id = p.message_id
 WHERE p.uploaded_at BETWEEN 
     '2023-01-01 00:00:00' AND '2023-12-31 23:59:59'
 GROUP BY u.username, m.chat_id, month
 ORDER BY total_amount DESC;
-```
 
-<div class="mt-4">
-<strong>Issues:</strong>
-- Joins large tables without filters first
-- No use of indices or partitioning
-- Transforms uploaded_at in the WHERE clause
-- Sorts a potentially large result set
-</div>
-
-</div>
-<div>
-
-## Optimized Query
-```sql{all|1-7|9-16|18-29|all}
--- Step 1: Filter payments first
-WITH filtered_payments AS (
-    SELECT message_id, payment_amount, uploaded_at
-    FROM payment_attachments
-    WHERE toYear(uploaded_at) = 2023
-      AND payment_status = 'paid'
-),
-
--- Step 2: Join with messages and filter again
-payment_messages AS (
-    SELECT 
-        m.user_id, m.chat_id, 
-        fp.payment_amount, fp.uploaded_at
-    FROM filtered_payments fp
-    JOIN messages m ON fp.message_id = m.message_id
-    WHERE m.has_attachment = 1
-),
-
--- Step 3: Join with users and aggregate
-final_result AS (
+WITH 
+filtered_data AS (
     SELECT 
         u.username,
-        pm.chat_id,
-        toStartOfMonth(pm.uploaded_at) AS month,
-        count() AS payment_count,
-        sum(pm.payment_amount) AS total_amount
-    FROM payment_messages pm
-    JOIN users u ON pm.user_id = u.user_id
-    GROUP BY u.username, pm.chat_id, month
+        m.chat_id,
+        toStartOfMonth(p.uploaded_at) AS month,
+        p.payment_amount
+    FROM attachments p
+    JOIN messages m ON p.message_id = m.message_id
+    JOIN users u ON m.user_id = u.user_id
+    WHERE p.uploaded_at BETWEEN 
+        '2023-01-01 00:00:00' AND '2023-12-31 23:59:59'
 )
 
--- Final selection with limited results
-SELECT * FROM final_result
-ORDER BY total_amount DESC
-LIMIT 1000;
+SELECT 
+    username,
+    chat_id,
+    month,
+    count() AS payment_count,
+    sum(payment_amount) AS total_amount
+FROM filtered_data
+GROUP BY 
+    username,
+    chat_id,
+    month
+ORDER BY total_amount DESC;
 ```
 
 </div>

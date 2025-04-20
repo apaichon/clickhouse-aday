@@ -51,4 +51,12 @@ Primary Key (attachment_id)
 PARTITION BY toYYYYMM(uploaded_at)
 ORDER BY (attachment_id, message_id, uploaded_at);
 
-SHOW INDEXES FROM chat_payments.attachments;
+CREATE TABLE users (
+    user_id UInt64,
+    username String,
+    email String,
+    company_id UInt16,
+    created_at DateTime
+) ENGINE = ReplacingMergeTree(created_at)
+Primary Key (user_id)
+ORDER BY user_id;

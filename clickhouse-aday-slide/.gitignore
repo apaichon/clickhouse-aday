@@ -5,3 +5,10 @@ dist
 .vite-inspect
 .remote-assets
 components.d.ts
+.csv
+.xlsx
+.xls
+.docx
+.doc
+.pptx
+.ppt
