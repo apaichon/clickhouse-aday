@@ -4892,68 +4892,40 @@ class: text-center
 ---
 layout: section
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
+
 # Session 5: Data Management
-## 1. Data Insertion Methods
+
+## Optimizing Operations for Chat Payment Apps
 
 ---
+layout: default
+---
+
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Data Insertion Methods
+# Session Overview
 
-<div grid="~ cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4">
 <div>
 
-## Single Record Insertion
-- Insert one record at a time
-- Immediate feedback
-- Simple implementation
-- Higher overhead for multiple records
-- Example: User submitting a form
-
-</div>
-<div>
-
-## Bulk Insertion
-- Insert multiple records in a single operation
-- Reduced overhead
-- Improved performance
-- Transaction handling complexity
-- Example: Importing CSV data
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Data Insertion Methods (cont.)
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Streaming Insertion
-- Continuous flow of data
-- Real-time processing
-- Scalable approach
-- Requires stable connection
-- Example: IoT sensor data
+## We'll cover:
+- Data insertion methods
+- Batch processing
+- Data deduplication
+- Data compression
+- Backup and restore
 
 </div>
 <div>
 
-## API-Based Insertion
-- Standardized interfaces
-- Platform independence
-- Validation at entry point
-- Network latency
-- Example: Mobile app syncing with backend
+## Use Case: Chat App with Payments
+- Messaging platform with attached invoices
+- Payment processing through chat interface
+- High volume of messages and attachments
+- Need for efficient data operations
+- Critical financial data requiring protection
 
 </div>
 </div>
@@ -4961,2113 +4933,492 @@ layout: section
 ---
 layout: section
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
+
+# 1. Data Insertion Methods
+
+---
+layout: default
+---
+
+# Loading from External Sources
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## INSERT FROM SELECT
+```sql{all|1-7|all}
+-- Copy data from one table to another
+CREATE TABLE attachments_backup AS attachments;
+
+Insert into attachments_backup
+  SELECT *
+FROM attachments
+WHERE toYear(uploaded_at) = 2023
+  AND payment_status = 'paid'
+  AND payment_amount > 1000;
+
+```
 </div>
+</div>
+
+---
+layout: section
+---
 
 # 2. Batch Processing
 
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
+layout: default
+---
 
-# Batch Processing
+# Batch Insert Best Practices
 
-<div grid="~ cols-2 gap-4">
-<div>
+```sql{all|1-8|10-11|13-17|all}
+-- Prepare a large batch of messages
+INSERT INTO messages
+SELECT
+    generateUUIDv4() as message_id,
+    toUInt64(rand() % 1000) as chat_id,
+    toUInt32(rand() % 10000) as user_id,
+    now() - toIntervalDay(rand() % 30) as sent_timestamp,
+    CAST(
+        multiIf(
+            rand() % 4 = 0, 'text',
+            rand() % 4 = 1, 'image',
+            rand() % 4 = 2, 'invoice',
+            'receipt'
+        ) AS Enum8('text' = 1, 'image' = 2, 'invoice' = 3, 'receipt' = 4)
+    ) as message_type,
+    'Batch generated message ' || toString(number) as content,
+    rand() % 2 as has_attachment,
+    1 as sign
+FROM numbers(1_000_000);  -- Generate 1 million rows
 
-## What is Batch Processing?
-- Processing of data in groups
-- Scheduled rather than real-time
-- Optimized for throughput over latency
-- Resource-efficient handling of large volumes
-
-</div>
-<div>
-
-## Key Components
-- Job scheduler
-- Data extraction mechanism
-- Processing engine
-- Error handling & recovery
-- Monitoring & reporting
-
-</div>
-</div>
+-- Optimal batch size in production
+SET max_insert_block_size = 1000000;  -- Default is 1048576
+SET min_insert_block_size_rows = 10000;
+SET min_insert_block_size_bytes = 10000000;
+```
 
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Batch Processing Patterns
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## ETL (Extract, Transform, Load)
-- Extract from sources
-- Transform to desired format
-- Load into target system
-- Example: Daily sales data aggregation
-
-</div>
-<div>
-
-## Map-Reduce
-- Map: Data transformation
-- Reduce: Data aggregation
-- Highly parallel
-- Example: Log file analysis
-
-</div>
-</div>
-
+layout: default
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
+
+## Monitoring Batch Operations
+<div style="height:350px; overflow-y:auto;">
+```sql{all|2-8|10-18|all}
+-- Check recent insertion performance
+SELECT
+    query_start_time,
+    event_time,
+    query_duration_ms,
+    read_rows,
+    written_rows,
+    memory_usage
+FROM system.query_log
+WHERE query LIKE '%INSERT INTO messages%'
+  AND event_time > now() - INTERVAL 1 HOUR
+  AND type = 'QueryFinish'
+ORDER BY event_time DESC
+LIMIT 20;
+
+-- Check parts created by recent inserts
+SELECT
+    table,
+    partition,
+    name,
+    rows,
+    bytes_on_disk,
+    modification_time
+FROM system.parts
+WHERE active = 1
+  AND table = 'attachments'
+ORDER BY modification_time DESC
+LIMIT 20;
+```
 </div>
 
-# Batch Processing: Best Practices
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Design Considerations
-- Idempotency (safe to repeat)
-- Checkpointing for recovery
-- Parallel processing where possible
-- Clear logging and monitoring
-
-</div>
-<div>
-
-## Implementation Tips
-- Configure appropriate batch sizes
-- Balance memory usage
-- Plan for failure scenarios
-- Monitor processing times
-- Schedule during off-peak hours
-
-</div>
+<div class="mt-4 bg-yellow-50 p-4 rounded">
+<strong>Balance Strategy:</strong> For chat payment data, consider using different batch strategies for different data: smaller, more frequent batches for critical payment events, and larger batches for routine messages.
 </div>
 
 ---
 layout: section
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
 # 3. Data Deduplication
 
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
+layout: two-cols
+---
+
+# Understanding Duplication Challenges
+
+```sql{all|1-8|10-17|all}
+-- Check for duplicate messages
+SELECT
+    message_id,
+    COUNT(*) as count
+FROM messages
+GROUP BY message_id
+HAVING count > 1
+ORDER BY count DESC;
+
+-- Check for duplicate payment attachments
+SELECT
+    attachment_id,
+    COUNT(*) as count
+FROM attachments
+GROUP BY attachment_id
+HAVING count > 1
+ORDER BY count DESC;
+
+```
+
+<div class="mt-4">
+
+**Common Sources of Duplication:**
+- Message retransmission due to network issues
+- Duplicated payment processing events
+- Backup and restore operations
+- Parallel load processes
+- Retry mechanisms in application code
+
 </div>
 
-# Data Deduplication
+::right::
 
-<div grid="~ cols-2 gap-4">
-<div>
+<div class="ml-4">
 
-## What is Deduplication?
-- Elimination of redundant data
-- Storage optimization
-- Improved data quality
-- Network bandwidth reduction
+# ClickHouse Deduplication Options
 
+### 1. ReplacingMergeTree
+- Removes duplicates during merges
+- Based on ORDER BY columns as primary key
+- Optional version column for determining newest
+
+### 2. CollapsingMergeTree
+- Uses a "sign" column (+1/-1)
+- Collapses pairs of rows with opposite signs
+- Good for updating/deleting events
+
+### 3. AggregatingMergeTree
+- Combines duplicate rows using aggregate functions
+- Good for pre-aggregated data
+
+### 4. ReplicatedMergeTree
+- Built-in deduplication for replicated tables
+- Uses a hash of the insert query batch
+
+<div class="mt-6 bg-blue-50 p-4 rounded">
+<strong>Key Consideration:</strong> Deduplication in ClickHouse happens during merge operations, not at insert time. It's eventually consistent, not immediate.
 </div>
-<div>
 
-## Deduplication Methods
-- Hash-based comparison
-- Byte-by-byte comparison
-- Metadata analysis
-- Fuzzy matching algorithms
-- Record linkage
-
-</div>
 </div>
 
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Deduplication Techniques
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## File-Level Deduplication
-- Compares entire files
-- Uses checksums/hashes
-- Simple implementation
-- Less storage efficient
-- Example: Email attachment storage
-
-</div>
-<div>
-
-## Block-Level Deduplication
-- Splits files into blocks
-- Identifies duplicate blocks
-- More storage efficient
-- Higher processing overhead
-- Example: Backup systems
-
-</div>
-</div>
-
+layout: default
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
-# Deduplication Challenges & Solutions
+# Implementing ReplacingMergeTree
 
-<div grid="~ cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4">
 <div>
 
-## Challenges
-- False positives/negatives
-- Performance overhead
-- Collision resistance
-- Handling near-duplicates
-- Scale with growing data
+## Basic Implementation
+```sql{all|1-10|12-16|all}
+-- Using ReplacingMergeTree for payment attachments
+CREATE TABLE attachments_dedup
+(
+   attachment_id UUID,
+    message_id UUID,
+    payment_amount Decimal64(2),
+    payment_currency LowCardinality(String),
+    invoice_date Date,
+    payment_status Enum8(
+        'pending' = 1, 'paid' = 2, 'canceled' = 3
+    ),
+    file_path String,
+    file_size UInt32,
+    uploaded_at DateTime,
+    sign Int8,
+) ENGINE = ReplacingMergeTree(uploaded_at)
+PARTITION BY toYYYYMM(uploaded_at)
+ORDER BY (message_id, attachment_id);
+
+-- Fill the table with deduplicated data
+INSERT INTO attachments_dedup
+SELECT *
+FROM attachments
+
+
+SELECT *
+FROM attachments
+limit 100
+
+SELECT
+    message_id,
+    COUNT(*) as count
+FROM attachments_dedup FINAL
+GROUP BY message_id
+HAVING count > 1
+ORDER BY count DESC;
+
+select * from attachments_dedup 
+where attachment_id = 'c9e6be4b-3a7b-45de-8003-b68b027736f7'
+ORDER BY attachment_id;
+```
 
 </div>
 <div>
 
-## Solutions
-- Multiple hash functions
-- Bloom filters for efficiency
-- Similarity thresholds
-- Incremental processing
-- Distributed deduplication
+## Force Merge for Deduplication
+```sql{all|2|all}
+-- Trigger merges to eliminate duplicates
+OPTIMIZE TABLE attachments_dedup FINAL;
+
+-- Verify deduplication
+SELECT
+    attachment_id,
+    COUNT(*) as count
+FROM attachments_dedup
+GROUP BY attachment_id
+HAVING count > 1;
+```
+
+## Limitations
+```sql{all|1-9|11-15|all}
+-- ReplacingMergeTree doesn't guarantee deduplication
+-- This query can still return duplicates before merge
+select * from attachments_dedup 
+where attachment_id = 'c9e6be4b-3a7b-45de-8003-b68b027736f7'
+ORDER BY attachment_id;
+
+```
 
 </div>
+</div>
+
+<div class="mt-4 bg-yellow-50 p-4 rounded">
+<strong>Payment Processing Tip:</strong> For financial data like payments, consider using a combination of ReplacingMergeTree with application-level deduplication based on transaction IDs to ensure no duplicate payments are processed.
 </div>
 
 ---
 layout: section
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
 # 4. Data Compression
 
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Data Compression Fundamentals
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Lossless Compression
-- Perfect reconstruction
-- No information loss
-- Lower compression ratios
-- Examples: ZIP, GZIP, PNG
-
-</div>
-<div>
-
-## Lossy Compression
-- Some information loss
-- Higher compression ratios
-- Quality vs. size tradeoff
-- Examples: JPEG, MP3, WebP
-
-</div>
-</div>
-
+layout: two-cols
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
-# Compression Algorithms
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Text & Document Compression
-- Huffman coding
-- LZ77/LZ78 algorithms
-- DEFLATE (ZIP/GZIP)
-- Dictionary-based techniques
-
-</div>
-<div>
-
-## Image Compression
-- JPEG (lossy)
-- PNG (lossless)
-- WebP (both modes)
-- SVG (vector graphics)
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 5. Real-World Case Study
-## Invoice & Payment Processing in Chat Applications
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Case Study: Overview
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Business Requirements
-- Support for invoice attachments
-- Payment slip uploads
-- Fast retrieval and display
-- Minimize storage costs
-- Maintain document quality
-- Support cross-platform viewing
-
-</div>
-<div>
-
-## Technical Challenges
-- High-volume document storage
-- Mobile bandwidth limitations
-- Document searchability
-- Storage optimization
-- Secure handling of financial documents
-- Cross-device compatibility
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Data Insertion Implementation
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## User Upload Flow
-- Client-side validation
-- Pre-compression on device
-- Chunked upload for large files
-- Background processing
-- Immediate chat preview
-
-</div>
-<div>
-
-## Backend Processing
-- Validation service
-- Asynchronous processing queue
-- Document classification
-- Metadata extraction
-- Storage optimization pipeline
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Batch Processing Implementation
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Document Processing Pipeline
-- Overnight batch processing
-- OCR text extraction
-- Indexing for search
-- Recompression optimization
-- Analytics data extraction
-- Retention policy enforcement
-
-</div>
-<div>
-
-## Monitoring & Management
-- Processing dashboard
-- Success/failure metrics
-- Average processing time
-- Storage efficiency tracking
-- Error rate monitoring
-- Reprocessing capabilities
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Deduplication Implementation
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Invoice Deduplication
-- Invoice number extraction
-- Vendor identification
-- Date matching
-- Amount verification
-- Perceptual hashing for similar invoices
-- User notification for duplicates
-
-</div>
-<div>
-
-## Storage Optimization
-- Cross-user reference counting
-- Single-instance storage
-- Content-addressable storage
-- Version tracking for document updates
-- Reclamation of duplicate space
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Compression Implementation
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Document Type-Specific Strategies
-- Invoices: PDF optimization
-- Receipts: JPEG with quality targeting
-- Text-heavy: Content extraction + layout
-- Forms: Vector conversion where possible
-- Signatures: Lossless regions
-
-</div>
-<div>
-
-## Multi-resolution Approach
-- High-quality archival storage
-- Medium-quality web viewing
-- Low-quality mobile previews
-- Progressive loading
-- On-demand quality switching
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Implementation Results
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Performance Metrics
-- 68% reduction in storage requirements
-- 42% faster document loading time
-- 99.7% deduplication accuracy
-- 3x improvement in mobile viewing experience
-- 50% reduction in bandwidth usage
-
-</div>
-<div>
-
-## Business Impact
-- Improved user satisfaction
-- Reduced cloud storage costs
-- Better compliance with retention policies
-- Enhanced searchability
-- Support for larger document volumes
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Key Takeaways
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Key Takeaways
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Technical Insights
-- Choose insertion methods based on data volume and timing
-- Batch processing optimizes resource utilization
-- Effective deduplication requires multi-faceted approach
-- Content-aware compression yields best results
-- Design for the entire data lifecycle
-
-</div>
-<div>
-
-## Implementation Strategy
-- Start with clear data requirements
-- Implement basic solutions, then optimize
-- Measure everything (storage, performance, quality)
-- Balance user experience with technical efficiency
-- Build for scale from the beginning
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-#  Session 6: Performance Optimization
-## Database and Query Techniques for Modern Applications
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-# 1. Index Types and Usage
-## What Are Indexes?
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Definition
-- Data structures that improve query speed
-- "Table of contents" for your database
-- Trade storage space for query performance
-- Critical for large datasets
-- Impact: Queries can go from minutes to milliseconds
-
-</div>
-<div>
-
-## When to Use Indexes
-- Frequently queried columns
-- Join operations
-- WHERE clause conditions
-- ORDER BY operations
-- High cardinality columns (many unique values)
-- Foreign key relationships
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Types of Indexes
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## B-Tree Indexes
-- Most common index type
-- Balanced tree structure
-- Excellent for equality and range queries
-- Supports >, <, =, BETWEEN, LIKE 'abc%'
-- Default in most RDBMS
-- Example: Customer lookup by ID
-
-</div>
-<div>
-
-## Hash Indexes
-- Based on hash functions
-- Ultra-fast for equality (=) operations
-- Not suitable for range queries
-- Fixed lookup time O(1)
-- Good for: Session lookups, cache implementations
-- Example: User session management
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Specialized Indexes
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Bitmap Indexes
-- Use bit arrays for low-cardinality data
-- Efficient for columns with few unique values
-- Excellent for multi-column filtering
-- Example: Status fields, categories, boolean flags
-
-</div>
-<div>
-
-## Full-Text Indexes
-- Designed for text search operations
-- Tokenization, stemming, ranking
-- Supports complex text queries
-- Example: Document search, invoice content search
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Specialized Indexes (cont.)
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Spatial Indexes
-- For geographic and geometric data
-- R-trees, Quadtrees
-- Supports location-based queries
-- Example: Finding locations within distance
-
-</div>
-<div>
-
-## Columnar Indexes
-- Organizes data by column instead of row
-- Excellent for analytical workloads
-- Optimizes for reading specific columns
-- Example: Reporting on payment trends
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Composite Indexes
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## What Are They?
-- Index on multiple columns
-- Order matters significantly
-- First column should be most selective
-- Example: (customer_id, date)
-
-</div>
-<div>
-
-## Benefits & Use Cases
-- Filter by multiple conditions
-- Cover entire queries (index-only scans)
-- Optimize complex WHERE clauses
-- Avoid redundant single-column indexes
-- Example: Find invoices by vendor and date range
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Index Best Practices
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## When to Create Indexes
-- Columns in WHERE clauses
-- JOIN columns
-- ORDER BY columns
-- GROUP BY columns
-- High selectivity columns
-- Foreign keys
-
-</div>
-<div>
-
-## When to Avoid Indexes
-- Small tables (full scan may be faster)
-- Columns that update frequently
-- Low selectivity columns
-- Tables with heavy write operations
-- Columns rarely used in queries
-- Already covered by composite indexes
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 2. Query Optimization
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Query Optimization Fundamentals
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## What is Query Optimization?
-- Process of improving query execution speed
-- Reducing resource consumption
-- Minimizing response time
-- Both an art and a science
-- Critical for application performance
-
-</div>
-<div>
-
-## The Query Lifecycle
-1. Parsing and validation
-2. Query plan generation
-3. Cost-based optimization
-4. Execution plan selection
-5. Execution
-6. Result return
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Understanding Execution Plans
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## What is an Execution Plan?
-- Database's strategy to execute a query
-- Shows operations and their sequence
-- Reveals index usage
-- Displays estimated vs. actual costs
-- Key tool for optimization
-
-</div>
-<div>
-
-## How to Obtain
-- `EXPLAIN` (PostgreSQL, MySQL)
-- `EXPLAIN PLAN` (Oracle)
-- `SHOWPLAN` (SQL Server)
-- Visual execution plans in most DBMS tools
-- Example: `EXPLAIN SELECT * FROM invoices WHERE customer_id = 123;`
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Common Query Optimization Techniques
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## 1. Proper Indexing
-- Match indexes to query patterns
-- Create missing indexes
-- Remove unused indexes
-- Use covering indexes
-
-</div>
-<div>
-
-## 2. Query Rewriting
-- Avoid `SELECT *`
-- Specify only needed columns
-- Use explicit JOINs
-- Simplify complex queries
-- Avoid unnecessary subqueries
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Common Query Optimization Techniques (cont.)
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## 3. Filter Early
-- Push filters to lowest level
-- Use WHERE before GROUP BY
-- Filter in subqueries
-- Use indexes effectively for filtering
-- Apply LIMIT early in the process
-
-</div>
-<div>
-
-## 4. Join Optimization
-- Join order matters
-- Filter tables before joining
-- Use proper join types (INNER, LEFT)
-- Ensure join columns are indexed
-- Consider denormalization when appropriate
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Advanced Optimization Strategies
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Query Hints
-- Override optimizer decisions
-- Force specific index usage
-- Control join strategies
-- Use sparingly
-- Example: `SELECT /*+ INDEX(invoices idx_customer_id) */ * FROM invoices WHERE customer_id = 123;`
-
-</div>
-<div>
-
-## Partitioning
-- Divide tables into smaller segments
-- Limit scan to relevant partitions
-- Time-based partitioning for historical data
-- Example: Partition invoices by month
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 3. Materialized Views
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Understanding Materialized Views
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## What are Materialized Views?
-- Pre-computed query results stored as objects
-- Physical copy of data vs. virtual views
-- Periodically refreshed
-- Trade storage for performance
-- Query complex data as if it were a simple table
-
-</div>
-<div>
-
-## Key Differences from Regular Views
-- Store actual data (not just query definitions)
-- Can be indexed
-- Require refresh/maintenance
-- Can be queried when source tables are unavailable
-- Significant performance advantages
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# When to Use Materialized Views
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Ideal Use Cases
-- Complex aggregations and calculations
-- Data that changes infrequently
-- Reporting and dashboards
-- Cross-database queries
-- Expensive joins
-- Historical/archival data access
-
-</div>
-<div>
-
-## Example Scenarios
-- Monthly invoice summaries
-- Customer payment history
-- Vendor performance metrics
-- Frequently accessed reporting data
-- Pre-calculated statistics
-- Time-series data aggregations
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Materialized View Refreshing Strategies
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Complete Refresh
-- Rebuilds entire materialized view
-- Simplest approach
-- Resource intensive
-- Suitable for nightly/weekly updates
-- Example: Complete rebuild of monthly reports
-
-</div>
-<div>
-
-## Incremental Refresh
-- Updates only changed data
-- More efficient for large datasets
-- Requires change tracking mechanism
-- More complex to implement
-- Example: Adding new day's invoices to existing report
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Materialized Views Best Practices
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Implementation Tips
-- Index materialized views
-- Schedule refreshes during low traffic
-- Consider data freshness requirements
-- Automate refresh processes
-- Monitor size and growth
-
-</div>
-<div>
-
-## Potential Pitfalls
-- Stale data issues
-- Storage requirements
-- Refresh performance impact
-- Query rewrite complexity
-- Maintenance overhead
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 4. Projections
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Understanding Projections
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## What are Projections?
-- Specific to columnar databases 
-- Physical storage structures
-- Subset of columns in specific order
-- Can include encoding and sorting
-- Example: Vertica, Amazon Redshift
-
-</div>
-<div>
-
-## Key Characteristics
-- Column subset selection
-- Column ordering
-- Sort order definition
-- Segmentation strategy
-- Data distribution approach
-- Encoding methods
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Projection Strategies
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Column Selection
-- Include only columns needed for queries
-- Group frequently accessed columns
-- Create purpose-specific projections
-- Example: Invoice header projection vs. details projection
-
-</div>
-<div>
-
-## Sort Order
-- Order by frequently filtered columns
-- Optimize for range queries
-- Consider query patterns
-- Multiple sort keys for different access patterns
-- Example: Sort by date for time-range queries
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Projection Strategies (cont.)
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Data Distribution
-- Hash distribution (even distribution)
-- Local segmentation (co-locate related data)
-- Broadcast (replicate to all nodes)
-- Example: Distribute invoices by customer_id
-
-</div>
-<div>
-
-## Encoding
-- Run-length encoding for repeated values
-- Dictionary encoding for text 
-- Delta encoding for sequential values
-- Example: Compress status fields with RLE
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Projections vs. Other Techniques
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Projections vs. Indexes
-- Projections store actual data
-- More storage-intensive
-- Can radically change query performance
-- Fundamental to columnar databases
-- Different optimization approach
-
-</div>
-<div>
-
-## Projections vs. Materialized Views
-- Both store data physically
-- Projections focus on column organization
-- Materialized views focus on precomputed results
-- Different database paradigms
-- Complementary in some systems
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 5. Real-World Case Study
-## Invoice & Payment Processing in Chat Applications
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Case Study: System Overview
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Application Requirements
-- Fast invoice retrieval by multiple criteria
-- Quick full-text search across invoices
-- Real-time payment status updates
-- Historical reporting and analytics
-- Support for millions of documents
-- Sub-second response times
-
-</div>
-<div>
-
-## Data Characteristics
-- Invoices: structured data + PDF attachments
-- Payment slips: transaction data + images
-- High write volume (thousands/hour)
-- Complex read patterns
-- Long retention requirements
-- Data size: 10+ TB and growing
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Index Implementation
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Primary Access Patterns
-- Lookup by invoice number (equality)
-- Search by date range (range queries)
-- Filter by customer/vendor (equality)
-- Full-text search on content
-- Geospatial queries for regional analysis
-
-</div>
-<div>
-
-## Index Strategy
-- B-Tree index: (customer_id, date, invoice_id)
-- Hash index: invoice_number
-- Full-text index: invoice_content
-- Bitmap index: payment_status
-- Spatial index: vendor_location
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Query Optimization Case
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Before Optimization
-```sql
-SELECT i.*, p.payment_date, p.amount
-FROM invoices i
-LEFT JOIN payments p ON i.invoice_id = p.invoice_id
-WHERE i.customer_id IN (
-  SELECT customer_id FROM customers
-  WHERE region = 'Northeast'
-)
-AND i.date BETWEEN '2023-01-01' AND '2023-03-31'
-AND i.status != 'Cancelled'
-ORDER BY i.date DESC;
-```
-- Execution time: 12.3 seconds
-- Full table scan on customers
-- Temporary table for join results
-
-</div>
-<div>
-
-## After Optimization
-```sql
-SELECT i.*, p.payment_date, p.amount
-FROM invoices i
-JOIN customers c ON i.customer_id = c.customer_id
-LEFT JOIN payments p ON i.invoice_id = p.invoice_id
-WHERE c.region = 'Northeast'
-AND i.date BETWEEN '2023-01-01' AND '2023-03-31'
-AND i.status != 'Cancelled'
-ORDER BY i.date DESC;
-```
-- Execution time: 0.2 seconds
-- Proper join order
-- Eliminated subquery
-- Leverages composite index
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Materialized Views Implementation
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Key Materialized Views
-1. `mv_invoice_summary_daily`
-   - Daily aggregation of invoice totals
-   - Refreshed nightly
-   - Indexed by date, customer, region
-
-2. `mv_payment_status`
-   - Current payment status for all invoices
-   - Refreshed every 15 minutes
-   - Indexed by status, due date
-
-</div>
-<div>
-
-3. `mv_customer_invoice_history`
-   - Complete invoice history by customer
-   - Refreshed daily
-   - Includes payment statistics
-   
-4. `mv_search_optimization`
-   - Denormalized view for search
-   - Contains all filterable fields
-   - Refreshed hourly
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Projections Implementation
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Invoice Projections
-1. **Time-based Access Projection**
-   - Sort key: invoice_date
-   - Columns: invoice_id, date, customer_id, amount
-   - Segmented by date_trunc(month, date)
-
-2. **Customer-centric Projection**
-   - Sort key: customer_id
-   - Columns: All invoice fields
-   - Segmented by hash(customer_id)
-
-</div>
-<div>
-
-## Payment Projections
-1. **Status Monitoring Projection**
-   - Sort key: status, due_date
-   - Columns: invoice_id, status, amount, customer_id
-   - Includes encoding for status
-
-2. **Analytics Projection**
-   - Sort key: payment_date, region
-   - Pre-joined invoice and payment data
-   - Designed for reporting queries
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Performance Results
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Before Optimization
-- Average query time: 5.2 seconds
-- Peak database load: 85%
-- Chat app response: 8+ seconds
-- Search functionality: Limited
-- Reporting: Overnight batch jobs
-- Storage: 12TB
-
-</div>
-<div>
-
-## After Optimization
-- Average query time: 200ms
-- Peak database load: 40%
-- Chat app response: < 1 second
-- Search functionality: Comprehensive
-- Reporting: On-demand, real-time
-- Storage: 18TB (increased but optimized)
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Lessons Learned
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Technical Insights
-- Proper indexing provided 80% of performance gains
-- Materialized views critical for reporting
-- Query optimization more impactful than hardware upgrades
-- Projections essential for analytical workloads
-- Database choice matters (columnar vs. row-based)
-
-</div>
-<div>
-
-## Implementation Strategy
-- Start with query analysis and indexing
-- Add materialized views for complex calculations
-- Implement projections for specialized access patterns
-- Continuous monitoring and tuning
-- Educate developers on query writing best practices
-- Regular database maintenance cycles
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Key Takeaways
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Key Takeaways
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Comprehensive Approach
-- Indexes for fast data access
-- Query optimization for efficient execution
-- Materialized views for complex calculations
-- Projections for specialized data organization
-- Combined strategy for maximum performance
-
-</div>
-<div>
-
-## Strategic Implementation
-- Understand access patterns first
-- Start with fundamentals (indexing, query optimization)
-- Add advanced techniques for specific bottlenecks
-- Measure everything before and after
-- Continuous improvement cycle
-- Balance performance with operational complexity
-
-</div>
-</div>
-
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Session 7: Monitoring with Grafana
-## Comprehensive ClickHouse Monitoring Strategy
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 1. Setting Up Grafana with ClickHouse
-## Grafana + ClickHouse: Architecture Overview
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Components
-- ClickHouse: High-performance analytical DBMS
-- Grafana: Visualization and monitoring platform
-- Prometheus (optional): Metrics collection
-- Node Exporter: System metrics
-- ClickHouse Exporter: Database metrics
-
-</div>
-<div>
-
-## Architecture Diagram
-```mermaid
-graph TD
-    A[ClickHouse Server] --> B[ClickHouse Exporter]
-    C[Host System] --> D[Node Exporter]
-    B --> E[Prometheus]
-    D --> E
-    A --> F[Grafana]
-    E --> F
+# ClickHouse Compression Overview
+
+```sql{all|1-8|10-16|all}
+-- Check current compression settings
+SELECT
+    name,
+    type,
+    compression_codec,
+    data_compressed_bytes,
+    data_uncompressed_bytes,
+    round(data_uncompressed_bytes / data_compressed_bytes, 2) as compression_ratio
+FROM system.columns
+WHERE table = 'attachments';
+
+-- Check compression ratio for tables
+SELECT
+    table,
+    formatReadableSize(sum(data_compressed_bytes)) AS compressed,
+    formatReadableSize(sum(data_uncompressed_bytes)) AS uncompressed,
+    round(sum(data_uncompressed_bytes) / sum(data_compressed_bytes), 2) AS ratio
+FROM system.columns
+WHERE database = currentDatabase()
+GROUP BY table
+ORDER BY ratio DESC;
 ```
 
+::right::
+
+<div class="ml-4">
+
+# Available Compression Codecs
+
+### General Purpose Codecs
+- **LZ4** (default) - Fast, balanced compression
+- **ZSTD** - Better compression, slightly slower
+- **Multiple codecs** - Can be combined (applied in order)
+
+### Specialized Codecs
+- **Delta** - For sequences with small differences
+- **DoubleDelta** - For sequences with small second differences
+- **Gorilla** - For IEEE 754 floating point numbers
+- **T64** - For timestamps (and numeric sequences)
+
+<div class="mt-6 bg-blue-50 p-4 rounded">
+<strong>Compression Strategy:</strong> ClickHouse automatically selects good defaults, but custom codecs can provide 2-4x better compression for specific data patterns.
 </div>
-</div>
 
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Installation Options
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Docker Deployment
-```bash
-# Start Grafana container
-docker run -d -p 3000:3000 --name grafana grafana/grafana
-
-# Start ClickHouse container
-docker run -d -p 8123:8123 -p 9000:9000 \
-  --name clickhouse-server \
-  --ulimit nofile=262144:262144 \
-  clickhouse/clickhouse-server
-```
-
-</div>
-<div>
-
-## Kubernetes Deployment
-```yaml
-# Using Helm Charts
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo add clickhouse https://ClickHouse.github.io/helm-charts
-
-helm install grafana grafana/grafana
-helm install clickhouse clickhouse/clickhouse
-```
-
-</div>
 </div>
 
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Configuration Basics
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Grafana Configuration
-- Default port: 3000
-- Default credentials: admin/admin
-- Config file: `/etc/grafana/grafana.ini`
-- Key settings:
-  - Database connection
-  - Authentication
-  - SMTP for alerts
-  - Plugin installation
-
-</div>
-<div>
-
-## ClickHouse Configuration
-- HTTP port: 8123
-- Native port: 9000
-- Config files:
-  - `/etc/clickhouse-server/config.xml`
-  - `/etc/clickhouse-server/users.xml`
-- Key settings:
-  - System tables exposure
-  - Metrics collection
-  - User permissions
-
-</div>
-</div>
-
+layout: default
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
-# Integration Architecture
+# Optimizing Compression for Chat Payment Data
 
-<div grid="~ cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4">
 <div>
 
-## Direct Connection
-- Grafana connects directly to ClickHouse
-- Uses ClickHouse HTTP interface
-- Simple to set up
-- Good for smaller installations
-- Limited metrics collection
-
-</div>
-<div>
-
-## Prometheus-based Setup
-- More comprehensive metrics
-- Historical metrics storage
-- Better scalability
-- More complex setup
-- Industry standard approach
-- Recommended for production
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 2. Creating ClickHouse Data Sources
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Adding ClickHouse Data Source
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Direct ClickHouse Connection
-1. Navigate to Configuration > Data Sources
-2. Click "Add data source"
-3. Search for "ClickHouse"
-4. Enter connection details:
-   - URL: `http://clickhouse-server:8123`
-   - Database name
-   - Username/password
-   - Default settings
-
-</div>
-<div>
-
-## Connection Settings
-- Default port: 8123
-- Connection timeout: 30s
-- SSL/TLS options for security
-- Verify connection with "Save & Test"
-- Key HTTP headers:
-  - X-ClickHouse-User
-  - X-ClickHouse-Key
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# ClickHouse Specific Settings
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Authorization Options
-- HTTP Basic Auth
-- Custom HTTP Headers
-- Credentials: 
-  - Default user/default
-  - Create dedicated monitoring user
-- Security best practice:
-  - Read-only monitoring user
-  - Access only to system tables
-
-</div>
-<div>
-
-## Query Settings
-- Max data points: 5000 (default)
-- Additional settings:
-  - max_execution_time
-  - max_result_rows
-  - max_result_bytes
-  - result_overflow_mode
-- Query timeout: 60s recommended
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Prometheus Data Source
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Adding Prometheus
-1. Navigate to Configuration > Data Sources
-2. Click "Add data source"
-3. Search for "Prometheus"
-4. Enter connection details:
-   - URL: `http://prometheus:9090`
-   - Default settings
-   - Scrape interval: 15s
-
-</div>
-<div>
-
-## ClickHouse Exporter Setup
-```bash
-# Run ClickHouse exporter
-docker run -d --name clickhouse-exporter \
-  -p 9116:9116 \
-  -e CLICKHOUSE_USER=default \
-  -e CLICKHOUSE_PASSWORD=default \
-  -e CLICKHOUSE_URL=http://clickhouse-server:8123 \
-  percona/clickhouse-exporter
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Multiple Data Sources Strategy
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Layered Approach
-1. **System layer**: Node Exporter + Prometheus
-   - CPU, memory, disk, network metrics
-   
-2. **Database layer**: ClickHouse direct connection
-   - Query performance
-   - Table metrics
-   - Real-time query inspection
-
-3. **Application layer**: Application metrics
-   - Client connections
-   - Query patterns
-   - Business metrics
-
-</div>
-<div>
-
-## Data Source Organization
-- Use folders to organize data sources
-- Consistent naming conventions
-- Document connection details
-- Version control dashboard definitions
-- Use variables to switch between environments
-- Test in non-production first
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 3. Building Monitoring Dashboards
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Dashboard Structure
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Key Components
-- Dashboard variables
-- Row organization
-- Panel types
-- Refresh intervals
-- Time range controls
-- Annotations
-- Links between dashboards
-
-</div>
-<div>
-
-## Recommended Organization
-- Overview dashboard
-- Query performance dashboard
-- Resource utilization dashboard
-- Table storage dashboard
-- Custom query dashboard
-- Alerts overview
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Essential Panels
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Time Series Panels
-- Query execution times
-- Query counts
-- Error rates
-- CPU/Memory utilization
-- Disk space utilization
-- Connection counts
-
-</div>
-<div>
-
-## Other Panel Types
-- Gauge: Current resource utilization
-- Stat: Key performance indicators
-- Table: Active queries, slow queries
-- Logs: Error logs, query logs
-- Heatmap: Query duration distribution
-- Bar gauge: Multi-metric comparison
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Creating an Overview Dashboard
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Top Row: Status at a Glance
-- Server uptime
-- Current connections
-- Active queries
-- Memory usage gauge
-- Disk usage gauge
-- CPU load gauge
-
-</div>
-<div>
-
-## Middle & Bottom Rows
-- Query rate (time series)
-- Error rate (time series)
-- Top 5 longest running queries (table)
-- Largest tables (bar chart)
-- Recent errors (logs panel)
-- System load trends (time series)
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Dashboard Variables
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Common Variables
-- Server selection
-- Time range presets
-- Database selection
-- Table selection
-- User selection
-- Query type filter
-
-</div>
-<div>
-
-## Implementation Example
-```sql
--- Query for database variable
-SELECT name 
-FROM system.databases 
-WHERE name NOT IN ('system', 'information_schema')
-
--- Query for table variable
-SELECT name 
-FROM system.tables 
-WHERE database = '$database'
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Dashboard Examples
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Query Performance Dashboard
-
-
-- Query execution time
-- Query count by type
-- Slow queries table
-- Query error rate
-- Query memory usage
-- Query distribution by user
-
-</div>
-<div>
-
-## System Resources Dashboard
-
-- CPU usage by core
-- Memory allocation
-- Disk IOPS
-- Network traffic
-- Background merges
-- Cache utilization
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 4. Key Metrics to Monitor
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Query Performance Metrics
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Essential Metrics
-- Query execution time
-- Queries per second
-- Slow query count
-- Query memory usage
-- Query CPU usage
-- Query errors/exceptions
-- Cache hit ratio
-- Background merges impact
-
-</div>
-<div>
-
-## ClickHouse Query Examples
-```sql
--- Slow queries
-SELECT query_id, query, 
-       formatReadableTimeDelta(query_duration_ms/1000) as duration,
-       read_rows, formatReadableSize(read_bytes) as read
-FROM system.query_log
-WHERE type = 'QueryFinish' 
-  AND query_duration_ms > 1000
-ORDER BY query_duration_ms DESC
-LIMIT 10
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# System Resource Metrics
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## CPU Metrics
-- CPU usage per core
-- System/user CPU time
-- CPU load average
-- Context switches
-- CPU iowait time
-- Process CPU consumption
-- Thread count
-
-</div>
-<div>
-
-## Memory Metrics
-- Memory usage
-- Available memory
-- Memory fragmentation
-- Buffer pool utilization
-- Swap usage
-- ClickHouse memory tracking
-- Memory usage by query
-- Memory usage by table
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# System Resource Metrics (cont.)
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Disk Metrics
-- Disk space used/available
-- Disk IOPS
-- Disk latency
-- Read/write throughput
-- Disk queue length
-- File descriptors usage
-- Temporary file usage
-- WAL/log file size
-
-</div>
-<div>
-
-## Network Metrics
-- Network bytes in/out
-- Network packets in/out
-- TCP connection states
-- Network errors
-- Retransmitted packets
-- Network saturation
-- Connection count
-- Connection errors
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Table Size and Growth Metrics
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Table Metrics
-- Total table size
-- Row count
-- Part count
-- Column sizes
-- Compression ratio
-- Growth rate
-- Merge activity
-- Insert rate
-
-</div>
-<div>
-
-## ClickHouse Query Examples
-```sql
--- Table sizes and row counts
-SELECT database, table,
-       formatReadableSize(sum(bytes)) as size,
-       sum(rows) as rows,
-       max(modification_time) as latest_modification
+## Column-Specific Compression
+```sql{all|1-11|13-24|all}
+-- Create table with column-specific compression
+CREATE TABLE attachments_compressed
+(
+    attachment_id UUID CODEC(ZSTD(1)),
+    message_id UUID CODEC(ZSTD(1)),
+    payment_amount Decimal(18, 2) CODEC(Delta, ZSTD(1)),
+    payment_currency LowCardinality(String) CODEC(ZSTD(1)),
+    invoice_date Date CODEC(Delta, ZSTD(1)),
+    payment_status Enum8('pending' = 1, 'paid' = 2, 'canceled' = 3) CODEC(ZSTD(1)),
+    file_path String CODEC(ZSTD(3)),
+    file_size UInt32 CODEC(Delta, ZSTD(1)),
+    uploaded_at DateTime CODEC(Delta, ZSTD(1)),
+    sign Int8 CODEC(Delta, ZSTD(1))
+) ENGINE = MergeTree()
+PARTITION BY toYYYYMM(uploaded_at)
+ORDER BY (message_id, uploaded_at);
+
+-- Fill with existing data
+INSERT INTO attachments_compressed
+SELECT * FROM attachments;
+
+
+SELECT 
+    table,
+    formatReadableSize(sum(bytes)) as size,
+    sum(rows) as rows,
+    min(min_date) as min_date,
+    max(max_date) as max_date,
+    sum(bytes) as bytes_size,
+    sum(data_compressed_bytes) as compressed_size,
+    sum(data_uncompressed_bytes) as uncompressed_size,
+    round(sum(data_compressed_bytes) / sum(data_uncompressed_bytes), 3) as compression_ratio
 FROM system.parts
-WHERE active
-GROUP BY database, table
-ORDER BY sum(bytes) DESC
-LIMIT 10
+WHERE active AND database = 'chat_payments' AND table in ('attachments', 'attachments_compressed')
+GROUP BY table
+ORDER BY bytes_size DESC;
+
+```
+
+</div>
+<div>
+
+## Configure Global Compression
+```sql{all|2-4|6-9|all}
+-- Set default compression at server level
+SET default_compression_codec = 'ZSTD';
+
+-- Or in the config file
+/etc/clickhouse-server/config.d/compression.xml
+<clickhouse>
+    <compression>
+        <method>zstd</method>
+        <level>3</level>
+    </compression>
+</clickhouse>
 ```
 
 </div>
 </div>
 
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Dashboard for Part-Level Analysis
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Important Part Metrics
-- Part count by table
-- Part size distribution
-- Active vs. inactive parts
-- Part age distribution
-- Largest parts
-- Recently modified parts
-- Compression ratio by part
-- Merge activity
-
-</div>
-<div>
-
-## ClickHouse Query Example
-```sql
--- Part count and size by partition
-SELECT table, partition, 
-       count() as parts,
-       formatReadableSize(sum(bytes)) as size
-FROM system.parts
-WHERE active AND database = '$database'
-GROUP BY table, partition
-ORDER BY sum(bytes) DESC
-LIMIT 20
-```
-
-</div>
+<div class="mt-4 bg-yellow-50 p-4 rounded">
+<strong>Chat App Strategy:</strong> For invoice and payment data: use Delta+ZSTD for dates/timestamps, ZSTD(3) for text fields like file paths, and LZ4 (default) for frequently queried fields to balance compression and query speed.
 </div>
 
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
+layout: default
+---
 
-# Database Specific Metrics
+# Real-World Compression Results: Chat Payment App
 
-<div grid="~ cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4">
 <div>
 
-## ClickHouse Internal Metrics
-- MergeTree table metrics
-- ReplicatedMergeTree metrics
-- Dictionary metrics
-- Background pool tasks
-- Background pool size
-- Mark cache metrics
-- Uncompressed cache metrics
-- Query cache metrics
+## Compression by Column Type
+<table class="border-collapse table-auto w-full">
+<thead>
+  <tr class="bg-gray-100">
+    <th class="border p-2">Column Type</th>
+    <th class="border p-2">Best Codec</th>
+    <th class="border p-2">Ratio</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="border p-2">User IDs</td>
+    <td class="border p-2">Delta, LZ4</td>
+    <td class="border p-2">8:1</td>
+  </tr>
+  <tr>
+    <td class="border p-2">Chat IDs</td>
+    <td class="border p-2">Delta, LZ4</td>
+    <td class="border p-2">6:1</td>
+  </tr>
+  <tr>
+    <td class="border p-2">Timestamps</td>
+    <td class="border p-2">Delta, ZSTD</td>
+    <td class="border p-2">20:1</td>
+  </tr>
+  <tr>
+    <td class="border p-2">Message Content</td>
+    <td class="border p-2">ZSTD(3)</td>
+    <td class="border p-2">4:1</td>
+  </tr>
+  <tr>
+    <td class="border p-2">Payment Amounts</td>
+    <td class="border p-2">Gorilla, ZSTD</td>
+    <td class="border p-2">10:1</td>
+  </tr>
+  <tr>
+    <td class="border p-2">File Paths</td>
+    <td class="border p-2">ZSTD(5)</td>
+    <td class="border p-2">7:1</td>
+  </tr>
+</tbody>
+</table>
 
 </div>
-<div>
+<div style="height:400px;overflow-y:auto;">
 
-## Performance Tracking
-- Query processing stages
-- Memory tracking by component
-- Data type efficiency
-- Function execution times
-- Mutation progress
-- Replication lag
-- Distributed query performance
-- Zookeeper operations
+## Overall Compression Benefits
+
+<div class="mt-4" >
+<strong>Storage Reduction:</strong>
+- Messages table: 6.8x smaller
+- Payment attachments: 8.2x smaller
+- Total storage savings: ~85%
+</div>
+
+<div class="mt-6">
+<strong>Performance Impact:</strong>
+- SELECT queries: 5-15% faster (less I/O)
+- INSERT operations: 2-5% slower (compression overhead)
+- Overall system throughput: 10% higher
+</div>
+
+<div class="mt-6">
+<strong>Cost Implications:</strong>
+- Reduced storage costs
+- Less network bandwidth for replication
+- Fewer server resources needed
+- Improved backup/restore speed
+</div>
+
+<div class="mt-6 bg-green-50 p-4 rounded">
+<strong>ROI:</strong> For our chat payment app with 500 million messages and 50 million payment attachments, optimized compression saved approximately 12TB of storage.
+</div>
 
 </div>
 </div>
@@ -7075,1850 +5426,70 @@ LIMIT 20
 ---
 layout: section
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
-# 5. Alerting Configuration
+# 5. Backup and Restore
 
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Grafana Alerting Overview
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Key Concepts
-- Alert rules
-- Alert instances
-- Contact points
-- Notification policies
-- Silences
-- Alert groups
-- State history
-
-</div>
-<div>
-
-## Alert States
-- Normal: No issue detected
-- Pending: Issue detected, within tolerance
-- Alerting: Issue requires attention
-- No data: Missing metrics
-- Error: Alert evaluation problem
-
-</div>
-</div>
-
+layout: two-cols
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
-# Creating Alert Rules
+# ClickHouse Backup Approaches
 
-<div grid="~ cols-2 gap-4">
-<div>
+```sql{all|1-5|7-12|14-19|all}
+-- 1. Using clickhouse-backup tool (external)
+-- Install from https://github.com/AlexAkulov/clickhouse-backup
 
-## Alert Rule Creation Steps
-1. Navigate to Alerting > Alert rules
-2. Click "New alert rule"
-3. Define query & conditions
-4. Set evaluation interval
-5. Configure notifications
-6. Add labels and annotations
+-- Configuration in /etc/clickhouse-backup/config.yml
+-- Supports local and cloud storage (S3, GCS, etc.)
 
-</div>
-<div>
+-- 2. Filesystem-level backup
+-- Stop ClickHouse service
+$ systemctl stop clickhouse-server
 
-## Example Alert Rule
-- Name: "High Query Error Rate"
-- Query A: Error count from query_log
-- Query B: Total query count
-- Condition: A/B > 0.05 (5%)
-- Evaluation: Every 1m
-- For: 5m (pending duration)
-- Labels: severity=warning, component=queries
+-- Copy data directory
+$ cp -r /var/lib/clickhouse /backup/clickhouse-data
 
-</div>
-</div>
+-- 3. Using BACKUP command (21.8+)
+BACKUP DATABASE chat_payments 
+TO Disk('backups', 'chat_payments_backup')
+SETTINGS compression_level = 4;
 
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
+BACKUP TABLE chat_payments.attachments TO Disk('backups', 'attachements.zip')
 
-# Essential ClickHouse Alerts
+select count(*) from chat_payments.attachments
+truncate table chat_payments.attachments 
 
-<div grid="~ cols-2 gap-4">
-<div>
-
-## System Resource Alerts
-- High CPU usage (>80% for 5m)
-- Low available memory (<10% for 5m)
-- High disk usage (>85% usage)
-- High iowait (>20% for 5m)
-- Unusual network traffic
-- File descriptor usage (>85%)
-
-</div>
-<div>
-
-## Database Performance Alerts
-- Slow query rate increase (>10%)
-- Query error rate increase (>5%)
-- High number of running queries
-- Replication lag (>30s)
-- Failed parts
-- Table size abnormal growth
-- Insertion rate drop
-- Background pool task queue
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Alert Notification Channels
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Integration Options
-- Email
-- Slack
-- Microsoft Teams
-- PagerDuty
-- OpsGenie
-- VictorOps
-- Webhook (custom integrations)
-- Telegram
-- Discord
-
-</div>
-<div>
-
-## Configuration Example: Slack
-```yaml
-# Slack notification setup
-name: ClickHouse Alerts
-type: slack
-settings:
-  url: https://hooks.slack.com/services/XXX/YYY/ZZZ
-  username: Grafana Alert
-  icon_emoji: :rotating_light:
-  mentionChannel: here
-  mentionUsers: U012A3CDE
-  token: xoxb-...
+RESTORE TABLE chat_payments.attachments FROM Disk('backups', 'attachements.zip')
 ```
 
-</div>
+::right::
+
+<div class="ml-4">
+
+# Backup Strategies
+
+### Full Backup
+- Complete copy of all data
+- Easiest to restore
+- Most storage intensive
+- Slowest to create
+
+### Incremental Backup
+- Only changes since last backup
+- Faster creation
+- More complex restore process
+- Requires tracking changes
+
+### Backup Targets
+- Local disk
+- Network storage (NFS, SMB)
+- Object storage (S3, GCS)
+- Cloud backups (managed services)
+
 </div>
 
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Alert Grouping & Routing
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Notification Policy
-- Group alerts by: server, component
-- Default contact point
-- Timing options:
-  - Group wait: 30s
-  - Group interval: 5m
-  - Repeat interval: 4h
-- Nested policies by severity
-
-</div>
-<div>
-
-## Advanced Routing Example
-```yaml
-# Notification policy structure
-routes:
-- receiver: devops-team
-  matchers:
-    - severity=critical
-  continue: true
-- receiver: db-admin
-  matchers:
-    - component=~"database|replication"
-  continue: false
-- receiver: default-notifications
-  continue: false
-```
-
-</div>
-</div>
-
+layout:end
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
-# Alert Visualization & Management
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Alert Dashboard
-- Current alerts status
-- Alert history
-- Alert frequency
-- Mean time to recovery
-- Alert grouping by component
-- Alert annotation visualization
-
-</div>
-<div>
-
-## Silencing & Maintenance
-- Creating silence periods
-- Maintenance windows
-- Silence by label matcher
-- Silence comments
-- Silence expiration
-- Silence by alert rule
-- Template silences for maintenance
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Real-World Alert Examples
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Query Performance Alert
-```sql
--- Alert when >10 queries take >30 seconds
-SELECT count() as slow_queries
-FROM system.query_log
-WHERE event_time > now() - 300
-  AND query_duration_ms > 30000
-  AND type = 'QueryFinish'
-HAVING slow_queries >= 10
-```
-
-</div>
-<div>
-
-## Disk Space Alert
-```sql
--- Alert when free disk space <15%
-SELECT
-  hostname,
-  path,
-  free / (free + used) * 100 as free_percent
-FROM system.disks
-WHERE free / (free + used) * 100 < 15
-```
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 6. Case Study & Best Practices
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Case Study: E-commerce Analytics Platform
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Environment
-- 5-node ClickHouse cluster
-- 100+ TB of data
-- 3000+ queries per minute
-- 200+ tables
-- Critical dashboards for business users
-
-</div>
-<div>
-
-## Monitoring Challenges
-- Complex query patterns
-- Daily data spikes during batch loads
-- Seasonal traffic variations
-- Query performance degradation
-- Storage growth management
-- High availability requirements
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Case Study: Solution Architecture
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Tiered Dashboards
-1. **Executive Overview**
-   - System health summary
-   - Business KPIs
-
-2. **Operational Dashboards**
-   - Query performance
-   - Resource utilization
-   - Table sizes
-   - Error rates
-
-3. **Technical Dashboards**
-   - Detailed metrics for DBAs
-   - Query analysis
-   - Part-level monitoring
-   - Replication status
-
-</div>
-<div>
-
-## Alert Strategy
-- Critical alerts: Immediate notification
-- Warning alerts: Business hours only
-- Info alerts: Daily digest
-- Maintenance window suppression
-- Auto-remediation for common issues
-- Runbook links in alert notifications
-- Post-mortem automation
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Monitoring Best Practices
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Technical Recommendations
-- Keep metric retention appropriate
-- Use continuous queries for aggregation
-- Balance dashboard refresh rate
-- Apply proper variables for filtering
-- Version control dashboards
-- Regularly review and optimize alerts
-- Set up monitoring for the monitoring system
-
-</div>
-<div>
-
-## Organizational Recommendations
-- Define clear ownership of alerts
-- Document runbooks for common alerts
-- Regular alert review process
-- Training on dashboard creation
-- Rotation for alert response
-- Post-incident analysis
-- Continuous dashboard improvement
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Key Takeaways
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Monitoring Strategy
-- Comprehensive metrics collection
-- Multi-layered dashboards
-- Strategic alert configuration
-- Balance between detail and usability
-- Focus on actionable metrics
-- Clear visualization of trends
-
-</div>
-<div>
-
-## Next Steps
-- Start with essential dashboards
-- Gradually add complexity
-- Tune alerts to reduce noise
-- Document your monitoring setup
-- Review and improve regularly
-- Share knowledge across teams
-- Automate common responses
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-
-# Session 8: Real-world Use Cases
-## Building a High-Performance Chat Application with ClickHouse
-
-
-# 1. Schema Design for Message Storage
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Understanding Chat Application Requirements
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Key Requirements
-- High volume message ingestion (millions/day)
-- Real-time delivery (<100ms latency)
-- Efficient retrieval of conversation history
-- Full-text search capabilities
-- Message analytics and aggregations
-- Support for attachments and rich media
-- Long-term message storage and archiving
-
-</div>
-<div>
-
-## Data Characteristics
-- Messages typically small (avg <1KB)
-- Mostly immutable after creation
-- Hot/cold access patterns (recent vs. old)
-- Read-heavy for historical messages
-- Write-heavy for active conversations
-- Attachment metadata vs. content
-- Mixed query patterns (point vs. analytical)
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Schema Design: Core Messages Table
-
-```sql
-CREATE TABLE chat.messages
-(
-    `message_id` UUID,
-    `conversation_id` UUID,
-    `sender_id` UUID,
-    `message_text` String,
-    `sent_timestamp` DateTime64(3),
-    `delivered_timestamp` Nullable(DateTime64(3)),
-    `read_timestamp` Nullable(DateTime64(3)),
-    `message_type` Enum('TEXT', 'IMAGE', 'VIDEO', 'FILE', 'AUDIO', 'LOCATION', 'CONTACT', 'SYSTEM'),
-    `attachment_id` Nullable(UUID),
-    `attachment_type` Nullable(String),
-    `attachment_size` Nullable(UInt64),
-    `client_message_id` String,
-    `is_edited` UInt8 DEFAULT 0,
-    `is_deleted` UInt8 DEFAULT 0,
-    `edit_timestamp` Nullable(DateTime64(3)),
-    `reply_to_message_id` Nullable(UUID),
-    `mentions` Array(UUID),
-    `tags` Array(String),
-    `metadata` Map(String, String),
-    `ttl_timestamp` Nullable(DateTime)
-)
-ENGINE = MergeTree()
-PARTITION BY toYYYYMM(sent_timestamp)
-ORDER BY (conversation_id, sent_timestamp)
-TTL sent_timestamp + INTERVAL 3 YEAR
-SETTINGS index_granularity = 8192
-```
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Partitioning Strategy
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Time-Based Partitioning
-- Partition by month: `toYYYYMM(sent_timestamp)`
-- Benefits:
-  - Efficient pruning for time-range queries
-  - Simpler archiving of old messages
-  - Balanced partition sizes
-  - Reduced merge workload
-  - Better parallelization
-
-</div>
-<div>
-
-## Alternative Strategies
-- Partition by conversation category
-  ```sql
-  PARTITION BY (toYYYYMM(sent_timestamp), 
-               conversation_type)
-  ```
-
-- Partition by organization (multi-tenant)
-  ```sql
-  PARTITION BY (toYYYYMM(sent_timestamp), 
-               organization_id)
-  ```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Ordering Keys and Indices
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Primary Key Selection
-```sql
--- Primary approach
-ORDER BY (conversation_id, sent_timestamp)
-
--- Alternative for balanced load
-ORDER BY (conversation_id, sender_id, sent_timestamp)
-```
-
-## Benefits
-- Fast retrieval of conversation history
-- Efficient range queries within conversations
-- Good compression ratio
-- Natural time-based sorting
-
-</div>
-<div>
-
-## Secondary Indices
-```sql
--- Improve search by sender
-ALTER TABLE chat.messages
-ADD INDEX idx_sender sender_id TYPE minmax;
-
--- Improve search by message type
-ALTER TABLE chat.messages
-ADD INDEX idx_message_type message_type TYPE set(100);
-
--- Full-text search
-ALTER TABLE chat.messages
-ADD INDEX idx_message_text message_text TYPE tokenbf_v1(512, 3, 0);
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Supporting Tables
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Conversations Table
-```sql
-CREATE TABLE chat.conversations
-(
-    `conversation_id` UUID,
-    `conversation_name` String,
-    `conversation_type` Enum('DIRECT', 'GROUP', 'CHANNEL'),
-    `created_by` UUID,
-    `created_at` DateTime64(3),
-    `updated_at` DateTime64(3),
-    `is_active` UInt8 DEFAULT 1,
-    `metadata` Map(String, String),
-    `member_count` UInt32,
-    `organization_id` Nullable(UUID)
-)
-ENGINE = MergeTree()
-ORDER BY conversation_id
-```
-
-</div>
-<div>
-
-## Conversation Members Table
-```sql
-CREATE TABLE chat.conversation_members
-(
-    `conversation_id` UUID,
-    `user_id` UUID,
-    `joined_at` DateTime64(3),
-    `role` Enum('MEMBER', 'ADMIN', 'OWNER'),
-    `last_read_message_id` Nullable(UUID),
-    `last_read_timestamp` Nullable(DateTime64(3)),
-    `is_muted` UInt8 DEFAULT 0,
-    `notifications_enabled` UInt8 DEFAULT 1
-)
-ENGINE = MergeTree()
-ORDER BY (conversation_id, user_id)
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Attachment Handling
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Attachment Metadata Table
-```sql
-CREATE TABLE chat.attachments
-(
-    `attachment_id` UUID,
-    `message_id` UUID,
-    `conversation_id` UUID,
-    `sender_id` UUID,
-    `filename` String,
-    `file_type` String,
-    `mime_type` String,
-    `file_size` UInt64,
-    `created_at` DateTime64(3),
-    `storage_path` String,
-    `thumbnail_path` Nullable(String),
-    `is_image` UInt8,
-    `width` Nullable(UInt32),
-    `height` Nullable(UInt32),
-    `duration_seconds` Nullable(Float64),
-    `metadata` Map(String, String)
-)
-ENGINE = MergeTree()
-PARTITION BY toYYYYMM(created_at)
-ORDER BY (conversation_id, created_at)
-```
-
-</div>
-<div>
-
-## Storage Strategy
-- Store actual files in object storage (S3, GCS)
-- Keep metadata in ClickHouse
-- Options for thumbnail generation:
-  - On upload (eager)
-  - On first access (lazy)
-  - Scheduled background job
-- TTL policies matching message retention
-- Optional content extraction for search
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Materialized Views for Access Patterns
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## User Message Timeline
-```sql
-CREATE MATERIALIZED VIEW chat.user_message_timeline
-ENGINE = MergeTree()
-PARTITION BY toYYYYMM(sent_timestamp)
-ORDER BY (sender_id, sent_timestamp)
-POPULATE AS
-SELECT * FROM chat.messages
-```
-
-## Unread Messages Counter
-```sql
-CREATE MATERIALIZED VIEW chat.unread_counts
-ENGINE = AggregatingMergeTree()
-ORDER BY (user_id, conversation_id)
-POPULATE AS
-SELECT
-    user_id,
-    conversation_id,
-    countState() AS unread_count
-FROM chat.messages AS m
-LEFT JOIN chat.conversation_members AS cm
-  ON m.conversation_id = cm.conversation_id
-WHERE m.sent_timestamp > cm.last_read_timestamp
-GROUP BY user_id, conversation_id
-```
-
-</div>
-<div>
-
-## Message Search Index
-```sql
-CREATE MATERIALIZED VIEW chat.message_search_index
-ENGINE = MergeTree()
-ORDER BY (conversation_id, sent_timestamp)
-POPULATE AS
-SELECT
-    message_id,
-    conversation_id,
-    sender_id,
-    sent_timestamp,
-    message_text,
-    message_type,
-    lower(message_text) AS message_text_lower,
-    -- Extract terms for faster search
-    splitByChar(' ', replaceRegexpAll(
-       lower(message_text), 
-       '[^a-zA-Z0-9 ]', 
-       ' ')) AS terms
-FROM chat.messages
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Integration with Vector Search
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Message Embeddings Table
-```sql
-CREATE TABLE chat.message_embeddings
-(
-    `message_id` UUID,
-    `conversation_id` UUID,
-    `embedding` Array(Float32),
-    `sent_timestamp` DateTime64(3)
-)
-ENGINE = MergeTree()
-ORDER BY conversation_id
-SETTINGS index_granularity = 8192;
-```
-
-</div>
-<div>
-
-## Semantic Search Function
-```sql
--- Create distance function
-CREATE FUNCTION cosineDistance AS (a, b) -> 
-1 - sum(a[i] * b[i] for i in range(length(a))) / 
-(sqrt(sum(a[i] * a[i] for i in range(length(a)))) * 
- sqrt(sum(b[i] * b[i] for i in range(length(b)))));
-
--- Query example
-SELECT m.*
-FROM chat.messages AS m
-JOIN chat.message_embeddings AS e
-  ON m.message_id = e.message_id
-WHERE e.conversation_id = '123e4567-...'
-ORDER BY cosineDistance(e.embedding, [0.1, 0.2, ...]) ASC
-LIMIT 10
-```
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 2. Handling Real-time Message Ingestion
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Message Flow Architecture
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## High-Level Architecture
-```mermaid
-graph TD
-    A[Client] --> B[API Gateway]
-    B --> C[Message Service]
-    C --> D[Message Queue]
-    C --> E[Real-time Delivery]
-    D --> F[ClickHouse Consumer]
-    F --> G[ClickHouse]
-    E --> H[WebSocket/Push]
-    H --> I[Recipients]
-```
-
-</div>
-<div>
-
-## Key Components
-- **Message Service**: Validates, enriches messages
-- **Message Queue**: Kafka/RabbitMQ for durability
-- **ClickHouse Consumer**: Batch inserts
-- **Real-time Delivery**: WebSockets/Push notifications
-- **Acknowledgment Flow**: Delivery confirmations
-- **Idempotency**: Handle duplicate messages
-- **Ordering**: Sequence numbers for correct display
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# ClickHouse Ingestion Patterns
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Asynchronous Batch Ingestion
-- Queue-based approach
-- Configurable batch sizes (500-5000 messages)
-- Batch insert every 100-1000ms
-- Trade-off between latency and throughput
-- Benefits:
-  - Higher throughput
-  - Better compression
-  - Reduced system load
-  - More efficient INSERTs
-
-</div>
-<div>
-
-## Implementation with Kafka
-```python
-# Pseudo-code for Kafka consumer
-def process_message_batch(messages):
-    # Group by table
-    message_inserts = []
-    attachment_inserts = []
-    
-    for msg in messages:
-        message_inserts.append(format_for_insert(msg))
-        if has_attachment(msg):
-            attachment_inserts.append(
-                format_attachment(msg))
-    
-    # Batch insert to ClickHouse
-    if message_inserts:
-        insert_batch(
-            'chat.messages', message_inserts)
-    if attachment_inserts:
-        insert_batch(
-            'chat.attachments', attachment_inserts)
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Optimization Techniques
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Insert Performance Optimization
-- Use async inserts with wait_for_async_insert=0
-- Buffer table for smoother writes
-- Optimize max_insert_block_size
-- Adjust background_pool_size for merges
-- Use lower compression level for recent data
-- Consider uncompressed_cache size increase
-- Parallel inserts across shards
-
-</div>
-<div>
-
-## Buffer Table Configuration
-```sql
-CREATE TABLE chat.messages_buffer AS chat.messages
-ENGINE = Buffer(chat, messages, 16, 10, 100, 10000, 1000000, 10000000, 100000000)
-```
-
-## Async Insert Settings
-```sql
--- Client settings
-SET async_insert = 1;
-SET wait_for_async_insert = 0;
-SET async_insert_timeout = 5;
-
--- Server settings
-SET max_threads = 16;
-SET background_pool_size = 16;
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Guaranteeing Message Order and Consistency
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Ordering Strategies
-- Client-side timestamps with ms precision
-- Client-generated UUIDs for messages
-- Sequence numbers within conversations
-- Order by ingestion time as fallback
-- Conflict resolution policies:
-  - Last-writer-wins
-  - Vector clocks
-  - Preserving edit history
-
-</div>
-<div>
-
-## Consistency Checks
-```sql
--- Detect gaps in message sequence
-SELECT
-    conversation_id,
-    toUInt64(max(sequence_number)) - 
-    toUInt64(min(sequence_number)) - 
-    count() + 1 AS gaps
-FROM chat.messages
-GROUP BY conversation_id
-HAVING gaps > 0
-
--- Message delivery confirmation
-INSERT INTO chat.message_status
-(message_id, user_id, status, timestamp)
-VALUES
-('{message_id}', '{user_id}', 'DELIVERED', now())
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Handling Message Updates
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Edit/Delete Approaches
-1. **Immutable with flags**:
-   - Set is_deleted=1 or is_edited=1
-   - Add edit history table
-
-2. **ReplacingMergeTree**:
-   - Update in place eventually
-   - Latest version during queries
-   
-3. **Versioned Messages**:
-   - Keep all versions with ver field
-   - Filter by latest version in queries
-
-</div>
-<div>
-
-## Implementation Example
-```sql
--- Option 1: Update with mutation (slow)
-ALTER TABLE chat.messages
-UPDATE is_deleted = 1, edit_timestamp = now()
-WHERE message_id = 'abc-123'
-
--- Option 2: Edit history table
-CREATE TABLE chat.message_edits
-(
-    message_id UUID,
-    edit_timestamp DateTime64(3),
-    previous_text String,
-    editor_id UUID,
-    edit_reason Nullable(String)
-)
-ENGINE = MergeTree()
-ORDER BY (message_id, edit_timestamp)
-```
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 3. Efficient Message Retrieval and Search
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Common Access Patterns
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Message Retrieval Patterns
-1. **Recent conversations list**
-   - Last message from each conversation
-   
-2. **Conversation history**
-   - Messages by conversation, paginated
-   
-3. **Context retrieval**
-   - Messages before/after specific point
-   
-4. **Unread messages**
-   - New messages since last read
-
-</div>
-<div>
-
-## Search Patterns
-1. **Full-text search**
-   - Across all user conversations
-   
-2. **Filtered search**
-   - By date, type, sender
-   
-3. **Semantic search**
-   - Finding similar messages
-   
-4. **Attachment search**
-   - By filename, type, content
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Conversation History Queries
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Basic Conversation Load
-```sql
--- Get recent messages (pagination)
-SELECT *
-FROM chat.messages
-WHERE conversation_id = '{conversation_id}'
-  AND is_deleted = 0
-ORDER BY sent_timestamp DESC
-LIMIT 50 OFFSET 0
-```
-
-## Loading Around a Message
-```sql
--- Context retrieval (messages around target)
-WITH target AS (
-  SELECT sent_timestamp 
-  FROM chat.messages 
-  WHERE message_id = '{message_id}'
-)
-SELECT m.*
-FROM chat.messages m, target
-WHERE m.conversation_id = '{conversation_id}'
-  AND m.sent_timestamp BETWEEN 
-      target.sent_timestamp - INTERVAL 1 HOUR AND
-      target.sent_timestamp + INTERVAL 10 MINUTE
-ORDER BY m.sent_timestamp
-```
-
-</div>
-<div>
-
-## Conversation List with Last Message
-```sql
--- Get conversations with latest message
-SELECT
-    c.conversation_id,
-    c.conversation_name,
-    c.conversation_type,
-    c.member_count,
-    m.message_id AS last_message_id,
-    m.sender_id AS last_message_sender,
-    m.message_text AS last_message_text,
-    m.sent_timestamp AS last_message_time,
-    unread.unread_count
-FROM chat.conversations c
-LEFT JOIN (
-    -- Latest message per conversation
-    SELECT
-        conversation_id,
-        argMax(message_id, sent_timestamp) AS message_id,
-        max(sent_timestamp) AS max_time
-    FROM chat.messages
-    WHERE is_deleted = 0
-    GROUP BY conversation_id
-) latest ON c.conversation_id = latest.conversation_id
-LEFT JOIN chat.messages m 
-  ON latest.message_id = m.message_id
-LEFT JOIN (
-    -- Unread count for current user
-    SELECT 
-        conversation_id, 
-        countMerge(unread_count) AS unread_count
-    FROM chat.unread_counts
-    WHERE user_id = '{current_user_id}'
-    GROUP BY conversation_id
-) unread ON c.conversation_id = unread.conversation_id
-WHERE c.conversation_id IN (
-    -- Only conversations user is member of
-    SELECT conversation_id
-    FROM chat.conversation_members
-    WHERE user_id = '{current_user_id}'
-)
-ORDER BY latest.max_time DESC
-LIMIT 20
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Search Implementation
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Basic Text Search
-```sql
--- Simple text search
-SELECT *
-FROM chat.messages
-WHERE conversation_id IN (
-    SELECT conversation_id 
-    FROM chat.conversation_members
-    WHERE user_id = '{current_user_id}'
-)
-AND message_text ILIKE '%{search_term}%'
-ORDER BY sent_timestamp DESC
-LIMIT 50
-```
-
-## Optimized Text Search
-```sql
--- Using materialized view with terms
-SELECT m.*
-FROM chat.message_search_index i
-JOIN chat.messages m ON i.message_id = m.message_id
-WHERE i.conversation_id IN (
-    SELECT conversation_id 
-    FROM chat.conversation_members
-    WHERE user_id = '{current_user_id}'
-)
-AND hasAny(i.terms, ['term1', 'term2', 'term3'])
-ORDER BY i.sent_timestamp DESC
-LIMIT 50
-```
-
-</div>
-<div>
-
-## Advanced Filtered Search
-```sql
--- Complex search with multiple filters
-SELECT
-    m.*,
-    u.display_name AS sender_name,
-    u.avatar_url AS sender_avatar
-FROM chat.messages m
-JOIN chat.users u ON m.sender_id = u.user_id
-WHERE m.conversation_id IN (
-    SELECT conversation_id 
-    FROM chat.conversation_members
-    WHERE user_id = '{current_user_id}'
-)
-AND m.sent_timestamp BETWEEN 
-    parseDateTimeBestEffort('{start_date}') AND 
-    parseDateTimeBestEffort('{end_date}')
-AND m.is_deleted = 0
-AND (
-    m.message_text ILIKE '%{search_term}%'
-    OR m.message_id IN (
-        SELECT message_id
-        FROM chat.attachments
-        WHERE file_type IN ('image', 'document')
-        AND filename ILIKE '%{search_term}%'
-    )
-)
-AND if('{sender_id}' != '', m.sender_id = '{sender_id}', 1)
-AND if('{message_type}' != '', 
-       m.message_type = '{message_type}', 1)
-ORDER BY m.sent_timestamp DESC
-LIMIT 50 OFFSET {offset}
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Performance Optimization Techniques
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Query Optimization
-- Use covering indices where possible
-- Prewhere for column filtering
-- Join order optimization
-- Limit transferred columns
-- Avoid expensive functions in WHERE
-- Push filters to lowest level
-- Only request needed columns
-- Use materialized views for common patterns
-
-</div>
-<div>
-
-## System Optimization
-- Adjust max_threads for query parallelism
-- Use query cache for repeated queries
-- Set appropriate memory limits
-- Query routing to specific replicas
-- Consider distributed processing
-- Monitor and tune cache settings:
-  - mark_cache_size
-  - uncompressed_cache_size
-
-```sql
--- Client settings
-SET max_threads = 8;
-SET max_memory_usage = 10000000000;
-SET use_uncompressed_cache = 1;
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Caching Strategies
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Multi-level Caching
-1. **Application cache**
-   - Redis for conversation lists
-   - Recent message history
-   - User profiles and settings
-   
-2. **Database caching**
-   - ClickHouse query cache
-   - Materialized views as cache
-   - Uncompressed cache for hot data
-   
-3. **Client caching**
-   - Local storage for conversation history
-   - Memory cache for active conversations
-   - Versioned resources with ETags
-
-</div>
-<div>
-
-## Implementation Example
-```python
-# Pseudo-code for caching layer
-def get_conversation_messages(conv_id, limit, offset):
-    cache_key = f"conv:{conv_id}:msgs:{offset}:{limit}"
-    
-    # Try cache first
-    cached = redis.get(cache_key)
-    if cached:
-        return json.loads(cached)
-    
-    # If not cached, query ClickHouse
-    messages = clickhouse.query("""
-        SELECT * FROM chat.messages
-        WHERE conversation_id = {conv_id}
-        ORDER BY sent_timestamp DESC
-        LIMIT {limit} OFFSET {offset}
-    """)
-    
-    # Cache for 60 seconds (short TTL for messages)
-    redis.setex(cache_key, 60, json.dumps(messages))
-    
-    return messages
-```
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 4. User Analytics Queries
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Message Volume Analytics
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Message Volume by Time
-```sql
--- Messages per hour
-SELECT
-    toStartOfHour(sent_timestamp) AS hour,
-    count() AS message_count
-FROM chat.messages
-WHERE sent_timestamp >= now() - INTERVAL 7 DAY
-GROUP BY hour
-ORDER BY hour
-```
-
-## Message Volume by User
-```sql
--- Top message senders
-SELECT
-    sender_id,
-    count() AS message_count,
-    min(sent_timestamp) AS first_message,
-    max(sent_timestamp) AS last_message
-FROM chat.messages
-WHERE conversation_id = '{conversation_id}'
-GROUP BY sender_id
-ORDER BY message_count DESC
-LIMIT 10
-```
-
-</div>
-<div>
-
-## Message Volume by Type
-```sql
--- Message distribution by type
-SELECT
-    message_type,
-    count() AS message_count,
-    round(count() * 100.0 / sum(count()) OVER (), 2) AS percentage
-FROM chat.messages
-WHERE conversation_id = '{conversation_id}'
-  AND sent_timestamp >= now() - INTERVAL 30 DAY
-GROUP BY message_type
-ORDER BY message_count DESC
-```
-
-## Attachment Volume
-```sql
--- Attachment storage by type
-SELECT
-    file_type,
-    count() AS file_count,
-    formatReadableSize(sum(file_size)) AS total_size,
-    round(avg(file_size)) AS avg_size
-FROM chat.attachments
-WHERE created_at >= now() - INTERVAL 30 DAY
-GROUP BY file_type
-ORDER BY sum(file_size) DESC
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# User Engagement Analytics
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Response Time Analysis
-```sql
--- Average response times
-WITH responses AS (
-    SELECT
-        conversation_id,
-        sender_id,
-        sent_timestamp,
-        lagInFrame(sender_id) 
-          OVER (PARTITION BY conversation_id 
-                ORDER BY sent_timestamp) AS prev_sender,
-        lagInFrame(sent_timestamp) 
-          OVER (PARTITION BY conversation_id 
-                ORDER BY sent_timestamp) AS prev_timestamp
-    FROM chat.messages
-    WHERE sent_timestamp >= now() - INTERVAL 7 DAY
-)
-SELECT
-    sender_id,
-    count() AS response_count,
-    avg(sent_timestamp - prev_timestamp) AS avg_response_time_seconds
-FROM responses
-WHERE sender_id != prev_sender
-  AND (sent_timestamp - prev_timestamp) < 3600  -- within 1 hour
-GROUP BY sender_id
-ORDER BY avg_response_time_seconds ASC
-```
-
-</div>
-<div>
-
-## User Activity Patterns
-```sql
--- Activity heat map (hour of day)
-SELECT
-    sender_id,
-    toHour(sent_timestamp) AS hour_of_day,
-    count() AS message_count
-FROM chat.messages
-WHERE sent_timestamp >= now() - INTERVAL 30 DAY
-GROUP BY sender_id, hour_of_day
-ORDER BY sender_id, hour_of_day
-
--- Active hours calculation
-SELECT
-    sender_id,
-    uniq(toStartOfHour(sent_timestamp)) AS active_hours,
-    count() AS message_count,
-    round(count() / uniq(toStartOfHour(sent_timestamp)), 1) 
-      AS messages_per_active_hour
-FROM chat.messages
-WHERE sent_timestamp >= now() - INTERVAL 30 DAY
-GROUP BY sender_id
-HAVING message_count > 100
-ORDER BY messages_per_active_hour DESC
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Conversation Analytics
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Conversation Activity
-```sql
--- Most active conversations
-SELECT
-    conversation_id,
-    count() AS message_count,
-    uniq(sender_id) AS unique_senders,
-    min(sent_timestamp) AS first_message,
-    max(sent_timestamp) AS last_message
-FROM chat.messages
-WHERE sent_timestamp >= now() - INTERVAL 30 DAY
-GROUP BY conversation_id
-ORDER BY message_count DESC
-LIMIT 20
-```
-
-## Conversation Growth
-```sql
--- Message volume growth by week
-SELECT
-    conversation_id,
-    toStartOfWeek(sent_timestamp) AS week,
-    count() AS message_count,
-    uniq(sender_id) AS active_users
-FROM chat.messages
-WHERE sent_timestamp >= now() - INTERVAL 90 DAY
-GROUP BY conversation_id, week
-ORDER BY conversation_id, week
-```
-
-</div>
-<div>
-
-## Word Usage Analysis
-```sql
--- Most common words in messages
-WITH words AS (
-    SELECT
-        conversation_id,
-        sent_timestamp,
-        arrayJoin(splitByChar(' ', 
-            replaceRegexpAll(
-                lower(message_text), 
-                '[^a-zA-Z0-9 ]', ' '
-            ))) AS word
-    FROM chat.messages
-    WHERE sent_timestamp >= now() - INTERVAL 30 DAY
-      AND length(message_text) > 0
-)
-SELECT
-    word,
-    count() AS frequency
-FROM words
-WHERE length(word) > 2
-GROUP BY word
-ORDER BY frequency DESC
-LIMIT 100
-```
-
-## Sentiment Analysis Example
-```sql
--- Assuming sentiment score column exists
-SELECT
-    conversation_id,
-    toStartOfDay(sent_timestamp) AS day,
-    avg(sentiment_score) AS avg_sentiment,
-    count() AS message_count
-FROM chat.message_sentiment
-WHERE sent_timestamp >= now() - INTERVAL 30 DAY
-GROUP BY conversation_id, day
-ORDER BY conversation_id, day
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Retention and Engagement Metrics
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Daily/Weekly Active Users
-```sql
--- Daily active users
-SELECT
-    toDate(sent_timestamp) AS day,
-    uniq(sender_id) AS daily_active_users,
-    count() AS total_messages,
-    round(count() / uniq(sender_id), 1) AS messages_per_user
-FROM chat.messages
-WHERE sent_timestamp >= now() - INTERVAL 30 DAY
-GROUP BY day
-ORDER BY day
-
--- Weekly active users
-SELECT
-    toStartOfWeek(sent_timestamp) AS week,
-    uniq(sender_id) AS weekly_active_users
-FROM chat.messages
-WHERE sent_timestamp >= now() - INTERVAL 90 DAY
-GROUP BY week
-ORDER BY week
-```
-
-</div>
-<div>
-
-## Cohort Retention Analysis
-```sql
--- Cohort retention by week
-WITH first_activity AS (
-    -- First week of activity for each user
-    SELECT
-        sender_id,
-        toStartOfWeek(min(sent_timestamp)) AS first_week
-    FROM chat.messages
-    GROUP BY sender_id
-),
-weekly_activity AS (
-    -- Activity weeks for each user
-    SELECT
-        sender_id,
-        toStartOfWeek(sent_timestamp) AS activity_week
-    FROM chat.messages
-    GROUP BY sender_id, activity_week
-)
-SELECT
-    first_week,
-    count(DISTINCT fa.sender_id) AS cohort_size,
-    groupArray(
-        (dateDiff('week', first_week, wa.activity_week),
-         count(DISTINCT wa.sender_id) / 
-         count(DISTINCT fa.sender_id))
-    ) AS retention_by_week
-FROM first_activity fa
-LEFT JOIN weekly_activity wa ON fa.sender_id = wa.sender_id
-WHERE first_week >= now() - INTERVAL 90 DAY
-GROUP BY first_week
-ORDER BY first_week
-```
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Performance Monitoring Analytics
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Message Delivery Analysis
-```sql
--- Delivery time analysis
-SELECT
-    toStartOfMinute(sent_timestamp) AS minute,
-    avg(delivered_timestamp - sent_timestamp) AS avg_delivery_time_ms,
-    count() AS message_count
-FROM chat.messages
-WHERE sent_timestamp >= now() - INTERVAL 24 HOUR
-  AND delivered_timestamp IS NOT NULL
-GROUP BY minute
-ORDER BY minute
-```
-
-## Read Receipt Analysis
-```sql
--- Time to read messages
-SELECT
-    toStartOfHour(sent_timestamp) AS hour,
-    avg(read_timestamp - delivered_timestamp) AS avg_time_to_read_sec,
-    median(read_timestamp - delivered_timestamp) AS median_time_to_read_sec,
-    count() AS message
-```
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# 6. Case Study & Best Practices
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Case Study: E-commerce Analytics Platform
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Environment
-- 5-node ClickHouse cluster
-- 100+ TB of data
-- 3000+ queries per minute
-- 200+ tables
-- Critical dashboards for business users
-
-</div>
-<div>
-
-## Monitoring Challenges
-- Complex query patterns
-- Daily data spikes during batch loads
-- Seasonal traffic variations
-- Query performance degradation
-- Storage growth management
-- High availability requirements
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Case Study: Solution Architecture
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Tiered Dashboards
-1. **Executive Overview**
-   - System health summary
-   - Business KPIs
-
-2. **Operational Dashboards**
-   - Query performance
-   - Resource utilization
-   - Table sizes
-   - Error rates
-
-3. **Technical Dashboards**
-   - Detailed metrics for DBAs
-   - Query analysis
-   - Part-level monitoring
-   - Replication status
-
-</div>
-<div>
-
-## Alert Strategy
-- Critical alerts: Immediate notification
-- Warning alerts: Business hours only
-- Info alerts: Daily digest
-- Maintenance window suppression
-- Auto-remediation for common issues
-- Runbook links in alert notifications
-- Post-mortem automation
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Monitoring Best Practices
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Technical Recommendations
-- Keep metric retention appropriate
-- Use continuous queries for aggregation
-- Balance dashboard refresh rate
-- Apply proper variables for filtering
-- Version control dashboards
-- Regularly review and optimize alerts
-- Set up monitoring for the monitoring system
-
-</div>
-<div>
-
-## Organizational Recommendations
-- Define clear ownership of alerts
-- Document runbooks for common alerts
-- Regular alert review process
-- Training on dashboard creation
-- Rotation for alert response
-- Post-incident analysis
-- Continuous dashboard improvement
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Key Takeaways
-
-<div grid="~ cols-2 gap-4">
-<div>
-
-## Monitoring Strategy
-- Comprehensive metrics collection
-- Multi-layered dashboards
-- Strategic alert configuration
-- Balance between detail and usability
-- Focus on actionable metrics
-- Clear visualization of trends
-
-</div>
-<div>
-
-## Next Steps
-- Start with essential dashboards
-- Gradually add complexity
-- Tune alerts to reduce noise
-- Document your monitoring setup
-- Review and improve regularly
-- Share knowledge across teams
-- Automate common responses
-
-</div>
-</div>
-
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
+# Thank you
