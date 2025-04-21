@@ -51,6 +51,4 @@
   - Query performance
   - System resources
   - Table sizes and growth
-- Alerting configuration
-
 

@@ -60,3 +60,4 @@ CREATE TABLE users (
 ) ENGINE = ReplacingMergeTree(created_at)
 Primary Key (user_id)
 ORDER BY user_id;
+

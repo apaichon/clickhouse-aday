@@ -5489,7 +5489,1204 @@ RESTORE TABLE chat_payments.attachments FROM Disk('backups', 'attachements.zip')
 </div>
 
 ---
-layout:end
+layout: section
 ---
 
-# Thank you
+# Session 6: ClickHouse Performance Optimization
+
+## Indexes, Query Optimization, Materialized Views & Projections
+
+---
+layout: default
+---
+
+# Session Overview
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## We'll cover:
+- Index types and usage
+- Query optimization techniques
+- Materialized views
+- Projections
+
+</div>
+<div>
+
+## Use Case: Chat App with Payments
+- Growing message volume
+- Complex payment analytics needs
+- High-cardinality user and chat data
+- Need for both real-time and historical analytics
+- Ensuring sub-second response times
+
+</div>
+</div>
+
+---
+layout: default
+---
+
+# Our Data Model
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Messages Table
+```sql
+CREATE TABLE chat_payments.messages (
+    message_id UUID,
+    chat_id UInt64,
+    user_id UInt32,
+    sent_timestamp DateTime,
+    message_type Enum8(
+        'text' = 1, 'image' = 2, 
+        'invoice' = 3, 'receipt' = 4
+    ),
+    content String,
+    has_attachment UInt8,
+    sign Int8,
+    INDEX message_type_idx message_type TYPE bloom_filter GRANULARITY 1
+) ENGINE = CollapsingMergeTree(sign)
+Primary Key (message_id)
+PARTITION BY toYYYYMM(sent_timestamp)
+ORDER BY (message_id, chat_id, sent_timestamp);
+```
+
+</div>
+<div>
+
+## Payment Attachments Table
+```sql
+CREATE TABLE chat_payments.attachments (
+    attachment_id UUID,
+    message_id UUID,
+    payment_amount Decimal64(2),
+    payment_currency LowCardinality(String),
+    invoice_date Date,
+    payment_status Enum8(
+        'pending' = 1, 'paid' = 2, 'canceled' = 3
+    ),
+    file_path String,
+    file_size UInt32,
+    uploaded_at DateTime,
+    sign Int8,
+    INDEX payment_status_idx payment_status TYPE set(0) GRANULARITY 1,
+    INDEX currency_idx payment_currency TYPE set(0) GRANULARITY 1
+) ENGINE = CollapsingMergeTree(sign)
+Primary Key (attachment_id)
+PARTITION BY toYYYYMM(uploaded_at)
+ORDER BY (attachment_id, message_id, uploaded_at);
+```
+
+</div>
+</div>
+
+---
+layout: default
+---
+
+## Users Table
+```sql
+CREATE TABLE users (
+    user_id UInt64,
+    username String,
+    email String,
+    company_id UInt16,
+    created_at DateTime
+) ENGINE = ReplacingMergeTree(created_at)
+Primary Key (user_id)
+ORDER BY user_id;
+```
+
+---
+layout: section
+---
+
+# 1. Index Types and Usage
+
+---
+layout: default
+---
+
+# ClickHouse Indexing Overview
+
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
+<div>
+
+## Primary Key (Sparse Index)
+```sql{all|9|all}
+-- Primary key defined by ORDER BY
+CREATE TABLE messages (
+    message_id UUID,
+    chat_id UInt64,
+    user_id UInt32,
+    sent_timestamp DateTime,
+    message_type Enum8('text'=1, 'image'=2, 
+                    'invoice'=3, 'receipt'=4)
+    /* other fields */
+) ENGINE = MergeTree()
+PARTITION BY toYYYYMM(sent_timestamp)
+ORDER BY (chat_id, sent_timestamp);
+
+-- Primary key doesn't have to match ORDER BY
+-- But it usually should
+CREATE TABLE example (...)
+ENGINE = MergeTree()
+ORDER BY (chat_id, sent_timestamp)
+PRIMARY KEY (chat_id);
+```
+
+</div>
+<div>
+
+## How Primary Keys Work in ClickHouse
+
+<div class="mt-4">
+<strong>Sparse Indexing Structure:</strong>
+- Not a traditional B-tree index
+- Creates 1 index entry per data block (~8192 rows)
+- Index marks point to granules (data blocks)
+- Enables efficient data skipping
+</div>
+
+<div class="mt-6">
+<strong>Key Characteristics:</strong>
+- Optimized for range scans, not point lookups
+- Cardinality matters: high → low cardinality
+- No unique constraint enforcement
+- Stored in memory for fast access
+</div>
+
+<div class="mt-6 bg-blue-50 p-4 rounded">
+<strong>Key Insight:</strong> ClickHouse's sparse primary index is designed for scanning large ranges efficiently, not for single-row lookups. Design with analytical query patterns in mind.
+</div>
+
+</div>
+</div>
+
+---
+layout: two-cols
+---
+
+# Skip Indexes
+
+```sql{all|1-6|8-18|20-25|all}
+-- Create a new index on an existing table
+ALTER TABLE attachments
+ADD INDEX payment_status_idx
+payment_status TYPE set(0)
+GRANULARITY 3;
+
+-- Create a table with a secondary index
+CREATE TABLE invoices (
+    invoice_id UUID,
+    customer_id UInt32,
+    amount Decimal64(2),
+    status Enum8('draft'=1, 'sent'=2, 'paid'=3, 'overdue'=4),
+    created_at DateTime,
+    /* other fields */
+    
+    INDEX status_idx status TYPE set(100) GRANULARITY 4,
+    INDEX amount_idx amount TYPE minmax GRANULARITY 4
+) ENGINE = MergeTree()
+PARTITION BY toYYYYMM(created_at)
+ORDER BY (customer_id, created_at);
+
+-- Forcing the use of a secondary index
+
+ SELECT count(*) FROM attachments
+WHERE payment_status = 'paid'
+SETTINGS use_skip_indexes = 1,
+         force_index_by_date = 0;
+```
+
+::right::
+
+<div class="ml-4" style="height:400px;overflow-y:auto;">
+
+# Skip Index Types
+
+### Set
+- Good for low cardinality columns (enum types)
+- Stores unique values for each granule
+- `TYPE set(max_rows)`
+
+### MinMax
+- Good for ranges of values
+- Stores min/max values for each granule
+- `TYPE minmax`
+
+### Bloom Filter
+- Good for high cardinality columns
+- Probabilistic data structure
+- `TYPE bloom_filter(false_positive)`
+
+
+<div class="mt-6 bg-yellow-50 p-4 rounded">
+<strong>Performance Impact:</strong> Secondary indexes can improve query performance by 10-1000x for specific filters, but add storage overhead and slow down INSERTs.
+</div>
+
+</div>
+
+---
+layout: default
+---
+
+# Optimizing Indexes for Chat Payment Data
+
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
+<div>
+
+## Primary Key Optimization
+```sql{all|4-5|all}
+-- Optimizing messages table primary key
+CREATE TABLE chat_payments.messages_optimized (
+    message_id UUID,
+    chat_id UInt64,
+    user_id UInt32,
+    sent_timestamp DateTime,
+    message_type Enum8(
+        'text' = 1, 'image' = 2, 
+        'invoice' = 3, 'receipt' = 4
+    ),
+    content String,
+    has_attachment UInt8,
+    sign Int8
+) ENGINE = CollapsingMergeTree(sign)
+PARTITION BY toYYYYMM(sent_timestamp)
+ORDER BY (chat_id, toStartOfDay(sent_timestamp), message_type, user_id);
+
+-- Query using optimized primary key
+SELECT 
+    toDate(sent_timestamp) AS date,
+    count() AS message_count
+FROM messages_optimized
+WHERE chat_id = 100
+  AND sent_timestamp >= '2023-04-01'
+  AND sent_timestamp < '2023-04-30'
+  AND message_type = 'invoice' 
+GROUP BY date
+ORDER BY date;
+```
+
+</div>
+<div>
+
+## Skip Index Recommendations
+```sql{all|10-12|all}
+-- Optimized payment_attachments with strategic indexes
+CREATE TABLE chat_payments.attachments_optimized (
+    attachment_id UUID CODEC(ZSTD(1)),
+    message_id UUID CODEC(ZSTD(1)),
+    payment_amount Decimal64(2) CODEC(Delta, ZSTD(1)),
+    payment_currency LowCardinality(String) CODEC(ZSTD(1)),
+    invoice_date Date CODEC(Delta, ZSTD(1)),
+    payment_status Enum8(
+        'pending' = 1, 'paid' = 2, 'canceled' = 3
+    ) CODEC(ZSTD(1)),
+    file_path String CODEC(ZSTD(3)),
+    file_size UInt32 CODEC(Delta, ZSTD(1)),
+    uploaded_at DateTime CODEC(Delta, ZSTD(1)),
+    sign Int8 CODEC(Delta, ZSTD(1)),
+    
+    -- Improved indexes
+    INDEX payment_status_idx payment_status TYPE minmax GRANULARITY 1,
+    INDEX currency_idx payment_currency TYPE set(8) GRANULARITY 1,
+    INDEX file_size_idx file_size TYPE minmax GRANULARITY 1,
+    INDEX payment_amount_idx payment_amount TYPE minmax GRANULARITY 1
+) ENGINE = CollapsingMergeTree(sign)
+PARTITION BY toYYYYMM(uploaded_at)
+ORDER BY (message_id, uploaded_at, attachment_id)
+SETTINGS 
+    index_granularity = 8192,
+    min_bytes_for_wide_part = 10485760,
+    enable_mixed_granularity_parts = 1;
+
+-- Analyzing the effectiveness of indexes
+SELECT
+    type,
+    name,
+    data_uncompressed_bytes,
+    data_compressed_bytes,
+   data_compressed_bytes / data_uncompressed_bytes as ratio
+FROM system.data_skipping_indices
+WHERE table = 'attachments_optimized';
+
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-blue-50 p-4 rounded">
+<strong>Chat App Strategy:</strong> For a chat app with payment processing, consider composite primary keys that include message_type to optimize filtering for invoice/receipt messages, and add secondary indexes on payment_status and amount ranges.
+</div>
+
+---
+layout: default
+---
+
+# Index Usage Tips and Troubleshooting
+
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
+<div>
+
+## Diagnosing Index Usage
+```sql{all|2-3|5-13|all}
+-- Check if a query uses the index
+EXPLAIN indexes = 1
+SELECT * FROM payment_attachments WHERE payment_status = 'paid';
+
+-- Analyze missed index opportunities
+  SELECT
+    query_id,
+    query,
+    read_rows,
+    read_bytes,
+    query_duration_ms
+FROM system.query_log
+WHERE query LIKE '%attachments%'
+    AND read_rows > 1000000
+    AND event_time > now() - INTERVAL 1 DAY
+    AND type = 'QueryFinish'  -- Only show completed queries
+ORDER BY query_duration_ms DESC;
+
+```
+
+## Common Index Mistakes
+- Putting low-cardinality columns first in ORDER BY
+- Creating too many secondary indexes
+- Using indexes on columns with frequent updates
+- Expecting unique constraint behavior
+- Creating indexes on highly correlated columns
+
+</div>
+<div>
+
+
+## Index Maintenance
+```sql{all}
+-- Rebuild all secondary indexes
+ALTER TABLE attachments
+DROP INDEX payment_status_idx,
+ADD INDEX payment_status_idx payment_status TYPE set(0) GRANULARITY 4;
+
+
+SELECT 
+    database,
+    table,
+    name as index_name,
+    type as index_type,
+    expr as index_expression,
+    granularity
+FROM system.data_skipping_indices
+ORDER BY database, table, index_name;
+
+-- List primary key and sorting key information
+SELECT
+    database,
+    table,
+    primary_key,
+    sorting_key,
+    partition_key
+FROM system.tables
+WHERE engine LIKE '%MergeTree'
+ORDER BY database, table;
+
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-yellow-50 p-4 rounded">
+<strong>Benchmarking:</strong> Always measure the actual performance impact of indexes on your specific query patterns. Monitor system.query_log to identify queries that would benefit from better indexing.
+</div>
+
+---
+layout: section
+---
+
+# 2. Query Optimization Techniques
+
+---
+layout: two-cols
+---
+
+# Understanding ClickHouse Query Execution
+
+```sql{all|1-2|4-12|all}
+-- View the query execution plan
+EXPLAIN SELECT * FROM chat_payments.attachments WHERE payment_status = 'paid';
+-- More detailed explain with settings
+EXPLAIN pipeline
+SELECT
+    user_id,
+    count() AS message_count,
+    sum(if(message_type = 'invoice', 1, 0)) AS invoice_count
+FROM chat_payments.messages
+WHERE chat_id IN (100, 101, 102)
+GROUP BY user_id
+
+```
+
+<div class="mt-4">
+
+## EXPLAIN Output Analysis
+- Table read method (MergeTree)
+- Index usage (primary or secondary)
+- Estimated rows to read
+- Filters applied (and order)
+- Optimizations performed
+- Join algorithms (if applicable)
+
+</div>
+
+::right::
+
+<div class="ml-4">
+
+# Query Execution Flow
+
+### 1. Parse and analyze
+- SQL parsing
+- Syntax validation
+- Semantic analysis
+
+### 2. Query optimization
+- Predicate pushdown
+- Join reordering
+- Index selection
+
+### 3. Distributed planning
+- Shard pruning
+- Query routing
+
+### 4. Physical execution
+- Data reading
+- Filtering
+- Transformations
+- Result formation
+
+<div class="mt-6 bg-blue-50 p-4 rounded">
+<strong>Performance Tip:</strong> ClickHouse's query optimizer is continuously improving but still benefits from careful query design. Learning to read EXPLAIN output is essential for performance tuning.
+</div>
+
+</div>
+
+---
+layout: default
+---
+
+# Optimizing WHERE Clauses
+
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
+<div>
+
+## Filter Optimization Principles
+```sql{all|3-5|7-10|12-16|all}
+-- Bad: Non-indexed filter first
+SELECT count(*) FROM messages
+WHERE message_type = 'invoice'
+  AND chat_id = 100
+  AND sent_timestamp >= '2023-04-01';
+
+-- Good: Primary key columns first
+SELECT count(*) FROM messages
+WHERE chat_id = 100
+  AND sent_timestamp >= '2023-04-01'
+  AND message_type = 'invoice';
+
+-- Avoid transformations on indexed columns
+-- Bad:
+SELECT count(*) FROM messages
+WHERE toDate(sent_timestamp) = '2023-04-01';
+-- Good:
+SELECT count(*) FROM messages
+WHERE sent_timestamp >= '2023-04-01 00:00:00'
+  AND sent_timestamp < '2023-04-02 00:00:00';
+```
+
+</div>
+<div>
+
+## Partition Pruning
+```sql{all|3|all}
+-- Efficient: Scans only specific partitions
+SELECT * FROM messages
+WHERE toYYYYMM(sent_timestamp) = 202304
+  AND chat_id = 100;
+
+/*SELECT * FROM messages
+WHERE  chat_id = 100
+AND sent_timestamp >= '2023-04-01 00:00:00'
+  AND sent_timestamp < '2023-04-30 00:00:00';*/
+
+-- Force partition pruning
+SELECT count(*) FROM attachments
+WHERE toYYYYMM(uploaded_at) = 202304
+SETTINGS force_optimize_skip_unused_shards = 1;
+```
+
+## IN Clause Optimization
+```sql{all|3-7|9-12|all}
+-- Optimize large IN lists
+-- Bad: Large inline list
+SELECT count(*) FROM messages
+WHERE chat_id IN (
+    100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+    /* hundreds more values */
+);
+
+-- Better: Use a temporary table
+
+WITH [100, 101, 102, 103, 104, 105, 106, 107, 108, 109] as ids
+SELECT count(*) FROM messages
+WHERE chat_id IN ids;
+
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-yellow-50 p-4 rounded">
+<strong>Filter Order Matters:</strong> When combining filters, always place conditions on primary key columns first, then on secondary indexes, followed by other conditions. This helps ClickHouse skip unnecessary data blocks.
+</div>
+
+---
+layout: default
+---
+
+# JOIN Optimization
+
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
+<div>
+
+## JOIN Strategies
+```sql{all|3-6|8-12|14-19|all}
+-- Filter before joining
+SELECT m.chat_id, p.payment_amount
+FROM (
+    SELECT * FROM messages 
+    WHERE chat_id = 100 
+) AS m
+JOIN attachments p ON m.message_id = p.message_id;
+
+
+-- Use JOIN hints
+SELECT m.chat_id, p.payment_amount
+FROM messages m
+JOIN /* LOCAL */ attachments p
+ON m.message_id = p.message_id
+WHERE m.chat_id = 100;
+
+
+-- ASOF JOIN for time-based matching
+SELECT m.user_id, m.sent_timestamp, p.payment_amount
+FROM messages m
+ASOF JOIN attachments p
+ON m.user_id = p.user_id
+AND m.sent_timestamp >= p.uploaded_at
+WHERE m.message_type = 'receipt';
+```
+
+</div>
+<div>
+
+## JOIN Algorithm Selection
+```sql{all|3|9|all}
+-- Hash join (default, good for equality joins)
+SELECT   toDate(invoice_date) invoice_date ,sum(payment_amount) total_amount, payment_currency FROM messages m
+JOIN attachments p ON m.message_id = p.message_id
+group by invoice_date, payment_currency
+SETTINGS join_algorithm = 'hash';
+
+-- Grace hash join (for large tables)
+SELECT   toDate(invoice_date) invoice_date ,sum(payment_amount) total_amount, payment_currency FROM messages m
+JOIN attachments p ON m.message_id = p.message_id
+group by invoice_date, payment_currency
+SETTINGS join_algorithm = 'grace_hash';
+
+SELECT   toDate(invoice_date) invoice_date ,sum(payment_amount) total_amount, payment_currency FROM messages m
+JOIN attachments p ON m.message_id = p.message_id
+group by invoice_date, payment_currency
+SETTINGS join_algorithm = 'parallel_hash';
+```
+
+## Memory Management for JOINs
+```sql{all|1-4|6-9|all}
+-- Limit memory for large joins
+SET max_bytes_in_join = 1000000000; -- 1GB
+SET join_overflow_mode = 'break';
+SET max_joined_block_size_rows = 500000;
+
+-- For distributed queries
+SET distributed_product_mode = 'local';
+SET optimize_skip_unused_shards = 1;
+SET optimize_distributed_group_by_sharding_key = 1;
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-blue-50 p-4 rounded">
+<strong>Chat App JOIN Strategy:</strong> For joining message data with payment attachments, pre-filter both tables aggressively. Consider creating a specialized joining table if the same joins are performed frequently in reports.
+</div>
+
+---
+layout: default
+---
+
+# Aggregation and GROUP BY Optimization
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Efficient Aggregation
+```sql{all|3-4|6-7|9-13|all}
+-- Use specialized aggregate functions
+-- For approximate distinct counts
+SELECT uniq(user_id) FROM messages;
+-- Instead of: SELECT count(DISTINCT user_id) FROM messages;
+
+-- For quantiles
+SELECT quantileTDigest(0.95)(toFloat64(payment_amount)) FROM attachments;
+
+-- Instead of sorting and manual calculation
+
+-- Combine multiple aggregations
+SELECT
+    payment_status,
+    count() AS count,
+    sum(payment_amount) AS total,
+    round(avg(payment_amount), 2) AS average
+FROM attachments
+GROUP BY payment_status;
+```
+
+</div>
+<div>
+
+## GROUP BY Optimization
+```sql{all|1-8|10-17|all}
+-- Leverage ORDER BY for grouped data
+SELECT
+    chat_id,
+    toDate(sent_timestamp) AS date,
+    count() AS message_count
+FROM messages
+WHERE chat_id IN (100, 101, 102)
+GROUP BY chat_id, date
+ORDER BY chat_id, date;
+
+-- Use WITH TOTALS for summary rows
+SELECT
+    payment_currency,
+    payment_status,
+    sum(payment_amount) AS total
+FROM attachments
+GROUP BY payment_currency, payment_status
+WITH TOTALS
+ORDER BY payment_currency, payment_status;
+```
+
+## Memory Settings for Aggregation
+```sql{all}
+-- Control memory usage for aggregations
+SET max_bytes_before_external_group_by = 2000000000;
+SET group_by_overflow_mode = 'any';
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-yellow-50 p-4 rounded">
+<strong>Insight:</strong> ClickHouse shines at aggregation queries. For complex analytics on payment data, consider pre-aggregating common metrics in materialized views rather than calculating them repeatedly.
+</div>
+
+---
+layout: default
+---
+
+# Other Query Optimization Techniques
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## LIMIT Optimization
+```sql{all|1-5|7-12|all}
+-- Use LIMIT with ORDER BY
+SELECT * FROM messages
+WHERE chat_id = 100
+ORDER BY sent_timestamp DESC
+LIMIT 100;
+
+-- Using LIMIT BY for top-N per group
+SELECT
+    user_id,
+    sent_timestamp,
+    content
+FROM messages
+ORDER BY sent_timestamp DESC
+LIMIT 5 BY user_id;
+```
+
+</div>
+<div>
+
+## Optimizing String Operations
+```sql{all|3-4|6-8|all}
+-- Avoid expensive string operations
+-- Bad
+SELECT * FROM messages WHERE content LIKE '%payment%';
+
+-- Better - use a secondary index
+-- tokenbf_v1(size_of_bloom_filter_in_bytes, number_of_hash_functions, random_seed)
+
+ALTER TABLE messages
+ADD INDEX content_idx content TYPE tokenbf_v1(512, 3, 0)
+GRANULARITY 4;
+```
+
+## Query Cache
+```sql{all}
+-- Enable query cache (if supported in your version)
+SET use_query_cache = 1;
+SET query_cache_min_query_duration = 10;
+SET query_cache_min_result_size = 1048576;
+SET query_cache_max_entries = 1000000;
+
+-- Check query cache status
+SELECT 
+    metric, 
+    value 
+FROM system.metrics 
+WHERE metric LIKE '%Cache%';
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-blue-50 p-4 rounded">
+<strong>Incremental Optimization:</strong> Focus on optimizing the most frequent and expensive queries first. Monitor system.query_log to identify slow queries, and apply targeted optimizations based on EXPLAIN output.
+</div>
+
+---
+layout: section
+---
+
+# 3. Materialized Views
+
+---
+layout: two-cols
+---
+
+# Materialized View Basics
+
+```sql{all|1-9|11-21|all}
+-- Simple materialized view for message counts
+CREATE MATERIALIZED VIEW message_counts_mv
+ENGINE = SummingMergeTree()
+ORDER BY (chat_id, date)
+AS
+SELECT
+    chat_id,
+    toDate(sent_timestamp) AS date,
+    count() AS message_count
+FROM messages
+GROUP BY chat_id, date;
+
+
+-- Materialized view for payment statistics
+CREATE MATERIALIZED VIEW payment_stats_mv
+ENGINE = SummingMergeTree()
+PARTITION BY toYYYYMM(date)
+ORDER BY (payment_currency, payment_status, date)
+AS
+SELECT
+    toDate(uploaded_at) AS date,
+    payment_currency,
+    payment_status,
+    count() AS payment_count,
+    sum(payment_amount) AS total_amount
+FROM attachments
+GROUP BY date, payment_currency, payment_status;
+```
+
+::right::
+
+<div class="ml-4">
+
+# Key Concepts
+
+### How Materialized Views Work
+- Pre-computed query results stored as tables
+- Automatically updated when source data changes
+- Uses a specialized MergeTree engine
+- Can transform data during insertion
+
+### Common Use Cases
+- Pre-aggregated metrics and KPIs
+- Dimensional data models
+- Custom data transformations
+- Real-time dashboards
+
+### Benefits
+- Dramatically faster queries (10-1000x)
+- Reduced computational load
+- Simplified complex queries
+- Better resource utilization
+
+<div class="mt-6 bg-blue-50 p-4 rounded">
+<strong>Storage Trade-off:</strong> Materialized views consume additional storage but can pay for themselves in query performance, especially for frequently run reports.
+</div>
+
+</div>
+
+---
+layout: default
+---
+
+# Specialized Materialized View Engines
+
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
+<div>
+
+## SummingMergeTree
+```sql{all|2|8-17|all}
+-- Aggregates numeric columns during merges
+CREATE MATERIALIZED VIEW daily_payments_mv
+ENGINE = SummingMergeTree()
+PARTITION BY toYYYYMM(date)
+ORDER BY (date, payment_currency)
+AS
+SELECT
+    toDate(uploaded_at) AS date,
+    payment_currency,
+    count() AS payment_count,
+    sum(payment_amount) AS total_amount,
+    min(payment_amount) AS min_amount,
+    max(payment_amount) AS max_amount,
+    uniq(message_id) AS unique_messages,
+    uniqExact(user_id) AS unique_users
+FROM attachments p
+JOIN messages m ON p.message_id = m.message_id
+GROUP BY date, payment_currency;
+```
+
+</div>
+<div>
+
+## AggregatingMergeTree
+```sql{all|2|5-12|all}
+-- More flexible aggregation with state functions
+CREATE MATERIALIZED VIEW payment_stats_aggr_mv
+ENGINE = AggregatingMergeTree()
+PARTITION BY toYYYYMM(date)
+ORDER BY (date, payment_currency)
+AS
+SELECT
+    toDate(uploaded_at) AS date,
+    payment_currency,
+    countState() AS payment_count,           -- Changed count() to countState()
+    sumState(payment_amount) AS sum_amount,
+    avgState(payment_amount) AS avg_amount,
+    quantilesState(0.5, 0.9, 0.95)(payment_amount) AS amount_quantiles
+FROM attachments
+GROUP BY date, payment_currency;
+
+-- Then query with corresponding Merge functions
+SELECT
+    date,
+    payment_currency,
+    countMerge(payment_count) AS payment_count,
+    sumMerge(sum_amount) AS total_amount,
+    avgMerge(avg_amount) AS average_amount,
+    quantilesMerge(0.5, 0.9, 0.95)(amount_quantiles) AS quantiles
+FROM payment_stats_aggr_mv
+GROUP BY date, payment_currency
+ORDER BY date ASC, payment_currency ASC;
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-yellow-50 p-4 rounded">
+<strong>Engine Selection:</strong> For payment analytics in a chat app, use SummingMergeTree for straightforward counting and summing, but consider AggregatingMergeTree when you need complex statistical aggregates like percentiles.
+</div>
+
+---
+layout: default
+---
+
+# Real-Time Materialized Views
+
+<div class="grid grid-cols-2 gap-4" style="height:400;overflow-y:auto;">
+<div>
+
+## TO Syntax for Automatic Updates
+```sql{all|1-9|all}
+-- Creates view and populates from new inserts
+CREATE MATERIALIZED VIEW invoice_summary_mv
+TO invoice_summary
+AS
+SELECT
+    toDate(a.uploaded_at) AS date,
+    count() AS invoice_count,
+    sum(a.payment_amount) AS total_amount
+FROM attachments a 
+JOIN messages m on a.message_id = m.message_id 
+WHERE m.message_type = 'invoice'
+GROUP BY date;
+
+-- View will be populated automatically when
+-- new data is inserted into payment_attachments
+```
+
+## Initial Population
+```sql{all}
+-- Populate view with existing data
+INSERT INTO invoice_summary_mv
+SELECT
+    toDate(a.uploaded_at) AS date,
+    count() AS invoice_count,
+    sum(a.payment_amount) AS total_amount
+FROM attachments a 
+JOIN messages m on a.message_id = m.message_id 
+WHERE m.message_type = 'invoice'
+GROUP BY date;
+```
+
+</div>
+<div>
+
+
+## Live Dashboards with Materialized Views
+```sql{all|1-12|14-22|all}
+-- Creating a real-time dashboard source
+CREATE MATERIALIZED VIEW payment_dashboard_mv
+ENGINE = SummingMergeTree()
+PARTITION BY toStartOfDay(event_time)
+ORDER BY (event_time, dimension)
+TTL event_time + INTERVAL 30 DAY
+AS
+SELECT
+    toStartOfHour(uploaded_at) AS event_time,
+    payment_status AS dimension,
+    count() AS event_count,
+    sum(payment_amount) AS amount
+FROM attachments
+WHERE uploaded_at BETWEEN now() - INTERVAL 30 DAY AND now()
+GROUP BY event_time, dimension
+ORDER BY event_time DESC;
+
+insert into payment_dashboard_mv
+SELECT
+    toStartOfHour(uploaded_at) AS event_time,
+    payment_status AS dimension,
+    count() AS event_count,
+    sum(payment_amount) AS amount
+FROM attachments
+WHERE uploaded_at BETWEEN now() - INTERVAL 30 DAY AND now()
+GROUP BY event_time, dimension
+ORDER BY event_time DESC;
+
+-- Query for dashboard
+SELECT
+    event_time,
+    dimension,
+    sum(event_count) AS count,
+    sum(amount) AS total_amount
+FROM payment_dashboard_mv
+WHERE event_time >= now() - INTERVAL 24 HOUR
+GROUP BY event_time, dimension
+ORDER BY event_time;
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-blue-50 p-4 rounded">
+<strong>Real-Time Strategy:</strong> For chat payment apps with real-time dashboards, create materialized views with time-based partitioning and a reasonable TTL. This gives you fast dashboard queries with minimal storage overhead.
+</div>
+
+---
+layout: default
+---
+
+# Materialized View Maintenance
+
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
+<div>
+
+## Managing Materialized Views
+```sql{all|1-3|5-8|10-13|all}
+-- List all materialized views
+SELECT name, engine FROM system.tables
+WHERE engine LIKE '%Materialized%';
+
+-- Details about materialized views
+SELECT * FROM system.tables
+WHERE database = currentDatabase()
+  AND engine LIKE '%Materialized%';
+
+-- Drop a materialized view
+DROP TABLE payment_stats_mv;
+-- or
+DROP VIEW payment_stats_mv;
+```
+
+## Refreshing a Materialized View
+```sql{all|1-5|7-13|all}
+-- Force a full refresh by recreating
+DROP TABLE payment_stats_mv;
+CREATE MATERIALIZED VIEW payment_stats_mv
+/* same definition as before */
+AS SELECT /* ... */;
+
+insert into payment_stats_mv
+SELECT /* ... */;
+
+-- Trigger merges to update summation
+OPTIMIZE TABLE payment_stats_mv FINAL;
+
+
+```
+
+</div>
+<div>
+
+## Performance Monitoring
+```sql{all|2-9|11-17|all}
+-- Monitor materialized view usage
+SELECT 
+    database,
+    name as view_name,
+    engine,
+    create_table_query,
+    engine_full
+FROM system.tables 
+WHERE engine = 'MaterializedView'
+ORDER BY database, view_name;
+
+-- Monitor query performance with materialized views
+  select * FROM system.query_log
+  WHERE query LIKE '%payment_stats_mv%'
+  AND type = 'QueryFinish';
+
+```
+
+## Best Practices
+- Keep materialized views focused on specific needs
+- Monitor storage usage and update frequency
+- Consider a TTL for time-series materialized views
+- Use DETACH/ATTACH for maintenance
+- Use TO syntax for real-time dashboards
+
+</div>
+</div>
+
+<div class="mt-4 bg-yellow-50 p-4 rounded">
+<strong>Materialized View Strategy:</strong> Create materialized views for your most common and expensive analytical queries. For a chat payment app, focus on payment trend analysis, currency aggregations, and user payment patterns.
+</div>
+
+---
+layout: section
+---
+
+# 4. Projections
+
+---
+layout: two-cols
+---
+
+# Introduction to Projections
+
+```sql{all|1-8|10-19|all}
+-- Understanding projections vs materialized views
+-- Materialized view: separate table
+CREATE MATERIALIZED VIEW user_message_counts_mv
+ENGINE = SummingMergeTree()
+ORDER BY user_id
+AS SELECT
+    user_id, count() AS message_count
+FROM messages GROUP BY user_id;
+
+-- Projection: alternate physical representation
+ALTER TABLE messages
+    ADD PROJECTION user_message_counts_proj (
+        SELECT
+            user_id,
+            count() AS message_count
+        GROUP BY user_id
+    )
+    
+
+-- Build the projection
+ALTER TABLE messages
+    MATERIALIZE PROJECTION user_message_counts_proj;
+```
+
+::right::
+
+<div class="ml-4">
+
+# Projections vs Materialized Views
+
+### Key Differences
+- **Ownership**: Projections are part of the table
+- **Consistency**: Always consistent with base table
+- **Visibility**: Transparent to queries
+- **Maintenance**: Managed by ClickHouse
+- **Usage**: Automatic selection by optimizer
+
+### Benefits of Projections
+- Alternate sorting orders
+- Pre-aggregated data
+- Specialized data layout
+- Lower maintenance overhead
+- Automatic query routing
+</div>
+
+---
+layout: section
+---
+#  Session 7. Monitoring with Grafana
+---
+
+## Path : labs/session7/docker-compose.yml
+```bash
+docker compose up -d
+```
+1. Open Browser go to `localhost:3000` .
+
+2. Login to Grafana default user:`admin` password: `admin`.
+<img src="./images/session7/grafana-login.png" width="400" height="200" alt="login">
+
+---
+layout: two-cols
+---
+3. Add new conections then select `Clickhouse`.
+<img src="./images/session7/clickhouse-connection.png" width="500" height="500" alt="login">
+4. Add new data source.
+<img src="./images/session7/add-new-ds.png" width="500" height="500" alt="login">
+
+::right::
+5. Set database connection string configuration.
+<img src="./images/session7/db-connection.png" width="300" height="300" alt="login">
+
+6. Click tab `Dashboards` then import each dashboard.
+<img src="./images/session7/dashboard.png" width="500" height="500" alt="login">
+
+---
+layout: default
+---
+## Congraduation!
+
+<img src="./images/session7/monitoring.png" width="500" height="500" alt="login">
+
+---
+layout: end
+---
+
+# Thank you 
