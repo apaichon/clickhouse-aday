@@ -12,3 +12,7 @@ components.d.ts
 .doc
 .pptx
 .ppt
+./labs/session1/clickhouse_backups/
+./labs/session1/clickhouse_data/
+./labs/session1/clickhouse_logs/
+./config

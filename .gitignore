@@ -142,3 +142,8 @@ dist
 .doc
 .pptx
 .ppt
+
+clickhouse-aday-slide/labs/session1/clickhouse_backups/
+clickhouse-aday-slide/labs/session1/clickhouse_data/
+clickhouse-aday-slide/labs/session1/clickhouse_logs/
+clickhouse-aday-slide/config
