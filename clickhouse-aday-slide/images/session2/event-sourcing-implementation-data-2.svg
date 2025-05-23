@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800" font-family="Arial, sans-serif">
+  <!-- Background -->
+  <rect width="1000" height="800" fill="#f9f9fa"/>
+  
+  <!-- Title Section -->
+  <rect x="50" y="30" width="900" height="80" rx="10" fill="#4a6fa5"/>
+  <text x="500" y="80" font-size="36" font-weight="bold" text-anchor="middle" fill="white">Event Sourcing Implementation in ClickHouse</text>
+  
+  <!-- Section 1: ClickHouse Schema -->
+  <rect x="50" y="140" width="900" height="210" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="2"/>
+  <text x="65" y="170" font-size="28" font-weight="bold" fill="#4a6fa5">ClickHouse Schema for Event Store</text>
+  
+  <!-- Schema Code Block -->
+  <rect x="65" y="190" width="870" height="140" rx="5" fill="#f5f5f5" stroke="#ddd" stroke-width="1"/>
+  <text x="85" y="220" font-size="16" font-family="Consolas, monospace" fill="#333">CREATE TABLE order_events (</text>
+  <text x="105" y="245" font-size="16" font-family="Consolas, monospace" fill="#333">order_id UInt64,</text>
+  <text x="105" y="270" font-size="16" font-family="Consolas, monospace" fill="#333">event_time DateTime,</text>
+  <text x="105" y="295" font-size="16" font-family="Consolas, monospace" fill="#333">event_type String,        -- 'OrderCreated', 'PaymentReceived', etc.</text>
+  <text x="105" y="320" font-size="16" font-family="Consolas, monospace" fill="#333">event_data String,       -- JSON payload with event details</text>
+  <text x="85" y="345" font-size="16" font-family="Consolas, monospace" fill="#333">) ENGINE = MergeTree() ORDER BY (order_id, event_time);</text>
+  
+  <!-- Section 2: Additional Schema for Materialized View -->
+  <rect x="50" y="380" width="900" height="180" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="2"/>
+  <text x="65" y="410" font-size="28" font-weight="bold" fill="#4a6fa5">Materialized View for Current State</text>
+  
+  <rect x="65" y="430" width="870" height="110" rx="5" fill="#f5f5f5" stroke="#ddd" stroke-width="1"/>
+  <text x="85" y="455" font-size="14" font-family="Consolas, monospace" fill="#333">CREATE MATERIALIZED VIEW order_current_state</text>
+  <text x="85" y="475" font-size="14" font-family="Consolas, monospace" fill="#333">ENGINE = ReplacingMergeTree(event_time) ORDER BY order_id AS</text>
+  <text x="85" y="495" font-size="14" font-family="Consolas, monospace" fill="#333">SELECT</text>
+  <text x="105" y="515" font-size="14" font-family="Consolas, monospace" fill="#333">order_id, argMax(status, event_time) AS current_status, argMax(total, event_time) AS current_total</text>
+  <text x="85" y="535" font-size="14" font-family="Consolas, monospace" fill="#333">FROM (SELECT order_id, event_time, JSONExtractString(event_data, 'status') AS status,</text>
+  <text x="180" y="555" font-size="14" font-family="Consolas, monospace" fill="#333">JSONExtractFloat(event_data, 'total') AS total FROM order_events) GROUP BY order_id;</text>
+  
+  <!-- Section 3: Example Data Table -->
+  <rect x="50" y="590" width="900" height="300" rx="10" fill="#ffffff" stroke="#4a6fa5" stroke-width="2"/>
+  <text x="65" y="620" font-size="28" font-weight="bold" fill="#4a6fa5">Example Events Data</text>
+  
+  <!-- Table Headers -->
+  <rect x="65" y="640" width="120" height="40" fill="#4a6fa5"/>
+  <rect x="185" y="640" width="150" height="40" fill="#4a6fa5"/>
+  <rect x="335" y="640" width="180" height="40" fill="#4a6fa5"/>
+  <rect x="515" y="640" width="390" height="40" fill="#4a6fa5"/>
+  
+  <text x="125" y="665" font-size="16" text-anchor="middle" fill="white">order_id</text>
+  <text x="260" y="665" font-size="16" text-anchor="middle" fill="white">event_time</text>
+  <text x="425" y="665" font-size="16" text-anchor="middle" fill="white">event_type</text>
+  <text x="710" y="665" font-size="16" text-anchor="middle" fill="white">event_data</text>
+  
+  <!-- Table Rows -->
+  <rect x="65" y="680" width="120" height="40" fill="#f9f9f9" stroke="#ddd" stroke-width="1"/>
+  <rect x="185" y="680" width="150" height="40" fill="#f9f9f9" stroke="#ddd" stroke-width="1"/>
+  <rect x="335" y="680" width="180" height="40" fill="#f9f9f9" stroke="#ddd" stroke-width="1"/>
+  <rect x="515" y="680" width="390" height="40" fill="#f9f9f9" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="125" y="705" font-size="14" text-anchor="middle" fill="#333">1001</text>
+  <text x="260" y="705" font-size="14" text-anchor="middle" fill="#333">2024-05-10 10:30:00</text>
+  <text x="425" y="705" font-size="14" text-anchor="middle" fill="#333">OrderCreated</text>
+  <text x="710" y="705" font-size="14" text-anchor="middle" fill="#333">{"customer_id": 42, "items": [{"id": 101, "qty": 2}]}</text>
+  
+  <rect x="65" y="720" width="120" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="185" y="720" width="150" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="335" y="720" width="180" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="515" y="720" width="390" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="125" y="745" font-size="14" text-anchor="middle" fill="#333">1001</text>
+  <text x="260" y="745" font-size="14" text-anchor="middle" fill="#333">2024-05-10 10:45:20</text>
+  <text x="425" y="745" font-size="14" text-anchor="middle" fill="#333">PaymentReceived</text>
+  <text x="710" y="745" font-size="14" text-anchor="middle" fill="#333">{"payment_id": "pmt_123", "amount": 79.98}</text>
+  
+  <rect x="65" y="760" width="120" height="40" fill="#f9f9f9" stroke="#ddd" stroke-width="1"/>
+  <rect x="185" y="760" width="150" height="40" fill="#f9f9f9" stroke="#ddd" stroke-width="1"/>
+  <rect x="335" y="760" width="180" height="40" fill="#f9f9f9" stroke="#ddd" stroke-width="1"/>
+  <rect x="515" y="760" width="390" height="40" fill="#f9f9f9" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="125" y="785" font-size="14" text-anchor="middle" fill="#333">1001</text>
+  <text x="260" y="785" font-size="14" text-anchor="middle" fill="#333">2024-05-11 09:15:30</text>
+  <text x="425" y="785" font-size="14" text-anchor="middle" fill="#333">OrderShipped</text>
+  <text x="710" y="785" font-size="14" text-anchor="middle" fill="#333">{"tracking_id": "trk_789", "carrier": "FastShip"}</text>
+  
+  <rect x="65" y="800" width="120" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="185" y="800" width="150" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="335" y="800" width="180" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="515" y="800" width="390" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="125" y="825" font-size="14" text-anchor="middle" fill="#333">1001</text>
+  <text x="260" y="825" font-size="14" text-anchor="middle" fill="#333">2024-05-14 16:20:45</text>
+  <text x="425" y="825" font-size="14" text-anchor="middle" fill="#333">OrderDelivered</text>
+  <text x="710" y="825" font-size="14" text-anchor="middle" fill="#333">{"signature": "John Doe", "delivery_notes": null}</text>
+</svg>

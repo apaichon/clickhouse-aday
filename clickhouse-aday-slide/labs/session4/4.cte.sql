@@ -1,12 +1,13 @@
-# CTE Basics
+-- =============================================
+-- CTE Basics
+-- =============================================
 
--- Basic WITH clause example
+-- Basic WITH clause example: Average by currency and payments above 1.5x average
 WITH avg_by_currency AS (
     SELECT payment_currency, avg(payment_amount) AS avg_amount
     FROM attachments
     GROUP BY payment_currency
 )
-
 SELECT 
     p.payment_currency,
     p.payment_amount,
@@ -15,29 +16,25 @@ SELECT
 FROM attachments p
 JOIN avg_by_currency a ON p.payment_currency = a.payment_currency
 WHERE p.payment_status = 'paid'
-
--- Filter results after joining with CTE
 HAVING p.payment_amount > a.avg_amount * 1.5
 ORDER BY p.payment_currency, diff_from_avg DESC;
 
-## Multiple CTEs
+-- =============================================
+-- Multiple CTEs: Daily Totals and Active Users
+-- =============================================
 
--- Calculate daily totals
+-- Calculate daily totals and daily active users, then combine
 WITH daily_totals AS (
     SELECT toDate(uploaded_at) AS date, sum(payment_amount) AS total
     FROM attachments
     GROUP BY date
 ),
-
--- Calculate daily active users
 daily_users AS (
     SELECT toDate(sent_timestamp) AS date, count(DISTINCT user_id) AS active_users
     FROM messages
     WHERE has_attachment = 1
     GROUP BY date
 )
-
--- Combine the CTEs to get metrics
 SELECT 
     d.date,
     d.total AS daily_payment_total,
@@ -49,7 +46,10 @@ WHERE d.date >= '2023-04-01'
   AND d.date <= '2025-04-30'
 ORDER BY d.date;
 
-## Chained CTEs
+-- =============================================
+-- Chained CTEs: User Payment Categories
+-- =============================================
+
 -- Step 1: Get payment data by user
 WITH user_payments AS (
     SELECT m.user_id, p.payment_amount, p.payment_currency
@@ -57,7 +57,6 @@ WITH user_payments AS (
     JOIN attachments p ON m.message_id = p.message_id
     WHERE p.payment_status = 'paid'
 ),
-
 -- Step 2: Aggregate by user
 user_totals AS (
     SELECT 
@@ -68,7 +67,6 @@ user_totals AS (
     FROM user_payments
     GROUP BY user_id
 )
-
 -- Step 3: Categorize users
 SELECT 
     u.username,
@@ -81,7 +79,10 @@ FROM user_totals t
 JOIN users u ON t.user_id = u.user_id
 ORDER BY t.total_paid DESC;
 
-## Monthly Payment Trends
+-- =============================================
+-- Monthly Payment Trends with Previous Month Comparison
+-- =============================================
+
 WITH monthly_by_currency AS (
     SELECT 
         toStartOfMonth(uploaded_at) AS month,
@@ -93,8 +94,6 @@ WITH monthly_by_currency AS (
     WHERE payment_status = 'paid'
     GROUP BY month, payment_currency
 ),
-
--- Step 2: Calculate previous month metrics using anyLast
 monthly_with_previous AS (
     SELECT 
         m1.month,
@@ -115,8 +114,6 @@ monthly_with_previous AS (
     FROM monthly_by_currency m1
     ORDER BY m1.month, m1.payment_currency
 )
-
--- Step 3: Calculate growth rates with null checks
 SELECT 
     month,
     payment_currency,
@@ -137,8 +134,10 @@ FROM monthly_with_previous
 WHERE prev_month_total IS NOT NULL
 ORDER BY month DESC, payment_currency;
 
+-- =============================================
+-- User Cohort Analysis
+-- =============================================
 
-## User Cohort Analysis
 -- Step 1: Get user's first payment month
 WITH user_first_payment AS (
     SELECT 
@@ -149,7 +148,6 @@ WITH user_first_payment AS (
     WHERE p.payment_status = 'paid'
     GROUP BY m.user_id
 ),
-
 -- Step 2: Get all payments with cohort info
 user_payments_by_month AS (
     SELECT 
@@ -163,7 +161,6 @@ user_payments_by_month AS (
     WHERE p.payment_status = 'paid'
     GROUP BY cohort, payment_month
 )
-
 -- Step 3: Calculate month number from cohort start
 SELECT 
     cohort,

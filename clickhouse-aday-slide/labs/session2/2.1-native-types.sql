@@ -1,4 +1,7 @@
--- Example table demonstrating various ClickHouse data types
+-- =============================================
+-- 1. Table Creation with Various Data Types
+-- =============================================
+
 CREATE TABLE data_types_example (
     -- Numeric Types
     id UInt32,                    -- Auto-incrementing ID
@@ -36,12 +39,16 @@ CREATE TABLE data_types_example (
     location Point,              -- Latitude and longitude
     service_area Polygon,        -- Service coverage area
     
-    -- Low Cardinality for better performance
+    -- Low Cardinality Types
     region LowCardinality(String),
     device_type LowCardinality(String)
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (id, created_at);
+
+-- =============================================
+-- 2. Sample Data Insertion
+-- =============================================
 
 INSERT INTO data_types_example VALUES 
 (
@@ -72,32 +79,57 @@ INSERT INTO data_types_example VALUES
     'mobile'                    -- device_type (LowCardinality)
 );
 
-select * from data_types_example;
 
+-- =============================================
+-- 3. Data Verification
+-- =============================================
 
-# Type conversion
+SELECT * FROM data_types_example;
 
-SELECT toUInt8(10), toString(42), toFloat64('3.14');
+-- =============================================
+-- 4. Type Conversion Examples
+-- =============================================
 
--- CAST operator for explicit conversion:
-SELECT CAST('2023-01-01' AS Date), CAST(3.14 AS Decimal(10,2));
+-- Basic type conversions
+SELECT 
+    toUInt8(10), 
+    toString(42), 
+    toFloat64('3.14');
 
--- Conversion between numeric types:
+-- Using CAST operator
+SELECT 
+    CAST('2023-01-01' AS Date), 
+    CAST(3.14 AS Decimal(10,2));
+
+-- Numeric type conversion
 SELECT CAST(3 AS Float64) / 4 AS ratio;
 
--- String to Date/DateTime conversion:
-SELECT toDate('2023-01-01'), toDateTime('2023-01-01 12:30:00');
+-- Date/DateTime conversions
+SELECT 
+    toDate('2023-01-01'), 
+    toDateTime('2023-01-01 12:30:00');
 
--- Type conversion in table definition
+-- =============================================
+-- 5. Materialized Column Example
+-- =============================================
+
 CREATE TABLE conversion_example (
     string_date String,
     parsed_date Date MATERIALIZED toDate(string_date)
 ) ENGINE = MergeTree()
 ORDER BY parsed_date;
 
+-- Insert test data
 INSERT INTO conversion_example VALUES ('2023-01-01');
-
 INSERT INTO conversion_example VALUES ('2023-01-01 12:30:00');
 
+-- Verify the data
+SELECT * FROM conversion_example;
 
+-- =============================================
+-- 6. Cleanup
+-- =============================================
+
+DROP TABLE conversion_example;
+DROP TABLE data_types_example;
 

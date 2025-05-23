@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900" font-family="Arial, sans-serif">
+  <!-- Background -->
+  <rect width="1000" height="900" fill="#f9f9fa"/>
+  
+  <!-- Title Section -->
+  <rect x="50" y="30" width="900" height="100" rx="10" fill="#6b46c1"/>
+  <text x="500" y="85" font-size="40" font-weight="bold" text-anchor="middle" fill="white">Snapshot Pattern</text>
+  <text x="500" y="115" font-size="20" text-anchor="middle" fill="white">Periodically capturing complete entity states over time</text>
+  
+  <!-- Section 1: Concept Explanation -->
+  <rect x="50" y="160" width="900" height="180" rx="10" fill="#f8f0ff"/>
+  <text x="65" y="190" font-size="28" font-weight="bold" fill="#333">What is the Snapshot Pattern?</text>
+  
+  <!-- Concept Explanation -->
+  <g transform="translate(65, 220)">
+    <text x="0" y="0" font-size="18" fill="#333">• Periodically captures the complete state of entities at specific points in time</text>
+    <text x="0" y="35" font-size="18" fill="#333">• Each snapshot is immutable and contains all relevant entity attributes</text>
+    <text x="0" y="70" font-size="18" fill="#333">• Optimized for read performance and historical comparison</text>
+    <text x="0" y="105" font-size="18" fill="#333">• Simpler than event sourcing but provides less granular history</text>
+    <text x="0" y="140" font-size="18" fill="#333">• Excellent for periodic reporting, compliance, and trend analysis</text>
+  </g>
+  
+  <!-- Section 2: Timeline Visualization -->
+  <rect x="50" y="370" width="900" height="210" rx="10" fill="#ffffff" stroke="#6b46c1" stroke-width="2"/>
+  <text x="65" y="400" font-size="28" font-weight="bold" fill="#6b46c1">Snapshot Timeline</text>
+  
+  <!-- Timeline -->
+  <line x1="100" y1="470" x2="900" y2="470" stroke="#333" stroke-width="2"/>
+  <polygon points="895,465 905,470 895,475" fill="#333"/>
+  
+  <!-- Time Markers -->
+  <g>
+    <!-- Day 1 -->
+    <line x1="150" y1="460" x2="150" y2="480" stroke="#333" stroke-width="2"/>
+    <text x="150" y="500" font-size="14" text-anchor="middle" fill="#333">Day 1</text>
+    
+    <!-- Day 2 -->
+    <line x1="300" y1="460" x2="300" y2="480" stroke="#333" stroke-width="2"/>
+    <text x="300" y="500" font-size="14" text-anchor="middle" fill="#333">Day 2</text>
+    
+    <!-- Day 3 -->
+    <line x1="450" y1="460" x2="450" y2="480" stroke="#333" stroke-width="2"/>
+    <text x="450" y="500" font-size="14" text-anchor="middle" fill="#333">Day 3</text>
+    
+    <!-- Day 4 -->
+    <line x1="600" y1="460" x2="600" y2="480" stroke="#333" stroke-width="2"/>
+    <text x="600" y="500" font-size="14" text-anchor="middle" fill="#333">Day 4</text>
+    
+    <!-- Day 5 -->
+    <line x1="750" y1="460" x2="750" y2="480" stroke="#333" stroke-width="2"/>
+    <text x="750" y="500" font-size="14" text-anchor="middle" fill="#333">Day 5</text>
+    
+    <!-- Today -->
+    <line x1="900" y1="460" x2="900" y2="480" stroke="#333" stroke-width="2"/>
+    <text x="900" y="500" font-size="14" text-anchor="middle" fill="#333">Today</text>
+  </g>
+  
+  <!-- Snapshot Markers -->
+  <g>
+    <!-- Snapshot Day 1 -->
+    <rect x="120" y="420" width="60" height="30" rx="5" fill="#e9d5ff" stroke="#6b46c1" stroke-width="2"/>
+    <text x="150" y="440" font-size="12" text-anchor="middle" fill="#333">Snapshot</text>
+    <line x1="150" y1="450" x2="150" y2="460" stroke="#6b46c1" stroke-width="2" stroke-dasharray="3,2"/>
+    
+    <!-- Snapshot Day 2 -->
+    <rect x="270" y="420" width="60" height="30" rx="5" fill="#e9d5ff" stroke="#6b46c1" stroke-width="2"/>
+    <text x="300" y="440" font-size="12" text-anchor="middle" fill="#333">Snapshot</text>
+    <line x1="300" y1="450" x2="300" y2="460" stroke="#6b46c1" stroke-width="2" stroke-dasharray="3,2"/>
+    
+    <!-- Snapshot Day 3 -->
+    <rect x="420" y="420" width="60" height="30" rx="5" fill="#e9d5ff" stroke="#6b46c1" stroke-width="2"/>
+    <text x="450" y="440" font-size="12" text-anchor="middle" fill="#333">Snapshot</text>
+    <line x1="450" y1="450" x2="450" y2="460" stroke="#6b46c1" stroke-width="2" stroke-dasharray="3,2"/>
+    
+    <!-- Snapshot Day 4 -->
+    <rect x="570" y="420" width="60" height="30" rx="5" fill="#e9d5ff" stroke="#6b46c1" stroke-width="2"/>
+    <text x="600" y="440" font-size="12" text-anchor="middle" fill="#333">Snapshot</text>
+    <line x1="600" y1="450" x2="600" y2="460" stroke="#6b46c1" stroke-width="2" stroke-dasharray="3,2"/>
+    
+    <!-- Snapshot Day 5 -->
+    <rect x="720" y="420" width="60" height="30" rx="5" fill="#e9d5ff" stroke="#6b46c1" stroke-width="2"/>
+    <text x="750" y="440" font-size="12" text-anchor="middle" fill="#333">Snapshot</text>
+    <line x1="750" y1="450" x2="750" y2="460" stroke="#6b46c1" stroke-width="2" stroke-dasharray="3,2"/>
+  </g>
+  
+  <!-- Comparison Arrows -->
+  <g>
+    <path d="M170 520 C225 550, 225 550, 280 520" stroke="#6b46c1" stroke-width="2" fill="none"/>
+    <polygon points="275,515 285,520 275,525" fill="#6b46c1"/>
+    <text x="225" y="555" font-size="12" text-anchor="middle" fill="#333">Compare</text>
+    
+    <path d="M320 520 C375 550, 375 550, 430 520" stroke="#6b46c1" stroke-width="2" fill="none"/>
+    <polygon points="425,515 435,520 425,525" fill="#6b46c1"/>
+    <text x="375" y="555" font-size="12" text-anchor="middle" fill="#333">Compare</text>
+    
+    <path d="M470 520 C525 550, 525 550, 580 520" stroke="#6b46c1" stroke-width="2" fill="none"/>
+    <polygon points="575,515 585,520 575,525" fill="#6b46c1"/>
+    <text x="525" y="555" font-size="12" text-anchor="middle" fill="#333">Compare</text>
+    
+    <path d="M620 520 C675 550, 675 550, 730 520" stroke="#6b46c1" stroke-width="2" fill="none"/>
+    <polygon points="725,515 735,520 725,525" fill="#6b46c1"/>
+    <text x="675" y="555" font-size="12" text-anchor="middle" fill="#333">Compare</text>
+  </g>
+  
+  <!-- Section 3: Example Data -->
+  <rect x="50" y="610" width="900" height="240" rx="10" fill="#ffffff" stroke="#6b46c1" stroke-width="2"/>
+  <text x="65" y="640" font-size="28" font-weight="bold" fill="#6b46c1">Example: Customer Snapshots</text>
+  
+  <!-- Table Headers -->
+  <rect x="100" y="670" width="110" height="40" fill="#6b46c1"/>
+  <rect x="210" y="670" width="100" height="40" fill="#6b46c1"/>
+  <rect x="310" y="670" width="180" height="40" fill="#6b46c1"/>
+  <rect x="490" y="670" width="100" height="40" fill="#6b46c1"/>
+  <rect x="590" y="670" width="210" height="40" fill="#6b46c1"/>
+  
+  <text x="155" y="695" font-size="14" text-anchor="middle" fill="white">customer_id</text>
+  <text x="260" y="695" font-size="14" text-anchor="middle" fill="white">snapshot_date</text>
+  <text x="400" y="695" font-size="14" text-anchor="middle" fill="white">email</text>
+  <text x="540" y="695" font-size="14" text-anchor="middle" fill="white">status</text>
+  <text x="695" y="695" font-size="14" text-anchor="middle" fill="white">balance</text>
+  
+  <!-- Day 1 Row -->
+  <rect x="100" y="710" width="110" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="210" y="710" width="100" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="310" y="710" width="180" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="490" y="710" width="100" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="590" y="710" width="210" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="155" y="730" font-size="12" text-anchor="middle" fill="#333">1001</text>
+  <text x="260" y="730" font-size="12" text-anchor="middle" fill="#333">2024-05-01</text>
+  <text x="400" y="730" font-size="12" text-anchor="middle" fill="#333">user@example.com</text>
+  <text x="540" y="730" font-size="12" text-anchor="middle" fill="#333">New</text>
+  <text x="695" y="730" font-size="12" text-anchor="middle" fill="#333">$100.00</text>
+  
+  <!-- Day 2 Row -->
+  <rect x="100" y="740" width="110" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="210" y="740" width="100" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="310" y="740" width="180" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="490" y="740" width="100" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="590" y="740" width="210" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="155" y="760" font-size="12" text-anchor="middle" fill="#333">1001</text>
+  <text x="260" y="760" font-size="12" text-anchor="middle" fill="#333">2024-05-02</text>
+  <text x="400" y="760" font-size="12" text-anchor="middle" fill="#333">user@example.com</text>
+  <text x="540" y="760" font-size="12" text-anchor="middle" fill="#333">Active</text>
+  <text x="695" y="760" font-size="12" text-anchor="middle" fill="#333">$250.00</text>
+  
+  <!-- Day 3 Row -->
+  <rect x="100" y="770" width="110" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="210" y="770" width="100" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="310" y="770" width="180" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="490" y="770" width="100" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="590" y="770" width="210" height="30" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="155" y="790" font-size="12" text-anchor="middle" fill="#333">1001</text>
+  <text x="260" y="790" font-size="12" text-anchor="middle" fill="#333">2024-05-03</text>
+  <text x="400" y="790" font-size="12" text-anchor="middle" fill="#333">user@example.com</text>
+  <text x="540" y="790" font-size="12" text-anchor="middle" fill="#333">Active</text>
+  <text x="695" y="790" font-size="12" text-anchor="middle" fill="#333">$210.00</text>
+  
+  <!-- Day 5 Row -->
+  <rect x="100" y="800" width="110" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="210" y="800" width="100" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="310" y="800" width="180" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="490" y="800" width="100" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="590" y="800" width="210" height="30" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="155" y="820" font-size="12" text-anchor="middle" fill="#333">1001</text>
+  <text x="260" y="820" font-size="12" text-anchor="middle" fill="#333">2024-05-05</text>
+  <text x="400" y="820" font-size="12" text-anchor="middle" fill="#333">user@example.com</text>
+  <text x="540" y="820" font-size="12" text-anchor="middle" fill="#333">Inactive</text>
+  <text x="695" y="820" font-size="12" text-anchor="middle" fill="#333">$0.00</text>
+  
+  
+</svg>

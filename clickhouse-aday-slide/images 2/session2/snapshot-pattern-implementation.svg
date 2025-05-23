@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800" font-family="Arial, sans-serif">
+  <!-- Background -->
+  <rect width="1000" height="800" fill="#f9f9fa"/>
+  
+  <!-- Title Section -->
+  <rect x="50" y="30" width="900" height="80" rx="10" fill="#6b46c1"/>
+  <text x="500" y="80" font-size="36" font-weight="bold" text-anchor="middle" fill="white">Snapshot Pattern Implementation in ClickHouse</text>
+  
+  <!-- Section 1: ClickHouse Schema -->
+  <rect x="50" y="140" width="900" height="220" rx="10" fill="#ffffff" stroke="#6b46c1" stroke-width="2"/>
+  <text x="65" y="170" font-size="28" font-weight="bold" fill="#6b46c1">ClickHouse Schema for Customer Snapshots</text>
+  
+  <!-- Schema Code Block -->
+  <rect x="65" y="190" width="870" height="150" rx="5" fill="#f5f5f5" stroke="#ddd" stroke-width="1"/>
+  <text x="85" y="220" font-size="16" font-family="Consolas, monospace" fill="#333">CREATE TABLE customer_snapshots (</text>
+  <text x="105" y="245" font-size="16" font-family="Consolas, monospace" fill="#333">customer_id UInt64,</text>
+  <text x="105" y="270" font-size="16" font-family="Consolas, monospace" fill="#333">snapshot_date Date,</text>
+  <text x="105" y="295" font-size="16" font-family="Consolas, monospace" fill="#333">name String,</text>
+  <text x="105" y="320" font-size="16" font-family="Consolas, monospace" fill="#333">email String,</text>
+  <text x="105" y="345" font-size="16" font-family="Consolas, monospace" fill="#333">status String,</text>
+  <text x="105" y="370" font-size="16" font-family="Consolas, monospace" fill="#333">balance Decimal(10, 2)</text>
+  <text x="85" y="395" font-size="16" font-family="Consolas, monospace" fill="#333">) ENGINE = MergeTree() PARTITION BY toYYYYMM(snapshot_date) ORDER BY (customer_id, snapshot_date);</text>
+  
+  <!-- Section 2: Creating a Snapshot -->
+  <rect x="50" y="380" width="900" height="130" rx="10" fill="#ffffff" stroke="#6b46c1" stroke-width="2"/>
+  <text x="65" y="410" font-size="28" font-weight="bold" fill="#6b46c1">Creating Daily Snapshots</text>
+  
+  <rect x="65" y="430" width="870" height="60" rx="5" fill="#f5f5f5" stroke="#ddd" stroke-width="1"/>
+  <text x="85" y="455" font-size="16" font-family="Consolas, monospace" fill="#333">-- Creating daily snapshot (run periodically)</text>
+  <text x="85" y="480" font-size="16" font-family="Consolas, monospace" fill="#333">INSERT INTO customer_snapshots SELECT customer_id, today() AS snapshot_date, name, email,</text>
+  <text x="85" y="505" font-size="16" font-family="Consolas, monospace" fill="#333">       status, balance FROM customers;</text>
+  
+  <!-- Section 3: Example Data Table -->
+  <rect x="50" y="530" width="900" height="320" rx="10" fill="#ffffff" stroke="#6b46c1" stroke-width="2"/>
+  <text x="65" y="560" font-size="28" font-weight="bold" fill="#6b46c1">Example Snapshot Data (Daily Customer States)</text>
+  
+  <!-- Table Headers -->
+  <rect x="65" y="590" width="100" height="40" fill="#6b46c1"/>
+  <rect x="165" y="590" width="120" height="40" fill="#6b46c1"/>
+  <rect x="285" y="590" width="150" height="40" fill="#6b46c1"/>
+  <rect x="435" y="590" width="200" height="40" fill="#6b46c1"/>
+  <rect x="635" y="590" width="100" height="40" fill="#6b46c1"/>
+  <rect x="735" y="590" width="100" height="40" fill="#6b46c1"/>
+  
+  <text x="115" y="615" font-size="14" text-anchor="middle" fill="white">customer_id</text>
+  <text x="225" y="615" font-size="14" text-anchor="middle" fill="white">snapshot_date</text>
+  <text x="360" y="615" font-size="14" text-anchor="middle" fill="white">name</text>
+  <text x="535" y="615" font-size="14" text-anchor="middle" fill="white">email</text>
+  <text x="685" y="615" font-size="14" text-anchor="middle" fill="white">status</text>
+  <text x="785" y="615" font-size="14" text-anchor="middle" fill="white">balance</text>
+  
+  <!-- Customer 1001: Day 1 -->
+  <rect x="65" y="630" width="100" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="165" y="630" width="120" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="285" y="630" width="150" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="435" y="630" width="200" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="635" y="630" width="100" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="735" y="630" width="100" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="115" y="655" font-size="14" text-anchor="middle" fill="#333">1001</text>
+  <text x="225" y="655" font-size="14" text-anchor="middle" fill="#333">2024-05-01</text>
+  <text x="360" y="655" font-size="14" text-anchor="middle" fill="#333">John Doe</text>
+  <text x="535" y="655" font-size="14" text-anchor="middle" fill="#333">john@example.com</text>
+  <text x="685" y="655" font-size="14" text-anchor="middle" fill="#333">New</text>
+  <text x="785" y="655" font-size="14" text-anchor="middle" fill="#333">100.00</text>
+  
+  <!-- Customer 1001: Day 2 -->
+  <rect x="65" y="670" width="100" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="165" y="670" width="120" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="285" y="670" width="150" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="435" y="670" width="200" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="635" y="670" width="100" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="735" y="670" width="100" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="115" y="695" font-size="14" text-anchor="middle" fill="#333">1001</text>
+  <text x="225" y="695" font-size="14" text-anchor="middle" fill="#333">2024-05-02</text>
+  <text x="360" y="695" font-size="14" text-anchor="middle" fill="#333">John Doe</text>
+  <text x="535" y="695" font-size="14" text-anchor="middle" fill="#333">john@example.com</text>
+  <text x="685" y="695" font-size="14" text-anchor="middle" fill="#333">Active</text>
+  <text x="785" y="695" font-size="14" text-anchor="middle" fill="#333">250.00</text>
+  
+  <!-- Customer 1001: Day 3 -->
+  <rect x="65" y="710" width="100" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="165" y="710" width="120" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="285" y="710" width="150" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="435" y="710" width="200" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="635" y="710" width="100" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="735" y="710" width="100" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="115" y="735" font-size="14" text-anchor="middle" fill="#333">1001</text>
+  <text x="225" y="735" font-size="14" text-anchor="middle" fill="#333">2024-05-03</text>
+  <text x="360" y="735" font-size="14" text-anchor="middle" fill="#333">John Doe</text>
+  <text x="535" y="735" font-size="14" text-anchor="middle" fill="#333">john@example.com</text>
+  <text x="685" y="735" font-size="14" text-anchor="middle" fill="#333">Active</text>
+  <text x="785" y="735" font-size="14" text-anchor="middle" fill="#333">210.00</text>
+  
+  <!-- Customer 1001: Day 4 -->
+  <rect x="65" y="750" width="100" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="165" y="750" width="120" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="285" y="750" width="150" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="435" y="750" width="200" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="635" y="750" width="100" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  <rect x="735" y="750" width="100" height="40" fill="#ffffff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="115" y="775" font-size="14" text-anchor="middle" fill="#333">1001</text>
+  <text x="225" y="775" font-size="14" text-anchor="middle" fill="#333">2024-05-04</text>
+  <text x="360" y="775" font-size="14" text-anchor="middle" fill="#333">John Doe</text>
+  <text x="535" y="775" font-size="14" text-anchor="middle" fill="#333">john@example.com</text>
+  <text x="685" y="775" font-size="14" text-anchor="middle" fill="#333">Active</text>
+  <text x="785" y="775" font-size="14" text-anchor="middle" fill="#333">150.00</text>
+  
+  <!-- Customer 1001: Day 5 -->
+  <rect x="65" y="790" width="100" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="165" y="790" width="120" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="285" y="790" width="150" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="435" y="790" width="200" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="635" y="790" width="100" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  <rect x="735" y="790" width="100" height="40" fill="#f0e6ff" stroke="#ddd" stroke-width="1"/>
+  
+  <text x="115" y="815" font-size="14" text-anchor="middle" fill="#333">1001</text>
+  <text x="225" y="815" font-size="14" text-anchor="middle" fill="#333">2024-05-05</text>
+  <text x="360" y="815" font-size="14" text-anchor="middle" fill="#333">John Doe</text>
+  <text x="535" y="815" font-size="14" text-anchor="middle" fill="#333">john@example.com</text>
+  <text x="685" y="815" font-size="14" text-anchor="middle" fill="#333">Inactive</text>
+  <text x="785" y="815" font-size="14" text-anchor="middle" fill="#333">0.00</text>
+  
+  <!-- Section 4: Analysis Query -->
+  <rect x="50" y="690" width="900" height="110" rx="10" fill="#ffffff" stroke="#6b46c1" stroke-width="2"/>
+  <text x="65" y="720" font-size="24" font-weight="bold" fill="#6b46c1">Example: Comparing States Between Snapshots</text>
+  
+  <rect x="65" y="740" width="870" height="50" rx="5" fill="#f5f5f5" stroke="#ddd" stroke-width="1"/>
+  <text x="75" y="765" font-size="14" font-family="Consolas, monospace" fill="#333">SELECT s1.customer_id, s1.status AS old_status, s2.status AS new_status,</text>
+  <text x="75" y="785" font-size="14" font-family="Consolas, monospace" fill="#333">       s1.balance AS old_balance, s2.balance AS new_balance, s2.balance - s1.balance AS change</text>
+  <text x="75" y="805" font-size="14" font-family="Consolas, monospace" fill="#333">FROM customer_snapshots s1 JOIN customer_snapshots s2 ON s1.customer_id = s2.customer_id</text>
+  <text x="75" y="825" font-size="14" font-family="Consolas, monospace" fill="#333">WHERE s1.snapshot_date = '2024-05-01' AND s2.snapshot_date = '2024-05-05';</text>
+</svg>

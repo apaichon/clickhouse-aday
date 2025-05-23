@@ -66,12 +66,12 @@ for (let i = 0; i < numRows; i++) {
   const uploadDate = randomDate(startDate, endDate);
   const invoiceDate = randomDate(new Date(uploadDate.getTime() - 30 * 24 * 60 * 60 * 1000), uploadDate);
   const paymentStatus = statuses[Math.floor(Math.random() * statuses.length)];
-  
+
   // For collapsed rows, we need to generate pairs with sign 1 and -1
   // This simulates updates in CollapsingMergeTree
   // Let's make ~20% of our records have a "matching" collapsed record
   const generateCollapsedPair = Math.random() < 0.2;
-  
+
   // First record with sign = 1
   const row = [
     uuidv4(),
@@ -85,9 +85,9 @@ for (let i = 0; i < numRows; i++) {
     formatDateTime(uploadDate),
     1  // sign = 1 for "add" record
   ];
-  
+
   csvData.push(row.join(','));
-  
+
   // If we're generating a pair, add a matching record with sign = -1
   if (generateCollapsedPair) {
     // Clone the row but set sign to -1

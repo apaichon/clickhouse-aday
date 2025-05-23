@@ -1,4 +1,6 @@
+# =============================================
 # Understanding ClickHouse Query Execution
+# =============================================
 
 EXPLAIN
 SELECT 
@@ -15,7 +17,9 @@ GROUP BY m.chat_id, date
 ORDER BY m.chat_id, date;
 
 
-# Generate data
+# =============================================
+# Data Preparation and Table Management
+# =============================================
 
 describe table chat_payments.messages;
 
@@ -114,7 +118,10 @@ drop index idx_user_id on chat_payments.messages;
 ALTER TABLE chat_payments.messages
 ADD INDEX idx_user_id user_id TYPE minmax GRANULARITY 8192;
 
-# JOIN OPTIMIZATION STRATEGY
+# =============================================
+# JOIN Optimization Strategy
+# =============================================
+
 ## Choose the Right JOIN Type
 
 SELECT m.chat_id, p.payment_amount
@@ -201,7 +208,9 @@ JOIN attachments p USING (message_id)
 WHERE m.chat_id = 100;
 
 
+# =============================================
 # Aggregation and GROUP BY Optimization
+# =============================================
 
 ## Pre-filter Data
 -- Pre-filter before expensive aggregation
@@ -369,7 +378,9 @@ SET optimize_skip_unused_shards = 1;
 SET join_algorithm = 'partial_merge';
 
 
+# =============================================
 # Real-World Optimization Example: Chat Payment Analysis
+# =============================================
 
 ## Original Slow Query
 -- Complex, inefficient query

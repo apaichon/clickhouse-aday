@@ -1,33 +1,37 @@
-# ClickHouse Compression Overview
+-- =============================================
+-- ClickHouse Compression Overview
+-- =============================================
 
--- Check current compression settings
+-- Check current compression settings for columns in 'attachments'
 SELECT
     name,
     type,
     compression_codec,
     data_compressed_bytes,
     data_uncompressed_bytes,
-    round(data_uncompressed_bytes / data_compressed_bytes, 2) as compression_ratio
+    round(data_uncompressed_bytes / data_compressed_bytes, 2) as compression_ratio,
+    round(100 * (1 - data_compressed_bytes / data_uncompressed_bytes), 2) as compression_percent
 FROM system.columns
-WHERE table = 'attachments';
+WHERE table in ('attachments', 'messages');
 
--- Check compression ratio for tables
+-- Check compression ratio for all tables in the current database
 SELECT
     table,
     formatReadableSize(sum(data_compressed_bytes)) AS compressed,
     formatReadableSize(sum(data_uncompressed_bytes)) AS uncompressed,
-    round(sum(data_uncompressed_bytes) / sum(data_compressed_bytes), 2) AS ratio
+    round(sum(data_uncompressed_bytes) / sum(data_compressed_bytes), 2) AS ratio,
+    round(100 * (1 - sum(data_compressed_bytes) / sum(data_uncompressed_bytes)), 2) as compression_percent
 FROM system.columns
 WHERE database = currentDatabase()
 GROUP BY table
 ORDER BY ratio DESC;
 
+-- =============================================
+-- Column-Specific Compression
+-- =============================================
 
-
-## Column-Specific Compression
 -- Create table with column-specific compression
-
-CREATE TABLE attachments_compressed
+CREATE TABLE if not exists attachments_compressed
 (
     attachment_id UUID CODEC(ZSTD(1)),
     message_id UUID CODEC(ZSTD(1)),
@@ -47,6 +51,9 @@ ORDER BY (message_id, uploaded_at);
 INSERT INTO attachments_compressed
 SELECT * FROM attachments;
 
+-- =============================================
+-- Compression Ratio Analysis
+-- =============================================
 
 SELECT 
     table,
@@ -62,3 +69,5 @@ FROM system.parts
 WHERE active AND database = 'chat_payments' AND table in ('attachments', 'attachments_compressed')
 GROUP BY table
 ORDER BY bytes_size DESC;
+
+

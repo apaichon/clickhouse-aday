@@ -1,4 +1,6 @@
-# Batch Insert Best Practices
+-- =============================================
+-- Batch Insert Best Practices
+-- =============================================
 
 -- Prepare a large batch of messages
 INSERT INTO messages
@@ -18,18 +20,17 @@ SELECT
     'Batch generated message ' || toString(number) as content,
     rand() % 2 as has_attachment,
     1 as sign
-FROM numbers(1_000_000);  -- Generate 1 million rows
+FROM numbers(5_000_000)  
+SETTINGS 
+    max_insert_block_size = 10_000_000,
+    min_insert_block_size_rows = 100_000,
+    min_insert_block_size_bytes = 100_000_000;
 
--- Optimal batch size in production
-SET max_insert_block_size = 1000000;  -- Default is 1048576
-SET min_insert_block_size_rows = 10000;
-SET min_insert_block_size_bytes = 10000000;
 
--- Backup
+-- =============================================
+-- Monitoring Batch Operations
+-- =============================================
 
--- Transform
-
-## Monitoring Batch Operations
 -- Check recent insertion performance
 SELECT
     query_start_time,
@@ -58,6 +59,83 @@ WHERE active = 1
   AND table = 'attachments'
 ORDER BY modification_time DESC
 LIMIT 20;
+
+-- =============================================
+-- Understanding Duplication Challenges
+-- =============================================
+
+-- Check for duplicate messages
+SELECT
+    message_id,
+    COUNT(*) as count
+FROM messages
+GROUP BY message_id
+HAVING count > 1
+ORDER BY count DESC;
+
+-- Check for duplicate payment attachments
+SELECT
+    attachment_id,
+    COUNT(*) as count
+FROM attachments
+GROUP BY attachment_id
+HAVING count > 1
+ORDER BY count DESC;
+
+-- =============================================
+-- Basic Deduplication Implementation
+-- =============================================
+
+-- Using ReplacingMergeTree for payment attachments
+DROP TABLE IF EXISTS attachments_dedup;
+
+CREATE TABLE IF NOT EXISTS attachments_dedup
+(
+    attachment_id UUID,
+    message_id UUID,
+    payment_amount Decimal64(2),
+    payment_currency LowCardinality(String),
+    invoice_date Date,
+    payment_status Enum8(
+        'pending' = 1, 'paid' = 2, 'canceled' = 3
+    ),
+    file_path String,
+    file_size UInt32,
+    uploaded_at DateTime,
+    sign Int8
+) ENGINE = ReplacingMergeTree(uploaded_at)
+PARTITION BY toYYYYMM(uploaded_at)
+ORDER BY (message_id, attachment_id);
+
+-- Fill the table with deduplicated data (example: first 10 rows)
+INSERT INTO attachments_dedup
+SELECT *
+FROM attachments
+LIMIT 10;
+
+-- Check for duplicate messages in deduplicated table
+SELECT
+    message_id,
+    COUNT(*) as count
+FROM attachments_dedup FINAL
+GROUP BY message_id
+HAVING count > 1
+ORDER BY count DESC;
+
+-- =============================================
+-- Force Merge for Deduplication
+-- =============================================
+
+-- Trigger merges to eliminate duplicates
+OPTIMIZE TABLE attachments_dedup FINAL;
+
+-- Verify deduplication
+SELECT
+    attachment_id,
+    COUNT(*) as count
+FROM attachments_dedup
+GROUP BY attachment_id
+HAVING count > 1;
 
 
 

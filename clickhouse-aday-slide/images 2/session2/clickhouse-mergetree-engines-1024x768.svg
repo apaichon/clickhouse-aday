@@ -1,0 +1,178 @@
+<svg viewBox="0 0 1024 768" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="768" fill="#ffffff" rx="10" ry="10"/>
+  
+  <!-- Title -->
+  <rect x="112" y="40" width="800" height="70" rx="10" ry="10" fill="#ffcc01" />
+  <text x="512" y="88" font-family="Arial, sans-serif" font-size="30" font-weight="bold" text-anchor="middle" fill="#333">ClickHouse MergeTree Engine Family</text>
+  
+  <!-- Central MergeTree Node -->
+  <circle cx="512" cy="190" r="90" fill="#fff" stroke="#ffcc01" stroke-width="3"/>
+  <text x="512" y="180" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">MergeTree</text>
+  <text x="512" y="210" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#666">(Base Engine)</text>
+  
+  <!-- Connecting Lines -->
+  <line x1="512" y1="280" x2="512" y2="300" stroke="#ccc" stroke-width="2"/>
+  <line x1="512" y1="300" x2="200" y2="300" stroke="#ccc" stroke-width="2"/>
+  <line x1="512" y1="300" x2="824" y2="300" stroke="#ccc" stroke-width="2"/>
+  <line x1="200" y1="300" x2="200" y2="340" stroke="#ccc" stroke-width="2"/>
+  <line x1="512" y1="300" x2="512" y2="340" stroke="#ccc" stroke-width="2"/>
+  <line x1="824" y1="300" x2="824" y2="340" stroke="#ccc" stroke-width="2"/>
+  
+  <!-- ReplacingMergeTree -->
+  <rect x="80" y="340" width="240" height="230" rx="10" ry="10" fill="#e3f2fd" stroke="#64b5f6" stroke-width="2"/>
+  <text x="200" y="370" font-family="Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="middle" fill="#1565c0">ReplacingMergeTree</text>
+  
+  <!-- ReplacingMergeTree Illustration -->
+  <rect x="100" y="390" width="200" height="120" rx="5" ry="5" fill="#fff" stroke="#1565c0" stroke-width="1"/>
+  
+  <!-- Before Merge -->
+  <rect x="110" y="400" width="70" height="25" fill="#bbdefb" rx="2" ry="2"/>
+  <text x="145" y="418" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">id=1, v=1</text>
+  
+  <rect x="110" y="430" width="70" height="25" fill="#bbdefb" rx="2" ry="2"/>
+  <text x="145" y="448" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">id=1, v=2</text>
+  
+  <rect x="110" y="460" width="70" height="25" fill="#bbdefb" rx="2" ry="2"/>
+  <text x="145" y="478" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">id=2, v=1</text>
+  
+  <!-- Arrow -->
+  <line x1="190" y1="445" x2="220" y2="445" stroke="#1565c0" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="220,445 215,442 215,448" fill="#1565c0"/>
+  
+  <!-- After Merge -->
+  <rect x="230" y="430" width="70" height="25" fill="#64b5f6" rx="2" ry="2"/>
+  <text x="265" y="448" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#fff">id=1, v=2</text>
+  
+  <rect x="230" y="460" width="70" height="25" fill="#64b5f6" rx="2" ry="2"/>
+  <text x="265" y="478" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#fff">id=2, v=1</text>
+  
+  <!-- ReplacingMergeTree Description -->
+  <text x="200" y="530" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#1565c0">Key Features:</text>
+  <text x="200" y="550" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">• Removes duplicate entries</text>
+  <text x="200" y="570" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">• Keeps newest version (optional)</text>
+  
+  <!-- SummingMergeTree -->
+  <rect x="392" y="340" width="240" height="230" rx="10" ry="10" fill="#e8f5e9" stroke="#66bb6a" stroke-width="2"/>
+  <text x="512" y="370" font-family="Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="middle" fill="#2e7d32">SummingMergeTree</text>
+  
+  <!-- SummingMergeTree Illustration -->
+  <rect x="412" y="390" width="200" height="120" rx="5" ry="5" fill="#fff" stroke="#2e7d32" stroke-width="1"/>
+  
+  <!-- Before Merge -->
+  <rect x="422" y="400" width="70" height="25" fill="#c8e6c9" rx="2" ry="2"/>
+  <text x="457" y="418" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">id=1, val=10</text>
+  
+  <rect x="422" y="430" width="70" height="25" fill="#c8e6c9" rx="2" ry="2"/>
+  <text x="457" y="448" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">id=1, val=20</text>
+  
+  <rect x="422" y="460" width="70" height="25" fill="#c8e6c9" rx="2" ry="2"/>
+  <text x="457" y="478" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">id=2, val=5</text>
+  
+  <!-- Arrow -->
+  <line x1="502" y1="445" x2="532" y2="445" stroke="#2e7d32" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="532,445 527,442 527,448" fill="#2e7d32"/>
+  
+  <!-- After Merge -->
+  <rect x="542" y="430" width="70" height="25" fill="#66bb6a" rx="2" ry="2"/>
+  <text x="577" y="448" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#fff">id=1, val=30</text>
+  
+  <rect x="542" y="460" width="70" height="25" fill="#66bb6a" rx="2" ry="2"/>
+  <text x="577" y="478" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#fff">id=2, val=5</text>
+  
+  <!-- SummingMergeTree Description -->
+  <text x="512" y="530" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#2e7d32">Key Features:</text>
+  <text x="512" y="550" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">• Sums numeric columns</text>
+  <text x="512" y="570" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">• Great for pre-aggregated data</text>
+  
+  <!-- AggregatingMergeTree -->
+  <rect x="704" y="340" width="240" height="230" rx="10" ry="10" fill="#fff3e0" stroke="#ffb74d" stroke-width="2"/>
+  <text x="824" y="370" font-family="Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="middle" fill="#ef6c00">AggregatingMergeTree</text>
+  
+  <!-- AggregatingMergeTree Illustration -->
+  <rect x="724" y="390" width="200" height="120" rx="5" ry="5" fill="#fff" stroke="#ef6c00" stroke-width="1"/>
+  
+  <!-- Before Merge -->
+  <rect x="734" y="400" width="70" height="25" fill="#ffe0b2" rx="2" ry="2"/>
+  <text x="769" y="418" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">id=1, uniq(user)</text>
+  
+  <rect x="734" y="430" width="70" height="25" fill="#ffe0b2" rx="2" ry="2"/>
+  <text x="769" y="448" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">id=1, uniq(user)</text>
+  
+  <rect x="734" y="460" width="70" height="25" fill="#ffe0b2" rx="2" ry="2"/>
+  <text x="769" y="478" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">id=2, uniq(user)</text>
+  
+  <!-- Arrow -->
+  <line x1="814" y1="445" x2="844" y2="445" stroke="#ef6c00" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="844,445 839,442 839,448" fill="#ef6c00"/>
+  
+  <!-- After Merge -->
+  <rect x="854" y="430" width="70" height="25" fill="#ffb74d" rx="2" ry="2"/>
+  <text x="889" y="448" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">id=1, combined</text>
+  
+  <rect x="854" y="460" width="70" height="25" fill="#ffb74d" rx="2" ry="2"/>
+  <text x="889" y="478" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">id=2, unchanged</text>
+  
+  <!-- AggregatingMergeTree Description -->
+  <text x="824" y="530" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#ef6c00">Key Features:</text>
+  <text x="824" y="550" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">• Uses state aggregation functions</text>
+  <text x="824" y="570" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">• Complex analytics (uniq, quantile)</text>
+  
+  <!-- Second Row Connecting Lines -->
+  <line x1="200" y1="570" x2="200" y2="600" stroke="#ccc" stroke-width="2"/>
+  <line x1="512" y1="570" x2="512" y2="600" stroke="#ccc" stroke-width="2"/>
+  <line x1="200" y1="600" x2="356" y2="600" stroke="#ccc" stroke-width="2"/>
+  <line x1="512" y1="600" x2="356" y2="600" stroke="#ccc" stroke-width="2"/>
+  <line x1="356" y1="600" x2="356" y2="620" stroke="#ccc" stroke-width="2"/>
+  <line x1="512" y1="600" x2="668" y2="600" stroke="#ccc" stroke-width="2"/>
+  <line x1="668" y1="600" x2="668" y2="620" stroke="#ccc" stroke-width="2"/>
+  
+  <!-- CollapsingMergeTree -->
+  <rect x="216" y="620" width="280" height="140" rx="10" ry="10" fill="#f3e5f5" stroke="#ba68c8" stroke-width="2"/>
+  <text x="356" y="650" font-family="Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="middle" fill="#6a1b9a">CollapsingMergeTree</text>
+  
+  <!-- CollapsingMergeTree Illustration -->
+  <rect x="236" y="670" width="240" height="60" rx="5" ry="5" fill="#fff" stroke="#6a1b9a" stroke-width="1"/>
+  
+  <!-- Before and After -->
+  <rect x="246" y="680" width="70" height="20" fill="#e1bee7" rx="2" ry="2"/>
+  <text x="281" y="695" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">id=1, s=1</text>
+  
+  <rect x="246" y="705" width="70" height="20" fill="#e1bee7" rx="2" ry="2"/>
+  <text x="281" y="720" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#333">id=1, s=-1</text>
+  
+  <!-- Arrow -->
+  <line x1="326" y1="700" x2="356" y2="700" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="356,700 351,697 351,703" fill="#6a1b9a"/>
+  
+  <!-- After Merge -->
+  <text x="412" y="703" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#6a1b9a">(Rows Canceled)</text>
+  
+  <!-- VersionedCollapsingMergeTree -->
+  <rect x="528" y="620" width="280" height="140" rx="10" ry="10" fill="#e8eaf6" stroke="#7986cb" stroke-width="2"/>
+  <text x="668" y="650" font-family="Arial, sans-serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#3949ab">VersionedCollapsingMergeTree</text>
+  
+  <!-- VersionedCollapsingMergeTree Illustration -->
+  <rect x="548" y="670" width="240" height="60" rx="5" ry="5" fill="#fff" stroke="#3949ab" stroke-width="1"/>
+  
+  <!-- Before and After -->
+  <rect x="558" y="680" width="80" height="20" fill="#c5cae9" rx="2" ry="2"/>
+  <text x="598" y="695" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">id=1, s=1, v=1</text>
+  
+  <rect x="558" y="705" width="80" height="20" fill="#c5cae9" rx="2" ry="2"/>
+  <text x="598" y="720" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">id=1, s=-1, v=1</text>
+  
+  <!-- Arrow -->
+  <line x1="648" y1="700" x2="678" y2="700" stroke="#3949ab" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="678,700 673,697 673,703" fill="#3949ab"/>
+  
+  <!-- After Merge -->
+  <text x="738" y="703" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#3949ab">(Version Aware)</text>
+  
+  <!-- Common Features at Bottom -->
+  <rect x="60" y="768" width="904" height="0" rx="0" ry="0" fill="#f5f5f5" stroke="#ddd" stroke-width="0"/>
+  
+  <!-- Common Features Text -->
+  <rect x="112" y="770" width="800" height="40" rx="10" ry="10" fill="#f5f5f5" stroke="#ddd" stroke-width="2"/>
+  <text x="512" y="795" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">All engines inherit MergeTree's core features: partitioning, primary keys, TTL, sampling</text>
+</svg>

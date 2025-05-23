@@ -16,3 +16,17 @@ components.d.ts
 ./labs/session1/clickhouse_data/
 ./labs/session1/clickhouse_logs/
 ./config
+data/   
+clickhouse_data
+clickhouse_logs
+clickhouse_backups
+postgres_data
+postgres_logs
+postgres_backups
+postgres_config
+postgres
+grafana_data
+grafana_logs
+*.csv
+
+
