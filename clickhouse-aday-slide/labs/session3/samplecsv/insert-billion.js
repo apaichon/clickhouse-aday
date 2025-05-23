@@ -2,8 +2,8 @@ const { createClient } = require('@clickhouse/client');
 
 async function insertData() {
     const clickhouse = createClient({
-        url: 'http://localhost:10000',
-        database: 'default',
+        url: 'http://localhost:8123',
+        database: 'chat_payments',
         username: 'admin',
         password: 'admin',
         compression: {
@@ -16,15 +16,15 @@ async function insertData() {
         }
     });
 
-    const totalBatches = 1_000;
-    const batchSize = 1_000_000;  // Reduced batch size
-    
+    const totalBatches = 10;
+    const batchSize = 100_000;  // Reduced batch size
+
     console.time('Total Insert Time');
-    
+
     for (let batch = 0; batch < totalBatches; batch++) {
         try {
             console.time(`Batch ${batch + 1}`);
-            
+
             const query = `
                 INSERT INTO messages
                 (message_id, chat_id, user_id, sent_timestamp, message_type, content, has_attachment, sign)
@@ -61,10 +61,10 @@ async function insertData() {
 
             console.timeEnd(`Batch ${batch + 1}`);
             console.log(`Progress: ${((batch + 1) / totalBatches * 100).toFixed(2)}%`);
-            
+
             // Increased delay between batches
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
         } catch (error) {
             console.error(`Error in batch ${batch + 1}:`, error);
             if (error.code === 'ECONNREFUSED') {
@@ -79,12 +79,12 @@ async function insertData() {
             continue;
         }
     }
-    
+
     // Final flush
     await clickhouse.exec({
         query: 'SYSTEM FLUSH LOGS'
     });
-    
+
     console.timeEnd('Total Insert Time');
     await clickhouse.close();
 }

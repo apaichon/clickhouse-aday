@@ -1,0 +1,100 @@
+<svg viewBox="0 0 800 900" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="900" fill="#ffffff"/>
+  
+  <!-- Transport Layer -->
+  <text x="50" y="40" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#333">Transport</text>
+  <rect x="50" y="60" width="700" height="2" fill="#999" stroke-dasharray="10,5"/>
+  
+  <!-- Transport Layer Boxes -->
+  <rect x="80" y="80" width="280" height="80" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="220" y="110" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Cluster</text>
+  <text x="220" y="135" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Communication</text>
+  
+  <rect x="440" y="80" width="280" height="80" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="580" y="110" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Client</text>
+  <text x="580" y="135" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Communication</text>
+  
+  <!-- Arrow from left -->
+  <path d="M 20 120 L 70 120" fill="none" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrow between transport boxes -->
+  <path d="M 370 105 L 430 105" fill="none" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 430 135 L 370 135" fill="none" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Query Processor Section -->
+  <text x="50" y="220" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#333">Query Processor</text>
+  <rect x="50" y="240" width="700" height="2" fill="#999" stroke-dasharray="10,5"/>
+  
+  <!-- Query Parser Box -->
+  <rect x="80" y="260" width="640" height="60" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="400" y="295" font-family="Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#333">Query Parser</text>
+  
+  <!-- Query Optimizer Box -->
+  <rect x="80" y="340" width="640" height="60" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="400" y="375" font-family="Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#333">Query Optimizer</text>
+  
+  <!-- Execution Engine Section -->
+  <text x="50" y="460" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#333">Execution Engine</text>
+  <rect x="50" y="480" width="700" height="2" fill="#999" stroke-dasharray="10,5"/>
+  
+  <!-- Arrow to Execution Engine -->
+  <path d="M 400 410 L 400 440" fill="none" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Execution Engine Boxes -->
+  <rect x="80" y="500" width="280" height="80" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="220" y="530" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Remote</text>
+  <text x="220" y="555" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Execution</text>
+  
+  <rect x="440" y="500" width="280" height="80" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="580" y="530" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Local</text>
+  <text x="580" y="555" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Execution</text>
+  
+  <!-- Arrow from left to Remote Execution -->
+  <path d="M 20 540 L 70 540" fill="none" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrow between execution boxes -->
+  <path d="M 370 525 L 430 525" fill="none" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 430 555 L 370 555" fill="none" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Storage Engine Section -->
+  <text x="50" y="640" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#333">Storage Engine</text>
+  <rect x="50" y="660" width="700" height="2" fill="#999" stroke-dasharray="10,5"/>
+  
+  <!-- Arrow to Storage Engine -->
+  <path d="M 400 590 L 400 620" fill="none" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Storage Engine Top Row -->
+  <rect x="80" y="680" width="280" height="60" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="220" y="705" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Transaction</text>
+  <text x="220" y="725" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Manager</text>
+  
+  <rect x="440" y="680" width="280" height="60" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="580" y="705" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Lock</text>
+  <text x="580" y="725" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Manager</text>
+  
+  <!-- Access Methods Box -->
+  <rect x="80" y="760" width="640" height="50" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="400" y="790" font-family="Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#333">Access Methods</text>
+  
+  <!-- Storage Engine Bottom Row -->
+  <rect x="80" y="830" width="280" height="60" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="220" y="855" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Buffer Manager</text>
+  
+  <rect x="440" y="830" width="280" height="60" fill="white" stroke="#333" stroke-width="2"/>
+  <text x="580" y="855" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Recovery</text>
+  <text x="580" y="875" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Manager</text>
+  
+  <!-- Dashed border boxes for each section -->
+  <rect x="70" y="70" width="660" height="100" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="10,5"/>
+  <rect x="70" y="250" width="660" height="160" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="10,5"/>
+  <rect x="70" y="490" width="660" height="100" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="10,5"/>
+  <rect x="70" y="670" width="660" height="230" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="10,5"/>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333"/>
+    </marker>
+  </defs>
+</svg>

@@ -100,6 +100,22 @@ image: ./images/session1/stack-integration-graph.svg
 - Real-time query processing
 - High performance and scalability
 
+
+---
+layout: default
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+# Fundamental Database Architecture
+
+<div style="display: flex; justify-content: center; align-items: center; margin: 0.5rem auto;">
+  <img src="./images/session1/database_architecture_diagram.svg" style="width: 100%; height: 400px;" />
+</div>
+
+
 ---
 layout: default
 ---
@@ -160,27 +176,39 @@ layout: default
 
     services:
     clickhouse:
+
         image: clickhouse/clickhouse-server:latest
-        container_name: clickhouse-labs
+        container_name: clickhouse
         ports:
-        - "${CLICKHOUSE_PORT:-8123}:8123"       # HTTP port
-        - "${CLICKHOUSE_TCP_PORT:-9000}:9000"   # Native port
+        - "${CLICKHOUSE_PORT:-8123}:8123" # HTTP port
+        - "${CLICKHOUSE_TCP_PORT:-9000}:9000" # Native port
         volumes:
-        - ./data:/var/lib/clickhouse
-        - ./logs:/var/log/clickhouse-server
+        - ./clickhouse_data:/var/lib/clickhouse
+        - ./clickhouse_logs:/var/log/clickhouse-server
         - ./config/users.xml:/etc/clickhouse-server/users.d/users.xml:ro
+        - ./backup_disk.xml:/etc/clickhouse-server/config.d/backup_disk.xml:ro
+        - ./clickhouse_backups:/backups
         environment:
         - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
         - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-default}
         - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
-        ulimits:
-        nofile:
-            soft: 262144
-            hard: 262144
+    grafana:
+        image: grafana/grafana:latest
+        container_name: grafana
+        ports:
+        - "3000:3000"
+        volumes:
+        - ./grafana_data:/var/lib/grafana
+        environment:
+        - GF_SECURITY_ADMIN_USER=admin
+        - GF_SECURITY_ADMIN_PASSWORD=admin
+        restart: unless-stopped
 
     volumes:
     clickhouse_data:
     clickhouse_logs:
+    clickhouse_backups:
+    grafana_data:
 
 ```
 </div>

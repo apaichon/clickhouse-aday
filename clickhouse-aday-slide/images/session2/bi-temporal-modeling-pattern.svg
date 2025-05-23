@@ -73,7 +73,7 @@
   
   <!-- Product A - New Current -->
   <rect x="500" y="750" width="300" height="50" rx="5" fill="#bbdefb" stroke="#2F6687" stroke-width="2"/>
-  <text x="515" y="780" font-size="14" fill="#333">Product A ($100) - New</text>
+  <text x="515" y="780" font-size="14" fill="#333">Product A ($200) - New</text>
   <text x="790" y="780" font-size="14" text-anchor="end" fill="#333">is_current = TRUE</text>
   
   <!-- Labels for new record -->

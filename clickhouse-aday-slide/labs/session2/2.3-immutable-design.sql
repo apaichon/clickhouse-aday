@@ -78,7 +78,7 @@ SET valid_to  = (SELECT min(valid_from) FROM products_bitemporal WHERE product_i
 WHERE product_id = 1 AND valid_from < now();
 
 INSERT INTO products_bitemporal (product_id, name, price, valid_from, system_from, is_current)
-VALUES (1, 'Product A', 100.00, now(), now(), TRUE);
+VALUES (1, 'Product A', 200.00, now(), now(), TRUE);
 
 COMMIT;
 
