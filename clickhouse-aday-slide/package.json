@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "slidev build",
-    "dev": "slidev --open clickhouse.slides.md",
+    "dev": "slidev --open clickhouse.slides-v2.md",
     "export": "slidev export"
   },
   "dependencies": {
@@ -12,5 +12,8 @@
     "@slidev/theme-default": "latest",
     "@slidev/theme-seriph": "latest",
     "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "playwright-chromium": "^1.52.0"
   }
 }

@@ -1,13 +1,23 @@
--- 2. Filesystem-level backup
+-- =============================================
+-- Filesystem-level Backup (Manual)
+-- =============================================
+
 -- Stop ClickHouse service
+```bash
 $ systemctl stop clickhouse-server
+```
 
 -- Copy data directory
+```bash
 $ cp -r /var/lib/clickhouse /backup/clickhouse-data
+```
 
--- 3. Using BACKUP command (21.8+)
+-- =============================================
+-- Using BACKUP Command (ClickHouse 21.8+)
+-- =============================================
 
-/etc/clickhouse-server/config.d/backup_disk.xml
+-- Example disk configuration: /etc/clickhouse-server/config.d/backup_disk.xml
+```xml
 <clickhouse>
     <storage_configuration>
         <disks>
@@ -22,13 +32,28 @@ $ cp -r /var/lib/clickhouse /backup/clickhouse-data
         <allowed_path>/backups/</allowed_path>
     </backups>
 </clickhouse>
+```
 
-TO Disk('backups', 'chat_payments_backup')
-SETTINGS compression_level = 4;
+-- Create a backup of the entire database
+```sql
+BACKUP DATABASE chat_payments TO Disk('backups', 'chat_payments_backup')
+    SETTINGS compression_level = 4;
+```
 
-BACKUP TABLE chat_payments.attachments TO Disk('backups', 'attachements.zip')
+-- Create a backup of a single table
+```sql
+BACKUP TABLE chat_payments.attachments TO Disk('backups', 'attachments.zip');
+```
 
-select count(*) from chat_payments.attachments
-truncate table chat_payments.attachments 
+-- =============================================
+-- Restore Example
+-- =============================================
 
-RESTORE TABLE chat_payments.attachments FROM Disk('backups', 'attachements.zip')
+-- Check current row count
+SELECT count(*) FROM chat_payments.attachments;
+
+-- Truncate table before restore (optional, for demonstration)
+TRUNCATE TABLE chat_payments.attachments;
+
+-- Restore table from backup
+RESTORE TABLE chat_payments.attachments FROM Disk('backups', 'attachments.zip');

@@ -1,21 +1,24 @@
-# 1. Data Insertion Methods
+-- =============================================
+-- 1. Data Insertion Methods
+-- =============================================
 
-## INSERT FROM SELECT
--- Copy data from one table to another
+-- INSERT FROM SELECT: Copy data from one table to another
 CREATE TABLE attachments_backup AS attachments;
 
-Insert into attachments_backup
-  SELECT *
+INSERT INTO attachments_backup
+SELECT *
 FROM attachments
 WHERE toYear(uploaded_at) = 2023
   AND payment_status = 'paid'
   AND payment_amount > 1000;
 
+-- =============================================
+-- 2. Batch Processing
+-- =============================================
 
-# 2. Batch Processing
+-- Batch Insert Best Practices
 
-# Batch Insert Best Practices
-
+TRUNCATE TABLE messages;
 
 -- Prepare a large batch of messages
 INSERT INTO messages
@@ -35,9 +38,34 @@ SELECT
     'Batch generated message ' || toString(number) as content,
     rand() % 2 as has_attachment,
     1 as sign
-FROM numbers(1_000_000);  -- Generate 1 million rows
+FROM numbers(5_000_000)  
+SETTINGS 
+    max_insert_block_size = 10_000_000,
+    min_insert_block_size_rows = 100_000,
+    min_insert_block_size_bytes = 100_000_000;
 
--- Optimal batch size in production
-SET max_insert_block_size = 1000000;  -- Default is 1048576
-SET min_insert_block_size_rows = 10000;
-SET min_insert_block_size_bytes = 10000000;
+
+
+SELECT name, value, default
+FROM system.settings 
+WHERE name IN ('max_insert_block_size', 'min_insert_block_size_rows', 'min_insert_block_size_bytes');
+
+
+SET max_insert_block_size = DEFAULT;
+SET min_insert_block_size_rows = DEFAULT;
+SET min_insert_block_size_bytes = DEFAULT;
+
+xml
+<!-- In users.xml or settings profiles -->
+<profiles>
+    <default_profile>
+        <max_insert_block_size>1048576</max_insert_block_size>
+        <min_insert_block_size_rows>0</min_insert_block_size_rows>
+        <min_insert_block_size_bytes>0</min_insert_block_size_bytes>
+    </default_profile>
+</profiles>
+Then apply the profile:
+
+
+
+

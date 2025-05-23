@@ -1,18 +1,21 @@
+-- =============================================
+-- Chat Payments Database and Tables
+-- =============================================
 
-# Part 1: Database and Tables
--- Creating a new database
-CREATE DATABASE chat_payments;
+-- 1. Create Database
+CREATE DATABASE IF NOT EXISTS chat_payments;
 
--- Use the database
+-- 2. Use the Database
 USE chat_payments;
 
--- List all databases
+-- 3. List all databases and tables (for reference)
 SHOW DATABASES;
+SHOW TABLES;
 
-
-USE chat_payments;
-
-CREATE TABLE chat_payments.messages (
+-- =============================================
+-- 4. Messages Table
+-- =============================================
+CREATE TABLE messages (
     message_id UUID,
     chat_id UInt64,
     user_id UInt32,
@@ -26,12 +29,14 @@ CREATE TABLE chat_payments.messages (
     sign Int8,
     INDEX message_type_idx message_type TYPE bloom_filter GRANULARITY 1
 ) ENGINE = CollapsingMergeTree(sign)
-Primary Key (message_id)
+PRIMARY KEY (message_id)
 PARTITION BY toYYYYMM(sent_timestamp)
 ORDER BY (message_id, chat_id, sent_timestamp);
 
-
-CREATE TABLE chat_payments.attachments (
+-- =============================================
+-- 5. Attachments Table
+-- =============================================
+CREATE TABLE attachments (
     attachment_id UUID,
     message_id UUID,
     payment_amount Decimal64(2),
@@ -47,10 +52,13 @@ CREATE TABLE chat_payments.attachments (
     INDEX payment_status_idx payment_status TYPE set(0) GRANULARITY 1,
     INDEX currency_idx payment_currency TYPE set(0) GRANULARITY 1
 ) ENGINE = CollapsingMergeTree(sign)
-Primary Key (attachment_id)
+PRIMARY KEY (attachment_id)
 PARTITION BY toYYYYMM(uploaded_at)
 ORDER BY (attachment_id, message_id, uploaded_at);
 
+-- =============================================
+-- 6. Users Table
+-- =============================================
 CREATE TABLE users (
     user_id UInt64,
     username String,
@@ -58,6 +66,6 @@ CREATE TABLE users (
     company_id UInt16,
     created_at DateTime
 ) ENGINE = ReplacingMergeTree(created_at)
-Primary Key (user_id)
+PRIMARY KEY (user_id)
 ORDER BY user_id;
 

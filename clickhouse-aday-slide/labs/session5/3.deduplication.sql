@@ -1,5 +1,12 @@
 # Understanding Duplication Challenges
 
+/* insert into messages
+select * from messages limit 10; */
+
+-- =============================================
+-- Check for duplicate messages
+-- =============================================
+
 SELECT
     message_id,
     COUNT(*) as count
@@ -22,9 +29,9 @@ ORDER BY count DESC;
 ## Basic Implementation
 
 -- Using ReplacingMergeTree for payment attachments
-drop table attachments_dedup
+drop table if exists attachments_dedup
 
-CREATE TABLE attachments_dedup
+CREATE TABLE if not exists attachments_dedup
 (
    attachment_id UUID,
     message_id UUID,
@@ -45,7 +52,7 @@ ORDER BY (message_id, attachment_id);
 -- Fill the table with deduplicated data
 INSERT INTO attachments_dedup
 SELECT *
-FROM attachments
+FROM attachments limit 10;
 
 SELECT
     message_id,
@@ -54,13 +61,6 @@ FROM attachments_dedup FINAL
 GROUP BY message_id
 HAVING count > 1
 ORDER BY count DESC;
-
-
-insert into attachments_dedup
-select * from attachments_dedup 
-where attachment_id = 'c9e6be4b-3a7b-45de-8003-b68b027736f7'
-ORDER BY attachment_id;
-
 
 
 ## Force Merge for Deduplication
@@ -74,3 +74,5 @@ SELECT
 FROM attachments_dedup
 GROUP BY attachment_id
 HAVING count > 1;
+
+
