@@ -1,0 +1,405 @@
+<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background and Definitions -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc"/>
+      <stop offset="100%" style="stop-color:#e2e8f0"/>
+    </linearGradient>
+    
+    <!-- Lock gradients -->
+    <linearGradient id="exclusiveLockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc2626"/>
+      <stop offset="100%" style="stop-color:#991b1b"/>
+    </linearGradient>
+    
+    <linearGradient id="sharedLockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#1d4ed8"/>
+    </linearGradient>
+    
+    <linearGradient id="waitingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#d97706"/>
+    </linearGradient>
+    
+    <linearGradient id="databaseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#059669"/>
+    </linearGradient>
+    
+    <!-- Filters -->
+    <filter id="dropShadow">
+      <feDropShadow dx="3" dy="6" stdDeviation="4" flood-opacity="0.2"/>
+    </filter>
+    
+    <filter id="glowEffect">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Arrow markers -->
+    <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+    </marker>
+    
+    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    
+    <marker id="arrowOrange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/>
+    </marker>
+    
+    <!-- Animation for lock pulse -->
+    <animate id="lockPulse" attributeName="r" values="25;30;25" dur="2s" repeatCount="indefinite"/>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1400" height="900" fill="url(#bgGradient)"/>
+  
+  <!-- Title -->
+  <text x="700" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#1e293b">
+    Database Exclusive Lock &amp; Transaction Control
+  </text>
+  <text x="700" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#64748b">
+    Concurrent Read-for-Update Operations with Lock Management
+  </text>
+  
+  <!-- Database Resource (Center) -->
+  <g id="database-resource" transform="translate(600, 400)">
+    <!-- Database cylinder -->
+    <ellipse cx="0" cy="-40" rx="80" ry="20" fill="url(#databaseGrad)" filter="url(#dropShadow)"/>
+    <rect x="-80" y="-40" width="160" height="80" fill="url(#databaseGrad)"/>
+    <ellipse cx="0" cy="40" rx="80" ry="20" fill="#047857"/>
+    
+    <!-- Database label -->
+    <text x="0" y="-10" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+      DATABASE
+    </text>
+    <text x="0" y="10" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">
+      Shared Resource
+    </text>
+    
+    <!-- Lock mechanism overlay -->
+    <circle cx="0" cy="0" r="25" fill="url(#exclusiveLockGrad)" opacity="0.8" filter="url(#glowEffect)">
+      <animate attributeName="r" values="25;30;25" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- Lock icon -->
+    <g transform="translate(-8, -12)">
+      <rect x="0" y="8" width="16" height="12" rx="2" fill="white" stroke="none"/>
+      <path d="M 4 8 Q 4 4 8 4 Q 12 4 12 8" stroke="white" stroke-width="2" fill="none"/>
+      <circle cx="8" cy="12" r="2" fill="#dc2626"/>
+    </g>
+    
+    <text x="0" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white">
+      EXCLUSIVE LOCK
+    </text>
+  </g>
+  
+  <!-- Transaction 1 (Read-for-Update - Active) -->
+  <g id="transaction-1" transform="translate(200, 200)">
+    <!-- Transaction box -->
+    <rect x="0" y="0" width="180" height="120" rx="12" fill="url(#exclusiveLockGrad)" filter="url(#dropShadow)"/>
+    
+    <!-- Transaction header -->
+    <rect x="0" y="0" width="180" height="30" rx="12" fill="#7f1d1d"/>
+    <text x="90" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+      Transaction 1 (Active)
+    </text>
+    
+    <!-- Transaction details -->
+    <text x="15" y="50" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      SELECT ... FOR UPDATE
+    </text>
+    <text x="15" y="70" font-family="Arial, sans-serif" font-size="11" fill="#fecaca">
+      Status: Lock Acquired
+    </text>
+    <text x="15" y="85" font-family="Arial, sans-serif" font-size="11" fill="#fecaca">
+      Mode: Exclusive
+    </text>
+    <text x="15" y="100" font-family="Arial, sans-serif" font-size="11" fill="#fecaca">
+      Intent: READ + WRITE
+    </text>
+    
+    <!-- Connection line to database -->
+    <path d="M 180 60 Q 350 60 420 350" stroke="#dc2626" stroke-width="4" 
+          marker-end="url(#arrowRed)" stroke-dasharray="none" fill="none"/>
+    
+    <!-- Lock granted indicator -->
+    <g transform="translate(300, 40)">
+      <circle cx="0" cy="0" r="15" fill="#16a34a"/>
+      <path d="M -8 0 L -3 5 L 8 -6" stroke="white" stroke-width="3" fill="none"/>
+      <text x="0" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#16a34a">
+        GRANTED
+      </text>
+    </g>
+  </g>
+  
+  <!-- Transaction 2 (Waiting for Lock) -->
+  <g id="transaction-2" transform="translate(200, 400)">
+    <!-- Transaction box -->
+    <rect x="0" y="0" width="180" height="120" rx="12" fill="url(#waitingGrad)" filter="url(#dropShadow)"/>
+    
+    <!-- Transaction header -->
+    <rect x="0" y="0" width="180" height="30" rx="12" fill="#92400e"/>
+    <text x="90" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+      Transaction 2 (Waiting)
+    </text>
+    
+    <!-- Transaction details -->
+    <text x="15" y="50" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      SELECT ... FOR UPDATE
+    </text>
+    <text x="15" y="70" font-family="Arial, sans-serif" font-size="11" fill="#fed7aa">
+      Status: Waiting
+    </text>
+    <text x="15" y="85" font-family="Arial, sans-serif" font-size="11" fill="#fed7aa">
+      Mode: Exclusive (Requested)
+    </text>
+    <text x="15" y="100" font-family="Arial, sans-serif" font-size="11" fill="#fed7aa">
+      Queue Position: 1
+    </text>
+    
+    <!-- Connection line to database (blocked) -->
+    <path d="M 180 60 Q 350 200 420 380" stroke="#f59e0b" stroke-width="4" 
+          stroke-dasharray="10,5" marker-end="url(#arrowOrange)" fill="none"/>
+    
+    <!-- Blocked indicator -->
+    <g transform="translate(300, 240)">
+      <circle cx="0" cy="0" r="15" fill="#dc2626"/>
+      <rect x="-8" y="-2" width="16" height="4" fill="white"/>
+      <text x="0" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#dc2626">
+        BLOCKED
+      </text>
+    </g>
+  </g>
+  
+  <!-- Transaction 3 (Read Only - Blocked) -->
+  <g id="transaction-3" transform="translate(200, 600)">
+    <!-- Transaction box -->
+    <rect x="0" y="0" width="180" height="120" rx="12" fill="url(#sharedLockGrad)" filter="url(#dropShadow)"/>
+    
+    <!-- Transaction header -->
+    <rect x="0" y="0" width="180" height="30" rx="12" fill="#1e40af"/>
+    <text x="90" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
+      Transaction 3 (Blocked)
+    </text>
+    
+    <!-- Transaction details -->
+    <text x="15" y="50" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+      SELECT (Read Only)
+    </text>
+    <text x="15" y="70" font-family="Arial, sans-serif" font-size="11" fill="#bfdbfe">
+      Status: Waiting
+    </text>
+    <text x="15" y="85" font-family="Arial, sans-serif" font-size="11" fill="#bfdbfe">
+      Mode: Shared (Requested)
+    </text>
+    <text x="15" y="100" font-family="Arial, sans-serif" font-size="11" fill="#bfdbfe">
+      Queue Position: 2
+    </text>
+    
+    <!-- Connection line to database (blocked) -->
+    <path d="M 180 60 Q 350 400 420 420" stroke="#2563eb" stroke-width="4" 
+          stroke-dasharray="10,5" marker-end="url(#arrowBlue)" fill="none"/>
+    
+    <!-- Blocked indicator -->
+    <g transform="translate(300, 440)">
+      <circle cx="0" cy="0" r="15" fill="#dc2626"/>
+      <rect x="-8" y="-2" width="16" height="4" fill="white"/>
+      <text x="0" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#dc2626">
+        BLOCKED
+      </text>
+    </g>
+  </g>
+  
+  <!-- Lock Queue Visualization -->
+  <g id="lock-queue" transform="translate(900, 300)">
+    <rect x="0" y="0" width="250" height="300" rx="15" fill="#374151" filter="url(#dropShadow)"/>
+    
+    <!-- Queue header -->
+    <rect x="0" y="0" width="250" height="40" rx="15" fill="#1f2937"/>
+    <text x="125" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+      Lock Queue Manager
+    </text>
+    
+    <!-- Current lock holder -->
+    <g transform="translate(20, 60)">
+      <rect x="0" y="0" width="210" height="40" rx="8" fill="#dc2626" opacity="0.9"/>
+      <text x="15" y="15" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">
+        🔒 ACTIVE: Transaction 1
+      </text>
+      <text x="15" y="30" font-family="Arial, sans-serif" font-size="10" fill="#fecaca">
+        Exclusive Lock - READ/WRITE Access
+      </text>
+    </g>
+    
+    <!-- Waiting queue -->
+    <text x="20" y="130" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#d1d5db">
+      Waiting Queue:
+    </text>
+    
+    <!-- Queue item 1 -->
+    <g transform="translate(20, 150)">
+      <rect x="0" y="0" width="210" height="35" rx="6" fill="#f59e0b" opacity="0.8"/>
+      <text x="15" y="15" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">
+        ⏳ WAITING: Transaction 2
+      </text>
+      <text x="15" y="28" font-family="Arial, sans-serif" font-size="9" fill="#fed7aa">
+        Exclusive Lock Request - Position #1
+      </text>
+    </g>
+    
+    <!-- Queue item 2 -->
+    <g transform="translate(20, 195)">
+      <rect x="0" y="0" width="210" height="35" rx="6" fill="#2563eb" opacity="0.8"/>
+      <text x="15" y="15" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">
+        ⏳ WAITING: Transaction 3
+      </text>
+      <text x="15" y="28" font-family="Arial, sans-serif" font-size="9" fill="#bfdbfe">
+        Shared Lock Request - Position #2
+      </text>
+    </g>
+    
+    <!-- Queue statistics -->
+    <g transform="translate(20, 250)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#9ca3af">
+        Queue Stats:
+      </text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">
+        • Active Locks: 1
+      </text>
+      <text x="0" y="28" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">
+        • Waiting: 2
+      </text>
+      <text x="0" y="41" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">
+        • Avg Wait Time: 2.3s
+      </text>
+    </g>
+  </g>
+  
+  <!-- Transaction Lifecycle -->
+  <g id="transaction-lifecycle" transform="translate(100, 100)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#374151">
+      Transaction Lifecycle:
+    </text>
+    
+    <!-- Step 1 -->
+    <g transform="translate(0, 30)">
+      <circle cx="15" cy="0" r="12" fill="#10b981"/>
+      <text x="15" y="5" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">1</text>
+      <text x="35" y="5" font-family="Arial, sans-serif" font-size="12" fill="#374151">
+        BEGIN TRANSACTION
+      </text>
+    </g>
+    
+    <!-- Step 2 -->
+    <g transform="translate(0, 55)">
+      <circle cx="15" cy="0" r="12" fill="#f59e0b"/>
+      <text x="15" y="5" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">2</text>
+      <text x="35" y="5" font-family="Arial, sans-serif" font-size="12" fill="#374151">
+        REQUEST LOCK (SELECT FOR UPDATE)
+      </text>
+    </g>
+    
+    <!-- Step 3 -->
+    <g transform="translate(0, 80)">
+      <circle cx="15" cy="0" r="12" fill="#dc2626"/>
+      <text x="15" y="5" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">3</text>
+      <text x="35" y="5" font-family="Arial, sans-serif" font-size="12" fill="#374151">
+        ACQUIRE EXCLUSIVE LOCK
+      </text>
+    </g>
+    
+    <!-- Step 4 -->
+    <g transform="translate(200, 80)">
+      <circle cx="15" cy="0" r="12" fill="#8b5cf6"/>
+      <text x="15" y="5" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">4</text>
+      <text x="35" y="5" font-family="Arial, sans-serif" font-size="12" fill="#374151">
+        PERFORM READ/WRITE OPERATIONS
+      </text>
+    </g>
+    
+    <!-- Step 5 -->
+    <g transform="translate(200, 55)">
+      <circle cx="15" cy="0" r="12" fill="#16a34a"/>
+      <text x="15" y="5" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">5</text>
+      <text x="35" y="5" font-family="Arial, sans-serif" font-size="12" fill="#374151">
+        COMMIT/ROLLBACK
+      </text>
+    </g>
+    
+    <!-- Step 6 -->
+    <g transform="translate(200, 30)">
+      <circle cx="15" cy="0" r="12" fill="#6b7280"/>
+      <text x="15" y="5" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">6</text>
+      <text x="35" y="5" font-family="Arial, sans-serif" font-size="12" fill="#374151">
+        RELEASE LOCK
+      </text>
+    </g>
+    
+    <!-- Flow arrows -->
+    <path d="M 30 30 L 30 55" stroke="#374151" stroke-width="2" marker-end="url(#arrowRed)"/>
+    <path d="M 30 55 L 30 80" stroke="#374151" stroke-width="2" marker-end="url(#arrowRed)"/>
+    <path d="M 45 80 L 185 80" stroke="#374151" stroke-width="2" marker-end="url(#arrowRed)"/>
+    <path d="M 215 80 L 215 55" stroke="#374151" stroke-width="2" marker-end="url(#arrowRed)"/>
+    <path d="M 215 55 L 215 30" stroke="#374151" stroke-width="2" marker-end="url(#arrowRed)"/>
+  </g>
+  
+  <!-- Lock Types Legend -->
+  <g id="lock-legend" transform="translate(900, 650)">
+    <rect x="0" y="0" width="300" height="150" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" filter="url(#dropShadow)"/>
+    
+    <text x="15" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">
+      Lock Types &amp; Behavior
+    </text>
+    
+    <!-- Exclusive lock info -->
+    <g transform="translate(15, 45)">
+      <rect x="0" y="0" width="20" height="15" fill="#dc2626"/>
+      <text x="30" y="12" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#374151">
+        Exclusive Lock (X)
+      </text>
+      <text x="30" y="25" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">
+        • Blocks all other locks (shared and exclusive)
+      </text>
+      <text x="30" y="37" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">
+        • Used for SELECT FOR UPDATE, INSERT, UPDATE, DELETE
+      </text>
+    </g>
+    
+    <!-- Shared lock info -->
+    <g transform="translate(15, 90)">
+      <rect x="0" y="0" width="20" height="15" fill="#2563eb"/>
+      <text x="30" y="12" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#374151">
+        Shared Lock (S)
+      </text>
+      <text x="30" y="25" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">
+        • Allows multiple concurrent reads
+      </text>
+      <text x="30" y="37" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">
+        • Blocks exclusive locks, permits other shared locks
+      </text>
+    </g>
+  </g>
+  
+  <!-- Performance Impact Note -->
+  <g id="performance-note" transform="translate(50, 800)">
+    <rect x="0" y="0" width="600" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+    <g transform="translate(15, 15)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#92400e">
+        ⚠️ Performance Consideration:
+      </text>
+      <text x="0" y="18" font-family="Arial, sans-serif" font-size="12" fill="#78350f">
+        Exclusive locks can cause significant blocking in high-concurrency environments.
+      </text>
+      <text x="0" y="32" font-family="Arial, sans-serif" font-size="12" fill="#78350f">
+        Consider using optimistic locking or row-level locking strategies when possible.
+      </text>
+    </g>
+  </g>
+</svg>

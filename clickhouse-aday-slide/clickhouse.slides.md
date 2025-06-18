@@ -86,11 +86,8 @@ layout: section
 
 ---
 layout: image-right
-image: ./images/session1/clickhouse_an_open_source_column_oriented_database_management_system.jpeg
+image: ./images/session1/stack-integration-graph.svg
 ---
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
 
 
@@ -103,6 +100,7 @@ image: ./images/session1/clickhouse_an_open_source_column_oriented_database_mana
 - Real-time query processing
 - High performance and scalability
 
+
 ---
 layout: default
 ---
@@ -110,23 +108,13 @@ layout: default
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
+
 
 
 <div style="display: flex; justify-content: center; align-items: center; margin: 0.5rem auto;">
-  <img src="./images/session1/clickhouse-features.svg" style="width: 90%; height: 450px;" />
+  <img src="./images/session1/database_architecture_infographic.svg" style="width: 100%; height: 500px;" />
 </div>
 
----
-layout: default
----
-
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-<div style="display: flex; justify-content: center; align-items: center; margin: 2rem auto;">
-  <img src="./images/session1/cloudflare-citus-to-clickhouse.svg" style="width: 90%; height: 480px;" />
-</div>
 
 ---
 layout: default
@@ -137,8 +125,80 @@ layout: default
 </div>
 
 
-<div style="display: flex; justify-content: center; align-items: center; margin: 2rem auto;">
-  <img src="./images/session1/uber-elasticsearch-to-clickhouse.svg" style="width: 90%; height: 450px;" />
+<div style="display: flex; justify-content: center; align-items: center; margin: -2rem auto;">
+  <img src="./images/session1/clickhouse-features.svg" style="width: 90%; height: 500px;" />
+</div>
+
+---
+layout: default
+---
+
+<div style="position: absolute; top: 1rem; right: -2rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+<div style="display: flex; justify-content: center; align-items: center; margin: -2rem auto;">
+  <img src="./images/session1/cloudflare-citus-to-clickhouse.svg" style="width: 90%; height: 550px;" />
+</div>
+
+---
+layout: default
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+
+<div style="display: flex; justify-content: center; align-items: center; margin: -2rem auto;">
+  <img src="./images/session1/uber-elasticsearch-to-clickhouse.svg" style="width: 90%; height: 500px;" />
+</div>
+
+
+
+---
+layout: default
+---
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+  <img src="./images/session1/clickhouse-architecture.svg" style="width: 90%; height: 500px;" />
+
+---
+layout: default
+---
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+
+<div style="display: flex; justify-content: center; align-items: center; margin:-1rem auto;">
+  <img src="./images/session2/clickhouse-column-oriented.svg" style="width: 90%; height: 500px;" />
+</div>
+
+
+---
+layout: default
+---
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+
+<div style="display: flex; justify-content: center; align-items: center; margin:-2rem auto;">
+  <img src="./images/session2/clickhouse-granules-infographic.svg" style="width: 90%; height: 500px;" />
+</div>
+
+---
+layout: default
+---
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+<div style="display: flex; justify-content: center; align-items: center; margin:-2rem auto;">
+  <img src="./images/session2/clickhouse-granule-structure-improved.svg" style="width: 90%; height: 500px;" />
 </div>
 
 ---
@@ -163,27 +223,39 @@ layout: default
 
     services:
     clickhouse:
+
         image: clickhouse/clickhouse-server:latest
-        container_name: clickhouse-labs
+        container_name: clickhouse
         ports:
-        - "${CLICKHOUSE_PORT:-8123}:8123"       # HTTP port
-        - "${CLICKHOUSE_TCP_PORT:-9000}:9000"   # Native port
+        - "${CLICKHOUSE_PORT:-8123}:8123" # HTTP port
+        - "${CLICKHOUSE_TCP_PORT:-9000}:9000" # Native port
         volumes:
-        - ./data:/var/lib/clickhouse
-        - ./logs:/var/log/clickhouse-server
+        - ./clickhouse_data:/var/lib/clickhouse
+        - ./clickhouse_logs:/var/log/clickhouse-server
         - ./config/users.xml:/etc/clickhouse-server/users.d/users.xml:ro
+        - ./backup_disk.xml:/etc/clickhouse-server/config.d/backup_disk.xml:ro
+        - ./clickhouse_backups:/backups
         environment:
         - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
         - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-default}
         - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
-        ulimits:
-        nofile:
-            soft: 262144
-            hard: 262144
+    grafana:
+        image: grafana/grafana:latest
+        container_name: grafana
+        ports:
+        - "3000:3000"
+        volumes:
+        - ./grafana_data:/var/lib/grafana
+        environment:
+        - GF_SECURITY_ADMIN_USER=admin
+        - GF_SECURITY_ADMIN_PASSWORD=admin
+        restart: unless-stopped
 
     volumes:
     clickhouse_data:
     clickhouse_logs:
+    clickhouse_backups:
+    grafana_data:
 
 ```
 </div>
@@ -191,53 +263,27 @@ layout: default
 ---
 layout: default
 ---
+
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-  <img src="./images/session1/clickhouse-architecture.svg" style="width: 90%; height: 450px;" />
+# Connect with Web Browser on Port 8123
+
+<img src="./images/session1/clickhouse-http-server.png" />
 
 ---
 layout: default
 ---
+
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Why Clickhouse query so fast ?
+# Connect by SQLTools on VSCode
 
-<div style="display: flex; justify-content: center; align-items: center; margin:0rem auto;">
-  <img src="./images/session2/clickhouse-column-oriented.svg" style="width: 90%; height: 400px;" />
-</div>
+<img src="./images/session1/sqltools-vscode.png" />
 
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-
-# Granule
-
-<div style="display: flex; justify-content: center; align-items: center; margin:0rem auto;">
-  <img src="./images/session2/clickhouse-granules-infographic.svg" style="width: 90%; height: 400px;" />
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-
-# Granule Structure
-
-<div style="display: flex; justify-content: center; align-items: center; margin:0rem auto;">
-  <img src="./images/session2/clickhouse-granule-structure-improved.svg" style="width: 90%; height: 400px;" />
-</div>
 
 ---
 layout: section
@@ -304,7 +350,7 @@ layout: default
 
 # 2.1 Native Types
 
- <img src="./images/session2/native-data-types.png" style="width: 90%; height: 450px;" />
+ <img src="./images/session2/native_data_types_svg.svg" style="width: 90%; height: 450px;" />
 
 
 ---
@@ -583,53 +629,6 @@ CREATE TABLE conversion_example (
 ```
 
 ---
-layout: two-cols
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Type Selection Best Practices
-
-<div class="text-sm" style="height: 400px; overflow-y: auto;">
-
-## Use the most compact type possible
-- `UInt8` instead of `Int64` for small positive numbers
-- `Date` instead of `DateTime` if time not needed
-- `FixedString(N)` for known-length strings
-
-## Consider column cardinality
-- `LowCardinality(String)` for columns with few unique values
-- `Enum8/16` for fixed set of possible values
-
-## Avoid unnecessary `Nullable` types
-- Has performance cost (extra memory, slower processing)
-- Consider default values instead when possible
-
-</div>
-
-::right::
-
-<div class="text-sm mt-12">
-
-## Optimize for query patterns
-- Match types to how data will be queried
-- Use appropriate Date/DateTime types for time-series data
-
-## Storage impact
-- Smaller types = less disk space & memory
-- Better compression = better performance
-- More efficient types = faster calculations
-
-## Balance precision and performance
-- `Float32` vs `Float64`
-- `Decimal64(2)` vs `Decimal128(4)`
-- Higher precision = more storage & processing cost
-
-</div>
-
-
----
 layout: default
 ---
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
@@ -639,8 +638,8 @@ layout: default
 
 ## 2.2 Complex Data Types
 
-<div style="display: flex; justify-content: center; align-items: center; margin: 2rem auto;">
-  <img src="./images/session2/complex-types.svg" style="width: 90%; height: 450px;" />
+<div style="display: flex; justify-content: center; align-items: center; margin: 0rem auto;">
+  <img src="./images/session2/complex_data_types_svg.svg" style="width: 90%; height: 450px;" />
 </div>
 
 ---
@@ -1249,8 +1248,323 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
+## 2.3 ClickHouse's Schema and Immutable Design
 
-## 2.3 Table engines 
+- Uses an **immutable storage model** where data parts are written once
+- Parts are never modified (only merged later through background processes)
+- No traditional ACID transactions with locking
+- Allows duplicate values in "primary keys" (which primarily determine physical sorting)
+- Achieves extremely high write throughput for batch operations
+- Excels at analytical queries over large datasets
+
+```mermaid
+graph TD
+    A[INSERT Batch 1] --> D[Data Part 1]
+    B[INSERT Batch 2] --> E[Data Part 2]
+    C[INSERT Batch 3] --> F[Data Part 3]
+    D --> G[Background Merge]
+    E --> G
+    F --> G
+    G --> H[Single Merged Part]
+    style D fill:#f9f,stroke:#333,stroke-width:2px
+    style E fill:#f9f,stroke:#333,stroke-width:2px
+    style F fill:#f9f,stroke:#333,stroke-width:2px
+    style H fill:#bbf,stroke:#333,stroke-width:4px
+```
+
+---
+layout: default
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+<div style="height:450px;overflow-y:auto;">
+<img src="./images/session2/db-lock.svg" />
+</div>
+
+
+---
+layout: default
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+# Comparing Database Design Patterns
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Traditional RDBMS
+- Mutable records (UPDATE in place)
+- Strict constraints (UNIQUE, FK)
+- ACID transactions with locking
+- Row-oriented storage
+- Complex index structures
+
+</div>
+<div>
+
+## Immutable Designs
+- Append-only data (no UPDATE)
+- Event-based or time-based versioning
+- Optimistic concurrency
+- Columnar or specialized storage
+- Time-based partitioning & organization
+
+</div>
+</div>
+
+<div class="pt-6">
+<v-click>
+
+### Examine three key immutable patterns:
+- **Event Sourcing**: Storing domain events as source of truth
+- **Temporal Tables**: Tracking time validity of facts
+- **Snapshot Pattern**: Periodic state captures
+
+</v-click>
+</div>
+
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+<div style="height:450px;overflow-y:auto;">
+<img src="./images/session2/event-sourcing-pattern.svg" />
+</div>
+
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+<div style="height:450px;overflow-y:auto;">
+<img src="./images/session2/event-sourcing-postgres.svg" />
+</div>
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+<div style="height:450px;overflow-y:auto;">
+<img src="./images/session2/bi-temporal-modeling.svg" />
+</div>
+
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+<div style="height:450px;overflow-y:auto;">
+<img src="./images/session2/bi-temporal-modeling-pattern.svg" />
+</div>
+
+
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+<div style="height:450px;overflow-y:auto;">
+<img src="./images/session2/snapshot-pattern.svg" />
+</div>
+
+---
+layout: default
+---
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+
+## 2.4 Schema Design for Life Insurance Apps
+
+### Conceptaul Design - Design Schema by `Noun`, `Verb` and  `Relationship` Technique
+
+<div  style="overflow-y:auto;transform: scale(0.55); transform-origin: top left;">
+```mermaid 
+erDiagram
+    customers {
+     
+    }
+
+    agents {
+       
+    }
+
+    employees {
+      
+    }
+
+    oic {
+       
+    }
+
+    policies {
+        
+    }
+
+    claims {
+        
+    }
+
+    policy_documents {
+      
+    }
+
+    customers ||--o{ policies : "has"
+    agents ||--o{ policies : "sells"
+    policies ||--o{ claims : "generates"
+    policies ||--o{ policy_documents : "contains"
+    customers ||--o{ claims : "files"
+    employees ||--o{ policies: "Employees perform underwriting on multiple policies"
+    employees ||--o{ policy_documents: "Employees review policy documents"
+    oic ||--o{ claims: "OIC audits claims processing"
+    oic ||--o{ agents: "OIC audits agent activities"
+    oic ||--o{ employees: "OIC audits employee activities"
+    oic ||--o{ policy_documents: "OIC validates policy documents"
+    
+    
+```
+</div>
+
+
+---
+layout: default
+---
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+# Logical and Physical Design
+
+<div  style="overflow-y:auto;transform: scale(1); transform-origin: top left;">
+```mermaid 
+erDiagram
+    customers {
+        UInt64 customer_id
+        String first_name
+        String last_name
+        String email
+        String phone
+        Date date_of_birth
+        String address
+        LowCardinality(String) city
+        LowCardinality(String) state
+        FixedString(10) zip_code
+        Enum8 customer_type
+        DateTime created_at
+        UInt8 is_active
+        Int8 _sign
+    }
+
+    agents {
+        UInt32 agent_id
+        String first_name
+        String last_name
+        String email
+        String phone
+        String license_number
+        LowCardinality(String) territory
+        Decimal64(4) commission_rate
+        Date hire_date
+        UInt8 is_active
+        Int8 _sign
+    }
+
+    employees {
+        UInt32 employee_id
+        String first_name
+        String last_name
+        String email
+        String phone
+        String employee_number
+        LowCardinality(String) department
+        Decimal64(4) salary
+        Date hire_date
+        UInt8 is_active
+        Int8 _sign
+    }
+
+    oic {
+        UInt32 oic_id
+        String first_name
+        String last_name
+        String email
+        String phone
+        String license_number
+        LowCardinality(String) region
+        Decimal64(4) commission_rate
+        Date appointment_date
+        UInt8 is_active
+        Int8 _sign
+    }
+
+    policies {
+        UUID policy_id
+        UInt64 customer_id
+        UInt32 agent_id
+        Enum8 policy_type
+        String policy_number
+        Decimal64(2) coverage_amount
+        Decimal64(2) premium_amount
+        Decimal64(2) deductible_amount
+        Date start_date
+        Date end_date
+        Enum8 status
+        DateTime created_at
+        Int8 _sign
+    }
+
+    claims {
+        UUID claim_id
+        UUID policy_id
+        UInt64 customer_id
+        Enum8  claim_type
+        String claim_number
+        Date incident_date
+        DateTime reported_date
+        Decimal64(2) claim_amount
+        Decimal64(2) approved_amount
+        Enum8 claim_status
+        String description
+        UInt32 adjuster_id
+        Int8 _sign
+    }
+
+    policy_documents {
+        UUID document_id
+        UUID policy_id
+        Enum8 document_type
+        String file_path
+        UInt32 file_size
+        String content_type
+        DateTime upload_date
+        Date document_date
+        Int8 _sign
+    }
+```
+</div>
+
+---
+layout: default
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+## 2.5 Table engines 
 <div style="display: flex; justify-content: center; align-items: center; margin:0rem auto;">
   <img src="./images/session2/clickhouse-mergetree-engines-1024x768.svg" style="width: 90%; height: 450px;" />
 </div>
@@ -1268,18 +1582,20 @@ layout: two-cols
 <div class="text-sm">
 
 ## Use Case
-Managing product catalog where latest product information should replace old data.
+Life insurance policy master data with version control for policy updates.
 
 ```sql
-CREATE TABLE product_catalog (
-    product_id UInt32,
-    product_name String,
-    price Decimal(10,2),
-    stock_quantity Int32,
+CREATE TABLE policy_master (
+    policy_id UUID,
+    customer_id UInt64,
+    policy_number String,
+    coverage_amount Decimal(15,2),
+    premium_amount Decimal(10,2),
+    policy_status Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3),
     last_updated DateTime,
     version UInt32
 ) ENGINE = ReplacingMergeTree(version)
-PRIMARY KEY product_id;
+PRIMARY KEY policy_id;
 ```
 
 </div>
@@ -1290,18 +1606,20 @@ PRIMARY KEY product_id;
 
 ## Example Operations
 ```sql
--- Insert initial data
-INSERT INTO product_catalog VALUES
-(1, 'Laptop', 999.99, 50, 
- '2024-01-01 10:00:00', 1);
+-- Insert initial policy
+INSERT INTO policy_master VALUES
+('550e8400-e29b-41d4-a716-446655440000', 
+ 1001, 'LIFE-2024-001', 500000.00, 1200.00, 
+ 'Active', '2024-01-01 10:00:00', 1);
 
--- Update with new version
-INSERT INTO product_catalog VALUES
-(1, 'Laptop', 899.99, 45, 
- '2024-01-02 10:00:00', 2);
+-- Update premium after underwriting review
+INSERT INTO policy_master VALUES
+('550e8400-e29b-41d4-a716-446655440000', 
+ 1001, 'LIFE-2024-001', 500000.00, 1350.00, 
+ 'Active', '2024-01-15 14:30:00', 2);
 
--- After optimization
-OPTIMIZE TABLE product_catalog FINAL;
+-- After optimization, only latest version remains
+OPTIMIZE TABLE policy_master FINAL;
 ```
 
 </div>
@@ -1320,18 +1638,20 @@ layout: two-cols
 <div class="text-sm">
 
 ## Use Case
-Real-time inventory tracking with increment/decrement operations.
+Premium payment tracking with corrections and reversals.
 
 ```sql
-CREATE TABLE inventory_movements (
-    product_id UInt32,
-    warehouse_id UInt16,
-    quantity Int32,
-    operation_time DateTime,
-    sign Int8  -- 1 for add, -1 for subtract
+CREATE TABLE premium_transactions (
+    policy_id UUID,
+    transaction_id String,
+    amount Decimal(10,2),
+    transaction_type Enum8('Payment'=1, 'Refund'=2),
+    transaction_date DateTime,
+    payment_method String,
+    sign Int8  -- 1 for record, -1 for cancel
 ) ENGINE = CollapsingMergeTree(sign)
-ORDER BY (product_id, warehouse_id, 
-         operation_time);
+ORDER BY (policy_id, transaction_id, 
+         transaction_date);
 ```
 
 </div>
@@ -1342,20 +1662,26 @@ ORDER BY (product_id, warehouse_id,
 
 ## Example Operations
 ```sql
--- Receive inventory
-INSERT INTO inventory_movements VALUES
-(1, 1, 100, now(), 1);  -- Add 100
+-- Record premium payment
+INSERT INTO premium_transactions VALUES
+('550e8400-e29b-41d4-a716-446655440000',
+ 'TXN-001', 1200.00, 'Payment', now(), 
+ 'Credit Card', 1);
 
--- Record sale
-INSERT INTO inventory_movements VALUES
-(1, 1, -20, now(), 1);  -- Remove 20
+-- Record processing error (duplicate charge)
+INSERT INTO premium_transactions VALUES
+('550e8400-e29b-41d4-a716-446655440000',
+ 'TXN-002', 1200.00, 'Payment', now(), 
+ 'Credit Card', 1);
 
--- Cancel sale
-INSERT INTO inventory_movements VALUES
-(1, 1, 20, now(), -1);  -- Cancel removal
+-- Cancel duplicate transaction
+INSERT INTO premium_transactions VALUES
+('550e8400-e29b-41d4-a716-446655440000',
+ 'TXN-002', 1200.00, 'Payment', now(), 
+ 'Credit Card', -1);
 
 -- Check final state
-SELECT * FROM inventory_movements FINAL;
+SELECT * FROM premium_transactions FINAL;
 ```
 
 </div>
@@ -1373,18 +1699,19 @@ layout: two-cols
 <div class="text-sm">
 
 ## Use Case
-Daily sales aggregation for e-commerce analytics.
+Daily premium collection aggregation for financial reporting.
 
 ```sql
-CREATE TABLE daily_sales (
-    date Date,
-    product_id UInt32,
-    total_revenue Decimal(15,2),
-    items_sold UInt32,
-    return_count UInt32
+CREATE TABLE daily_premium_collection (
+    collection_date Date,
+    agent_id UInt32,
+    policy_type Enum8('Term'=1, 'Whole'=2, 'Universal'=3),
+    total_premiums Decimal(15,2),
+    policy_count UInt32,
+    commission_amount Decimal(10,2)
 ) ENGINE = SummingMergeTree()
-ORDER BY (date, product_id)
-PARTITION BY toYYYYMM(date);
+ORDER BY (collection_date, agent_id, policy_type)
+PARTITION BY toYYYYMM(collection_date);
 ```
 
 </div>
@@ -1395,20 +1722,91 @@ PARTITION BY toYYYYMM(date);
 
 ## Example Operations
 ```sql
--- Record sales
-INSERT INTO daily_sales VALUES
-('2024-01-01', 1, 1000.00, 10, 1),
-('2024-01-01', 1, 2000.00, 20, 2);
+-- Record morning collections
+INSERT INTO daily_premium_collection VALUES
+('2024-01-01', 101, 'Term', 5000.00, 4, 250.00),
+('2024-01-01', 101, 'Whole', 8000.00, 2, 480.00);
 
--- Add more sales
-INSERT INTO daily_sales VALUES
-('2024-01-01', 1, 1000.00, 10, 1);
+-- Record afternoon collections  
+INSERT INTO daily_premium_collection VALUES
+('2024-01-01', 101, 'Term', 3000.00, 2, 150.00),
+('2024-01-01', 101, 'Universal', 12000.00, 1, 720.00);
 
--- View aggregated results
-SELECT * FROM daily_sales FINAL;
+-- View aggregated daily totals
+SELECT * FROM daily_premium_collection FINAL;
 ```
 
 </div>
+
+---
+
+# VersionedCollapsingMergeTree
+
+A powerful ClickHouse table engine for tracking versioned, reversible events in life insurance operations.
+
+## How it works
+
+- **sign**: Indicates policy status change (`1`) or reversal (`-1`)
+- **version**: Tracks the version of the policy status
+- When queried with `FINAL`, pairs of rows with the same primary key and version but opposite signs are collapsed
+- Only the latest valid policy status remains
+
+---
+
+## Example: Policy Status Tracking
+
+```sql
+CREATE TABLE policy_status_history
+(
+    policy_id UUID,
+    status Enum8('Active'=1, 'Lapsed'=2, 'Reinstated'=3, 'Terminated'=4),
+    effective_date DateTime,
+    reason_code String,
+    version UInt32,
+    sign Int8
+) ENGINE = VersionedCollapsingMergeTree(sign, version)
+ORDER BY (policy_id, effective_date, version);
+```
+
+## Sample Data
+
+```sql
+-- Policy becomes active
+INSERT INTO policy_status_history VALUES 
+('550e8400-e29b-41d4-a716-446655440000', 'Active', '2024-01-01 00:00:00', 'NEW_POLICY', 1, 1);
+
+-- Policy lapses due to non-payment
+INSERT INTO policy_status_history VALUES 
+('550e8400-e29b-41d4-a716-446655440000', 'Lapsed', '2024-03-01 00:00:00', 'NON_PAYMENT', 2, 1);
+
+-- Incorrect lapse - reverse it
+INSERT INTO policy_status_history VALUES 
+('550e8400-e29b-41d4-a716-446655440000', 'Lapsed', '2024-03-01 00:00:00', 'NON_PAYMENT', 2, -1);
+
+-- Policy is reinstated
+INSERT INTO policy_status_history VALUES 
+('550e8400-e29b-41d4-a716-446655440000', 'Reinstated', '2024-03-05 00:00:00', 'PAYMENT_RECEIVED', 3, 1);
+```
+
+---
+
+## Querying the Data
+
+```sql
+-- View all status changes (raw data)
+SELECT * FROM policy_status_history;
+
+-- View current policy status (collapsed rows)
+SELECT * FROM policy_status_history FINAL;
+```
+
+- The `FINAL` keyword collapses insert/reversal pairs and shows only current valid status changes.
+
+## Why use VersionedCollapsingMergeTree for Life Insurance?
+
+- Track complex policy lifecycle events with ability to correct errors
+- Maintain audit trail while querying current state efficiently
+- Handle policy reinstatements, corrections, and status reversals
 
 ---
 layout: two-cols
@@ -1417,28 +1815,24 @@ layout: two-cols
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-
-
-
 # AggregatingMergeTree
 
 <div class="text-sm">
 
 ## Use Case
-Customer behavior analytics with complex aggregations.
+Claims analytics with complex aggregations for actuarial analysis.
 
 ```sql
-CREATE TABLE customer_behavior (
-    date Date,
-    customer_id UInt32,
-    total_visits AggregateFunction(sum, UInt8),
-    avg_session_duration 
-        AggregateFunction(avg, Float64),
-    product_categories 
-        AggregateFunction(groupUniqArray, String)
+CREATE TABLE claims_analytics (
+    analysis_date Date,
+    policy_type Enum8('Term'=1, 'Whole'=2, 'Universal'=3),
+    age_group Enum8('18-30'=1, '31-45'=2, '46-60'=3, '60+'=4),
+    total_claims AggregateFunction(sum, UInt32),
+    avg_claim_amount AggregateFunction(avg, Decimal64(2)),
+    claim_types AggregateFunction(groupUniqArray, String)
 ) ENGINE = AggregatingMergeTree()
-PARTITION BY toYYYYMM(date)
-ORDER BY (date, customer_id);
+PARTITION BY toYYYYMM(analysis_date)
+ORDER BY (analysis_date, policy_type, age_group);
 ```
 
 </div>
@@ -1450,42 +1844,45 @@ ORDER BY (date, customer_id);
 ## Example Query
 
 ```sql
-INSERT INTO customer_behavior
+INSERT INTO claims_analytics
 SELECT 
-    date,
-    customer_id,
-    sumState(CAST(visits AS UInt8)), -- Explicitly cast to UInt8
-    avgState(CAST(duration AS Float64)),
-    groupUniqArrayState(category)
+    analysis_date,
+    policy_type,
+    age_group,
+    sumState(CAST(claim_count AS UInt32)),
+    avgState(claim_amount),
+    groupUniqArrayState(claim_type)
 FROM 
 (
-    -- Sample raw data
+    -- Sample claims data
     SELECT
-        toDate('2024-01-01') as date,
-        1 as customer_id,
-        1 as visits,
-        300.0 as duration, -- Added .0 to make it explicit Float64
-        'Electronics' as category
+        toDate('2024-01-01') as analysis_date,
+        'Term' as policy_type,
+        '31-45' as age_group,
+        1 as claim_count,
+        150000.00 as claim_amount,
+        'Death Benefit' as claim_type
     UNION ALL
     SELECT
         toDate('2024-01-01'),
+        'Term',
+        '31-45',
         1,
-        1,
-        400.0,
-        'Clothing'
+        25000.00,
+        'Disability'
 ) raw
-GROUP BY date, customer_id;
+GROUP BY analysis_date, policy_type, age_group;
 
--- Query aggregated results
+-- Query aggregated results for actuarial analysis
 SELECT
-    date,
-    customer_id,
-    sumMerge(total_visits) as visits,
-    avgMerge(avg_session_duration) as duration,
-    groupUniqArrayMerge(product_categories) 
-        as categories
-FROM customer_behavior
-GROUP BY date, customer_id;
+    analysis_date,
+    policy_type,
+    age_group,
+    sumMerge(total_claims) as claims_count,
+    avgMerge(avg_claim_amount) as avg_amount,
+    groupUniqArrayMerge(claim_types) as claim_categories
+FROM claims_analytics
+GROUP BY analysis_date, policy_type, age_group;
 ```
 
 </div>
@@ -1496,7 +1893,6 @@ layout: default
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
-
 
 # MergeTree Engine Selection Guide
 
@@ -1512,6 +1908,9 @@ layout: default
 - Need to track state changes
 - Managing incremental updates
 - Real-time balance calculations
+
+### Use VersionedCollapsingMergeTree When:
+- Versioning data, which might be deleted later.
 
 </div>
 <div>
@@ -1534,499 +1933,6 @@ layout: default
 </div>
 
 ---
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-
-## 2.4 Schema Design, Partitioning & Sharding for Chat Apps with Payment Attachment
-
-<div class="grid grid-cols-2 gap-4">
-<div>
-
-Key strengths:
-- High performance on analytical queries
-- Efficient compression
-- Columnar storage
-- Data skipping mechanisms
-- Parallelization capabilities
-- Flexible scaling options
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Schema Design Best Practices
-
----
-layout: two-cols
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-
-# Schema Design Principles
-
-1. Column-oriented thinking
-2. Denormalization is often preferred
-3. Use appropriate data types
-4. Consider query patterns
-5. Balance between read & write efficiency
-6. Leverage materialized views
-7. Use efficient sorting keys
-
-::right::
-
-<div class="ml-4" style="height:1000px;overflow-y:auto;transform: scale(0.5); transform-origin: top left; ">
-```mermaid
-erDiagram
-    messages {
-        UUID message_id PK
-        UInt64 chat_id
-        UInt32 user_id
-        Enum8 message_type
-        String content
-        UInt8 has_attachment
-        DateTime created_at
-    }
-
-    attachments {
-        UUID attachment_id PK
-        UUID message_id FK
-        Enum8 file_type
-        String file_path
-        UInt32 file_size
-        String content_type
-        DateTime upload_at
-        Decimal64 payment_amount
-        LowCardinality payment_currency
-        Enum8 payment_status
-    }
-
-    messages ||--o{ attachments : "has"
-```
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-
-# Data Types Selection
-
-<div class="grid grid-cols-2 gap-4">
-
-<div>
-
-## Numeric Types
-- Use smallest possible integer type
-  - UInt8, UInt16, UInt32, UInt64
-  - Int8, Int16, Int32, Int64
-- For floats: Float32 or Float64
-- Decimal64(N) or Decimal128(N) for money
-
-</div>
-
-<div>
-
-## Special Data Types
-- DateTime or DateTime64 for timestamps
-- Date for just dates
-- LowCardinality for low-unique-value strings
-- Enum for fixed value sets
-- IPv4/IPv6 for IP addresses
-- Array for multiple values
-
-</div>
-
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-
-# ChatApp Payment Use Case: Schema Design
-
-<div class="grid grid-cols-2 gap-4">
-
-<div style="overflow-y:auto;height:400px">
-
-## Core Tables Structure
-```sql
--- Chat Rooms Table
-CREATE TABLE chat_rooms (
-    chat_id UInt64,
-    room_name String,
-    created_by UInt32,
-    created_at DateTime,
-    is_active UInt8,
-    _sign Int8
-) ENGINE = CollapsingMergeTree(_sign)
-PARTITION BY toYYYYMM(created_at)
-ORDER BY (chat_id, created_at);
-
--- Messages Table
-CREATE TABLE messages (
-    message_id UUID,
-    chat_id UInt64,
-    user_id UInt32,
-    message_type Enum8('text'=1, 'file'=2, 'payment'=3),
-    content String,
-    has_attachment UInt8,
-    created_at DateTime,
-    _sign Int8,
-    INDEX message_type_idx message_type TYPE bloom_filter GRANULARITY 1
-) ENGINE = CollapsingMergeTree(_sign)
-PARTITION BY toYYYYMM(created_at)
-ORDER BY (chat_id, created_at);
-```
-
-</div>
-<div>
-
-## Attachments Table
-```sql
-CREATE TABLE attachments (
-    attachment_id UUID,
-    message_id UUID,
-    file_type Enum8('invoice'=1, 'receipt'=2, 'other'=3),
-    file_path String,
-    file_size UInt32,
-    content_type String,
-    upload_at DateTime,
-    payment_amount Decimal64(2),
-    payment_currency LowCardinality(String),
-    payment_status Enum8('pending'=1, 'paid'=2, 'declined'=3),
-    _sign Int8,
-    INDEX file_type_idx file_type TYPE bloom_filter GRANULARITY 1
-) ENGINE = CollapsingMergeTree(_sign)
-PARTITION BY toYYYYMM(upload_at)
-ORDER BY (message_id, upload_at);
-```
-
-</div>
-</div>
-
----
-layout: default
----
-
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-
-# ER Diagram: Chat Application Schema
-
-<div style="transform: scale(0.9);transform-origin: top left;height:800px;overflow-y:auto; ">
-<img src="./images/session2/chat-er-diagram.svg" />
-
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-
-# Key Schema Design Features
-
-<div class="grid grid-cols-2 gap-4">
-<div>
-
-## CollapsingMergeTree Engine
-- Supports data updates via _sign column
-- -1 marks deleted rows, 1 marks active rows
-- Automatically collapses during merges
-- Perfect for mutable chat data
-
-## Partitioning Strategy
-- Monthly partitions by created_at/upload_at
-- Efficient data lifecycle management
-- Optimized for time-based queries
-
-</div>
-<div>
-
-## Indexing & Performance
-- Primary keys optimize data access
-- Bloom filter indexes for message_type and file_type
-- LowCardinality for repeated values
-- Efficient joins via UUID relationships
-
-## Data Types
-- UUID for unique identifiers
-- Enum8 for fixed value sets
-- Decimal64(2) for payment amounts
-- DateTime for timestamps
-
-</div>
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Schema Optimization Tips
-
-<div class="grid grid-cols-2 gap-4">
-
-<div>
-
-## Primary Keys & Sorting
-- ORDER BY determines physical data order
-- Choose columns that:
-  - Are used in WHERE conditions
-  - Follow cardinality principle (high to low)
-  - Enable data skipping
-- For our case: (chat_id, created_at)
-
-## Indexes
-- Sparse indexes in ClickHouse
-- Secondary indexes with expressions
-- Use bloom filters for high-cardinality columns
-
-</div>
-<div>
-
-## Optimizing for Queries
-- Common query for payment analytics:
-
-```sql
-SELECT 
-    toDate(upload_at) AS day,
-    sum(payment_amount) AS total_amount,
-    countIf(payment_status = 'paid') AS paid_count
-FROM attachments
-WHERE 
-    file_type = 'invoice' 
-    AND toYYYYMM(upload_at) >= 202301
-    AND toYYYYMM(upload_at) <= 202312
-GROUP BY day
-ORDER BY day
-```
-
-</div>
-</div>
-
----
-layout: section
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Partitioning and Sharding
-
----
-layout: two-cols
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Partitioning
-
-Partitioning divides data within a single server
-
-- Improves query performance
-- Simplifies data management
-- Enables efficient TTL policies
-- Optimizes storage operations
-
-### Best Practices:
-- Partition on date/time for time-series data
-- Aim for 10MB-100GB per partition
-- Avoid too many small partitions
-- Consider hardware limitations
-
-::right::
-
-<div class="ml-4 mt-10">
-
-### Our Chat App Approach:
-```sql
-PARTITION BY toYYYYMM(created_at)
-```
-
-- Groups data by year and month
-- Allows efficient historical queries
-- Works well with time-based retention
-- Partition by date component matching your typical query range
-
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Sharding
-
-<div class="grid grid-cols-2 gap-4">
-
-<div>
-
-## What is Sharding?
-- Horizontal partitioning across multiple servers
-- Distributes data and query load
-- Scales out capacity
-- Managed by ClickHouse Keeper
-- Uses Distributed table engine as a view
-
-## Sharding Key Selection
-- Even data distribution
-- Minimize cross-shard queries
-- Align with business domains
-
-</div>
-<div>
-
-## ChatApp Sharding Approach
-```sql
--- On each shard
-CREATE TABLE messages_local (
-    -- same schema as before
-) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(created_at)
-ORDER BY (chat_id, created_at);
-
--- Distributed view
-CREATE TABLE messages AS messages_local
-ENGINE = Distributed(cluster_name, 
-                    default, 
-                    messages_local, 
-                    sipHash64(chat_id));
-```
-
-Sharding by `chat_id` keeps all messages for a specific chat on the same shard, optimizing retrieval.
-
-</div>
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Real-World Use Case: Optimizing for Payment Analysis
-
-<div class="grid grid-cols-2 gap-4">
-
-<div>
-
-## Common Access Patterns
-1. Retrieve chat history with attachments
-2. Search for payment documents
-3. Calculate payment statistics
-4. Generate financial reports
-5. Filter payments by status
-
-## Key Optimizations
-- Materialized view for payment summaries
-- Separate partition for payment attachments
-- Pre-aggregated data for reporting
-- Custom sharding strategy for payment processing
-
-</div>
-<div>
-
-## Materialized View for Payments
-```sql
-CREATE MATERIALIZED VIEW payment_summary
-ENGINE = SummingMergeTree()
-PARTITION BY toYYYYMM(day)
-ORDER BY (payment_currency, day)
-AS
-SELECT 
-    toDate(upload_at) AS day,
-    payment_currency,
-    payment_status,
-    count() AS payment_count,
-    sum(payment_amount) AS total_amount
-FROM attachments
-WHERE file_type IN ('invoice', 'receipt')
-GROUP BY day, payment_currency, payment_status;
-```
-
-</div>
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Key Takeaways
-
-<div class="grid grid-cols-2 gap-4">
-
-<div>
-
-## Schema Design
-- Think in columns, not rows
-- Optimize for your most common queries
-- Use the smallest efficient data types
-- Denormalize when it makes sense
-- Use materialized views for pre-aggregation
-- Apply proper ORDER BY for data locality
-
-</div>
-<div>
-
-## Partitioning & Sharding
-- Partition by date components for time-series data
-- Shard by high-cardinality business entity
-- Balance partition sizes (not too big, not too small)
-- Consider read vs. write optimization
-- Test with realistic data volumes
-- Monitor and adjust based on query patterns
-
-</div>
-</div>
-
-<div class="mt-4 p-4 bg-blue-50 rounded-lg">
-
-## ChatApp Payment Use Case Lessons
-1. Separate schema for attachments with specialized fields
-2. Partition monthly for efficient data lifecycle management
-3. Shard by chat_id to keep conversations together
-4. Use materialized views for real-time payment analytics
-5. Apply LowCardinality and appropriate Enums for dimension fields
-
-</div>
-
----
 layout: section
 
 ---
@@ -2036,8 +1942,7 @@ layout: section
 
 # Session:3 Basic Operations
 
-## Working with Chat App Payment Data
-
+## Working with Life Insurance Data
 
 ---
 layout: default
@@ -2062,11 +1967,12 @@ layout: default
 </div>
 <div>
 
-## Use Case: Chat App with Payments
-- Messaging platform with payment features
-- Users can share invoices and receipts
-- Admins need analytics on payment activity
-- Data needs to be queryable for reporting
+## Use Case: Life Insurance Management System
+- Policy administration and claims processing
+- Premium collection and commission tracking
+- Customer and agent data management
+- Regulatory reporting and analytics
+- Data needs to be queryable for business intelligence
 
 </div>
 </div>
@@ -2094,10 +2000,10 @@ layout: default
 
 ```sql
 -- Creating a new database
-CREATE DATABASE chat_payments;
+CREATE DATABASE life_insurance;
 
 -- Use the database
-USE chat_payments;
+USE life_insurance;
 
 -- List all databases
 SHOW DATABASES;
@@ -2105,7 +2011,7 @@ SHOW DATABASES;
 ```
 
 ### MergeTree Engine Family
-Most common and powerful table engine
+Most common and powerful table engine for life insurance data
 
 
 </div>
@@ -2118,28 +2024,30 @@ layout: two-cols
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Table Creation: Messages
+# Table Creation: Policies
 
 ```sql{all|1|3-17|6|8-10|12-13|16|all}
-USE chat_payments;
+USE life_insurance;
 
-CREATE TABLE messages (
-    message_id UUID,
-    chat_id UInt64,
-    user_id UInt32,
-    sent_timestamp DateTime,
-    message_type Enum8(
-        'text' = 1, 'image' = 2, 
-        'invoice' = 3, 'receipt' = 4
+CREATE TABLE policies (
+    policy_id UUID,
+    customer_id UInt64,
+    agent_id UInt32,
+    policy_number String,
+    policy_type Enum8(
+        'Term' = 1, 'Whole' = 2, 
+        'Universal' = 3, 'Variable' = 4
     ),
-    content String,
-    has_attachment UInt8,
+    coverage_amount Decimal64(2),
+    premium_amount Decimal64(2),
+    policy_status Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3),
+    effective_date Date,
     sign Int8,
-    INDEX message_type_idx message_type TYPE bloom_filter GRANULARITY 1
+    INDEX policy_type_idx policy_type TYPE bloom_filter GRANULARITY 1
 ) ENGINE = CollapsingMergeTree(sign)
-Primary Key (message_id)
-PARTITION BY toYYYYMM(sent_timestamp)
-ORDER BY (message_id, chat_id, sent_timestamp);
+PRIMARY KEY (policy_id)
+PARTITION BY toYYYYMM(effective_date)
+ORDER BY (policy_id, customer_id, effective_date);
 ```
 
 ::right::
@@ -2148,16 +2056,16 @@ ORDER BY (message_id, chat_id, sent_timestamp);
 
 # Key Concepts
 
-- **Engine = CollapsingMergeTree()** - Best for mutable data
+- **Engine = CollapsingMergeTree()** - Best for mutable policy data
 
 - **PARTITION BY** - How data is split into files
-  - Monthly partitioning works well for chat data
+  - Monthly partitioning works well for policy data
   - Enables efficient data lifecycle management
 
 - **ORDER BY** - Critical for query performance
   - Defines primary key (if not specified separately)
   - Orders data physically on disk
-  - Here: Group all messages by chat, then by time
+  - Here: Group policies by ID, then customer, then date
 
 - **Sparse Indexes** - ClickHouse creates automatic sparse indexes on ORDER BY columns
 
@@ -2170,28 +2078,32 @@ layout: two-cols
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Table Creation: Payments
+# Table Creation: Claims
 
 ```sql{all|1-12|4-7|10|14-15|17|all}
-CREATE TABLE chat_payments.attachments (
-    attachment_id UUID,
-    message_id UUID,
-    payment_amount Decimal64(2),
-    payment_currency LowCardinality(String),
-    invoice_date Date,
-    payment_status Enum8(
-        'pending' = 1, 'paid' = 2, 'canceled' = 3
+CREATE TABLE life_insurance.claims (
+    claim_id UUID,
+    policy_id UUID,
+    customer_id UInt64,
+    claim_amount Decimal64(2),
+    claim_type Enum8(
+        'Death' = 1, 'Disability' = 2, 
+        'Maturity' = 3, 'Surrender' = 4
     ),
-    file_path String,
-    file_size UInt32,
-    uploaded_at DateTime,
+    claim_status Enum8(
+        'Submitted' = 1, 'Processing' = 2, 
+        'Approved' = 3, 'Paid' = 4, 'Denied' = 5
+    ),
+    incident_date Date,
+    reported_date DateTime,
+    processed_date DateTime,
     sign Int8,
-    INDEX payment_status_idx payment_status TYPE set(0) GRANULARITY 1,
-    INDEX currency_idx payment_currency TYPE set(0) GRANULARITY 1
+    INDEX claim_status_idx claim_status TYPE set(0) GRANULARITY 1,
+    INDEX claim_type_idx claim_type TYPE set(0) GRANULARITY 1
 ) ENGINE = CollapsingMergeTree(sign)
-Primary Key (attachment_id)
-PARTITION BY toYYYYMM(uploaded_at)
-ORDER BY (attachment_id, message_id, uploaded_at);
+PRIMARY KEY (claim_id)
+PARTITION BY toYYYYMM(reported_date)
+ORDER BY (claim_id, policy_id, reported_date);
 ```
 
 ::right::
@@ -2201,9 +2113,9 @@ ORDER BY (attachment_id, message_id, uploaded_at);
 # Important Data Types
 
 - **Decimal64(2)** - For currency values with 2 decimal places
-- **LowCardinality(String)** - Optimized for low-unique-value strings
 - **Enum8** - For fields with a fixed set of possible values
 - **Date/DateTime** - Optimized date and time types
+- **UUID** - For unique identifiers
 
 <div class="mt-6 bg-blue-50 p-4 rounded">
 <strong>Best Practice:</strong> Use specialized data types where possible instead of generic ones. They provide better compression and performance.
@@ -2239,20 +2151,21 @@ INSERT INTO table_name
 (column1, column2, ...)
 VALUES (value1, value2, ...);
 
--- Insert into messages table
-INSERT INTO chat_payments.messages 
-(message_id, chat_id, user_id, sent_timestamp, 
- message_type, content, has_attachment,sign)
+-- Insert into policies table
+INSERT INTO life_insurance.policies 
+(policy_id, customer_id, agent_id, policy_number, 
+ policy_type, coverage_amount, premium_amount, 
+ policy_status, effective_date, sign)
 VALUES 
-(generateUUIDv4(), 100, 1001, now(), 
- 'text', 'Let me send you the invoice later', 0, 1);
+(generateUUIDv4(), 1001, 201, 'LIFE-2024-001', 
+ 'Term', 500000.00, 1200.00, 'Active', '2024-01-01', 1);
 
--- Insert multiple rows
-INSERT INTO chat_payments.messages VALUES
-    (generateUUIDv4(), 100, 1001, now(), 'invoice', 'April Invoice', 1, 1),
-    (generateUUIDv4(), 100, 1002, now(), 'text', 'Got it, thanks!', 0, 1),
-    (generateUUIDv4(), 101, 1003, now(), 'receipt', 'Payment receipt', 1, 1),
-    (generateUUIDv4(), 101, 1001, now(), 'text', 'Payment confirmed', 0, 1);
+-- Insert multiple policies
+INSERT INTO life_insurance.policies VALUES
+    (generateUUIDv4(), 1002, 201, 'LIFE-2024-002', 'Whole', 250000.00, 2400.00, 'Active', '2024-01-15', 1),
+    (generateUUIDv4(), 1003, 202, 'LIFE-2024-003', 'Universal', 750000.00, 3600.00, 'Active', '2024-02-01', 1),
+    (generateUUIDv4(), 1004, 203, 'LIFE-2024-004', 'Term', 1000000.00, 4800.00, 'Active', '2024-02-15', 1),
+    (generateUUIDv4(), 1005, 201, 'LIFE-2024-005', 'Variable', 300000.00, 1800.00, 'Active', '2024-03-01', 1);
 ```
 
 ::right::
@@ -2285,20 +2198,18 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Inserting Payment Data
+# Inserting Claims Data
 <div style="height:500px; overflow-y:auto">
 
 ```sql{all|1-11|13-22|all}
-
-
--- Insert multiple payment records
-INSERT INTO chat_payments.attachments VALUES
-(generateUUIDv4(), 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 1250.00, 'USD', 
- '2023-04-01', 'pending', '/storage/invoices/inv_12345.pdf', 128000, '2023-04-02 14:30:00' ,1),
-(generateUUIDv4(), 'b1ffc999-7d1a-4ef8-bb6d-6bb9bd380a12', 750.50, 'EUR', 
- '2023-04-05', 'paid', '/storage/receipts/rec_75421.pdf', 98500, '2023-04-06 09:15:00', 1),
-(generateUUIDv4(), 'c2aac888-6e2b-4ef8-bb6d-6bb9bd380a13', 500.25, 'GBP', 
- '2023-04-10', 'canceled', '/storage/invoices/inv_33456.pdf', 115200, '2023-04-11 11:45:00', 1);
+-- Insert multiple claim records
+INSERT INTO life_insurance.claims VALUES
+(generateUUIDv4(), '550e8400-e29b-41d4-a716-446655440000', 1001, 500000.00, 'Death', 
+ 'Submitted', '2024-03-15', '2024-03-20 09:30:00', NULL, 1),
+(generateUUIDv4(), '660e8400-e29b-41d4-a716-446655440001', 1002, 25000.00, 'Disability', 
+ 'Processing', '2024-02-10', '2024-02-15 14:20:00', '2024-02-20 11:45:00', 1),
+(generateUUIDv4(), '770e8400-e29b-41d4-a716-446655440002', 1003, 75000.00, 'Surrender', 
+ 'Approved', '2024-01-25', '2024-01-30 16:10:00', '2024-02-05 10:30:00', 1);
 ```
 
 <div class="mt-4 grid grid-cols-2 gap-4" >
@@ -2314,7 +2225,7 @@ INSERT INTO chat_payments.attachments VALUES
 
 ### Loading from Files
 ```sql
-clickhouse-client -q "INSERT INTO chat_payments.attachments FORMAT CSVWithNames" < /data/output.csv
+clickhouse-client -q "INSERT INTO life_insurance.claims FORMAT CSVWithNames" < /data/claims.csv
 ```
 
 </div>
@@ -2344,18 +2255,19 @@ layout: default
 
 ```sql{all|1|2|3|all}
 SELECT *
-FROM messages
+FROM policies
 LIMIT 5;
 
 -- Select specific columns
 SELECT 
-    message_id,
-    chat_id,
-    user_id,
-    message_type,
-    sent_timestamp
-FROM messages
-LIMIT 2,1;
+    policy_id,
+    customer_id,
+    policy_number,
+    policy_type,
+    coverage_amount,
+    premium_amount
+FROM policies
+LIMIT 10;
 ```
 
 </div>
@@ -2363,7 +2275,7 @@ LIMIT 2,1;
 
 ```sql
 -- Examining table structure
-DESCRIBE TABLE messages;
+DESCRIBE TABLE policies;
 
 -- Inspecting data types
 SELECT 
@@ -2372,11 +2284,11 @@ SELECT
     default_kind,
     default_expression
 FROM system.columns
-WHERE table = 'messages';
+WHERE table = 'policies';
 
 -- Get count of rows
 SELECT count()
-FROM messages;
+FROM policies;
 ```
 
 </div>
@@ -2398,55 +2310,57 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Working with Chat Payment Data
+# Working with Life Insurance Data
 
 <div class="grid grid-cols-2 gap-4">
 <div>
 
 ```sql{all|1-6|8-13|15-21|all}
--- Get all invoice messages
+-- Get all active policies
 SELECT 
-    message_id, chat_id, sent_timestamp, content
-FROM messages
-WHERE message_type = 'invoice';
+    policy_id, customer_id, policy_number, 
+    coverage_amount, premium_amount
+FROM policies
+WHERE policy_status = 'Active';
 
--- Find messages with attachments
+-- Find high-value policies
 SELECT 
-    message_id, chat_id, user_id, 
-    message_type, sent_timestamp
-FROM messages
-WHERE has_attachment = 1;
+    policy_id, customer_id, agent_id,
+    policy_type, coverage_amount
+FROM policies
+WHERE coverage_amount > 500000;
 
--- Get payment data
+-- Get claims data
 SELECT 
-    attachment_id,
-    message_id,
-    payment_amount,
-    payment_currency,
-    payment_status
-FROM attachments limit 10;
+    claim_id,
+    policy_id,
+    claim_amount,
+    claim_type,
+    claim_status
+FROM claims 
+LIMIT 10;
 ```
 
 </div>
 <div>
 
 ```sql{all|1-7|9-14|all}
--- Join messages with payment data
+-- Join policies with claims data
 SELECT 
-    m.chat_id,
-    m.user_id,
-    p.payment_amount,
-    p.payment_currency
-FROM messages m
-JOIN payment_attachments p ON m.message_id = p.message_id;
+    p.policy_number,
+    p.customer_id,
+    c.claim_amount,
+    c.claim_type
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id;
 
--- Calculate total by currency
+-- Calculate total coverage by policy type
 SELECT 
-    payment_currency,
-    count() AS payment_count,
-    sum(payment_amount) AS total_amount
-FROM payment_attachments
-GROUP BY payment_currency;
+    policy_type,
+    count() AS policy_count,
+    sum(coverage_amount) AS total_coverage
+FROM policies
+GROUP BY policy_type;
 ```
 
 </div>
@@ -2478,23 +2392,23 @@ layout: default
 <div>
 
 ```sql{all|2|3|4|6-14|all}
-SELECT * FROM attachments 
-WHERE payment_status = 'paid'
-  AND payment_amount > 500
-  AND uploaded_at >= '2023-04-01'
-  limit 100;
+SELECT * FROM policies 
+WHERE policy_status = 'Active'
+  AND coverage_amount > 500000
+  AND effective_date >= '2024-01-01'
+  LIMIT 100;
  
 -- Using date functions in filters
 SELECT 
-    attachment_id,
-    payment_amount,
-    payment_currency,
-    payment_status,
-    uploaded_at
-FROM attachments
-WHERE toYYYYMM(uploaded_at) = 202304
-  AND payment_currency = 'USD'
-  limit 100;
+    policy_id,
+    policy_number,
+    coverage_amount,
+    premium_amount,
+    effective_date
+FROM policies
+WHERE toYYYYMM(effective_date) = 202401
+  AND policy_type = 'Term'
+  LIMIT 100;
 ```
 
 </div>
@@ -2502,20 +2416,22 @@ WHERE toYYYYMM(uploaded_at) = 202304
 
 ```sql{all|2-4|6-9|11-15|all}
 -- Multiple conditions
-SELECT * FROM messages
-WHERE message_type IN ('invoice', 'receipt')
-  AND sent_timestamp BETWEEN 
-    '2025-04-01 00:00:00' AND '2025-04-30 23:59:59';
+SELECT * FROM claims
+WHERE claim_type IN ('Death', 'Disability')
+  AND reported_date BETWEEN 
+    '2024-01-01 00:00:00' AND '2024-03-31 23:59:59';
 
 -- String pattern matching
-SELECT * FROM messages
-WHERE content LIKE '%invoice%'
-OR content LIKE '%payment%';
+SELECT * FROM policies
+WHERE policy_number LIKE 'LIFE-2024-%'
+OR policy_number LIKE 'TERM-%';
 
 -- Using functions in filters
-SELECT * FROM attachments
-WHERE formatDateTime(uploaded_at, '%Y-%m-%d') = '2023-04-15' AND (payment_status = 'pending' 
-OR payment_status = 'paid') limit 100;
+SELECT * FROM claims
+WHERE formatDateTime(reported_date, '%Y-%m-%d') = '2024-02-15' 
+AND (claim_status = 'Processing' 
+OR claim_status = 'Approved') 
+LIMIT 100;
 ```
 
 </div>
@@ -2541,27 +2457,27 @@ layout: two-cols
 # Advanced Filtering Examples
 
 ```sql{all|1-5|7-12|14-20|all}
--- Finding large payments
-SELECT * FROM attachments
-WHERE payment_amount > 1000
-  AND payment_status = 'pending'
-ORDER BY payment_amount DESC limit 100;
+-- Finding large claims
+SELECT * FROM claims
+WHERE claim_amount > 100000
+  AND claim_status = 'Submitted'
+ORDER BY claim_amount DESC LIMIT 100;
 
--- Time-based filtering with chat context
-SELECT m.*, p.payment_amount, p.payment_currency
-FROM messages m
-LEFT JOIN attachments p ON m.message_id = p.message_id
-WHERE m.chat_id = 100
-  AND toDate(m.sent_timestamp) = today()
-   limit 100;
+-- Time-based filtering with policy context
+SELECT p.*, c.claim_amount, c.claim_type
+FROM policies p
+LEFT JOIN claims c ON p.policy_id = c.policy_id
+WHERE p.customer_id = 1001
+  AND toDate(p.effective_date) >= '2024-01-01'
+   LIMIT 100;
 
--- Finding specific file types
+-- Finding specific policy types
 SELECT *
-FROM attachments
-WHERE file_path LIKE '%.pdf'
-  AND file_size > 100000
-  AND payment_status != 'canceled'
-ORDER BY file_size DESC limit 100;
+FROM policies
+WHERE policy_type = 'Universal'
+  AND premium_amount > 2000
+  AND policy_status != 'Terminated'
+ORDER BY premium_amount DESC LIMIT 100;
 ```
 
 ::right::
@@ -2606,17 +2522,17 @@ layout: default
 
 ```sql{all|4|8-12|all}
 -- Simple sorting
-SELECT * FROM payment_attachments
-WHERE payment_status = 'paid'
-ORDER BY payment_amount DESC
+SELECT * FROM policies
+WHERE policy_status = 'Active'
+ORDER BY coverage_amount DESC
 LIMIT 10;
 
 -- Multi-column sorting
 SELECT 
-    message_id, user_id, sent_timestamp, message_type
-FROM messages
-ORDER BY chat_id ASC, 
-         sent_timestamp DESC
+    policy_id, customer_id, effective_date, policy_type
+FROM policies
+ORDER BY customer_id ASC, 
+         effective_date DESC
 LIMIT 20;
 ```
 
@@ -2624,26 +2540,26 @@ LIMIT 20;
 <div>
 
 ```sql{all|2-4|8-13|all}
--- Order amounts by currency
-SELECT * FROM payment_attachments
-ORDER BY payment_currency ASC, 
-         payment_amount DESC
+-- Order by premium amounts
+SELECT * FROM policies
+ORDER BY policy_type ASC, 
+         premium_amount DESC
 LIMIT 100;
 
 -- Sorting with expressions
 SELECT 
-    attachment_id,
-    payment_amount,
-    payment_currency,
-    payment_status
-FROM payment_attachments
-ORDER BY payment_amount DESC;
+    policy_id,
+    coverage_amount,
+    premium_amount,
+    policy_status
+FROM policies
+ORDER BY coverage_amount DESC;
 ```
 
 </div>
 </div>
 
-<div class="mt-4">
+<div class="mt-4" style="height:150px;overflow-y:auto;">
 
 ### ORDER BY Rules in ClickHouse
 - Can sort by any column or expression
@@ -2669,32 +2585,32 @@ layout: default
 ### ORDER BY with LIMIT is optimized
 ```sql
 SELECT 
-    message_id, 
-    chat_id,
-    sent_timestamp
-FROM messages
-WHERE message_type = 'invoice'
-ORDER BY sent_timestamp DESC
+    policy_id, 
+    customer_id,
+    effective_date
+FROM policies
+WHERE policy_type = 'Term'
+ORDER BY effective_date DESC
 LIMIT 100;
 ```
 
 ### Effective for top-N queries
 ```sql
--- Find top 10 largest payments
-SELECT * FROM attachments
-ORDER BY payment_amount DESC
+-- Find top 10 largest policies
+SELECT * FROM policies
+ORDER BY coverage_amount DESC
 LIMIT 10;
 ```
 
 </div>
 <div>
 
-### Using BY clause for sampling
+### Using ORDER BY for sampling
 
 ```sql
--- Get 10 random payments for review
+-- Get 10 random policies for review
 SELECT *
-FROM attachments
+FROM policies
 ORDER BY rand()
 LIMIT 10;
 ```
@@ -2702,14 +2618,14 @@ LIMIT 10;
 ### With GROUP BY and aggregates
 
 ```sql
--- Largest payments by currency
+-- Largest coverage by policy type
 SELECT 
-    payment_currency,
-    max(payment_amount) AS max_amount,
-    sum(payment_amount) AS total
-FROM attachments
-GROUP BY payment_currency
-ORDER BY total DESC;
+    policy_type,
+    max(coverage_amount) AS max_coverage,
+    sum(coverage_amount) AS total_coverage
+FROM policies
+GROUP BY policy_type
+ORDER BY total_coverage DESC;
 ```
 
 </div>
@@ -2741,30 +2657,30 @@ layout: two-cols
 ```sql{all|1-6|8-14|16-23|all}
 -- Count, sum, average
 SELECT
-    count() AS total_payments,
-    sum(payment_amount) AS total_amount,
-    avg(payment_amount) AS average_amount
-FROM attachments;
+    count() AS total_policies,
+    sum(coverage_amount) AS total_coverage,
+    avg(premium_amount) AS average_premium
+FROM policies;
 
 -- Min, max, statistics
 SELECT
-    min(payment_amount) AS min_amount,
-    max(payment_amount) AS max_amount,
-    stddevPop(payment_amount) AS std_deviation,
-    median(payment_amount) AS median_amount
-FROM attachments
-WHERE payment_status = 'paid';
+    min(coverage_amount) AS min_coverage,
+    max(coverage_amount) AS max_coverage,
+    stddevPop(premium_amount) AS premium_std_dev,
+    median(coverage_amount) AS median_coverage
+FROM policies
+WHERE policy_status = 'Active';
 
 -- Group by with multiple aggregates
 SELECT
-    payment_currency,
-    count() AS num_payments,
-    sum(payment_amount) AS total,
-    avg(payment_amount) AS average,
-    min(payment_amount) AS minimum,
-    max(payment_amount) AS maximum
-FROM attachments
-GROUP BY payment_currency;
+    policy_type,
+    count() AS policy_count,
+    sum(coverage_amount) AS total_coverage,
+    avg(premium_amount) AS avg_premium,
+    min(coverage_amount) AS min_coverage,
+    max(coverage_amount) AS max_coverage
+FROM policies
+GROUP BY policy_type;
 ```
 </div>
 
@@ -2785,9 +2701,6 @@ GROUP BY payment_currency;
 - **uniq()** - Approximate distinct count
 - **groupArray()** - Collect values into array
 
-<div class="mt-6 bg-blue-50 p-4 rounded">
-<strong>Note:</strong> ClickHouse is extremely fast at aggregations, which is one of its main strengths for analytical workloads.
-</div>
 
 </div>
 
@@ -2799,68 +2712,59 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Advanced Aggregations for Payment Analysis
+# Advanced Aggregations for Insurance Analysis
 
 <div class="grid grid-cols-2 gap-4">
 <div>
 
 ```sql{all|2-5|7-15|all}
--- Payment status distribution
+-- Policy status distribution
 SELECT 
-    payment_status,
+    policy_status,
     count() AS count
-FROM attachments
-GROUP BY payment_status;
+FROM policies
+GROUP BY policy_status;
 
--- Monthly payment totals
+-- Monthly policy issuance
 SELECT 
-    toYear(uploaded_at) AS year,
-    toMonth(uploaded_at) AS month,
-    payment_currency,
-    count() AS payment_count,
-    sum(payment_amount) AS monthly_total,
-    round(avg(payment_amount), 2) AS avg_payment
-FROM attachments
-GROUP BY year, month, payment_currency
-ORDER BY year, month, payment_currency;
+    toYear(effective_date) AS year,
+    toMonth(effective_date) AS month,
+    policy_type,
+    count() AS policies_issued,
+    sum(coverage_amount) AS total_coverage,
+    round(avg(premium_amount), 2) AS avg_premium
+FROM policies
+GROUP BY year, month, policy_type
+ORDER BY year, month, policy_type;
 ```
 
 </div>
 <div>
 
 ```sql{all|1-9|11-18|all}
--- Payments by user
+-- Claims by customer
 SELECT 
-    m.user_id,
-    count() AS payment_count,
-    sum(p.payment_amount) AS total_spent,
-    avg(p.payment_amount) AS avg_payment
-FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-GROUP BY m.user_id
-ORDER BY total_spent DESC;
+    c.customer_id,
+    count() AS claim_count,
+    sum(c.claim_amount) AS total_claims,
+    avg(c.claim_amount) AS avg_claim
+FROM claims c
+JOIN policies p ON c.policy_id = p.policy_id
+GROUP BY c.customer_id
+ORDER BY total_claims DESC;
 
--- Payment size categories
+-- Coverage amount categories
 SELECT
-    multiIf(payment_amount < 100, 'Small',
-            payment_amount < 500, 'Medium',
-            payment_amount < 1000, 'Large',
-            'Very Large') AS payment_category,
+    multiIf(coverage_amount < 100000, 'Small',
+            coverage_amount < 500000, 'Medium',
+            coverage_amount < 1000000, 'Large',
+            'Very Large') AS coverage_category,
     count() AS count
-FROM attachments
-GROUP BY payment_category;
+FROM policies
+GROUP BY coverage_category;
 ```
 
 </div>
-</div>
-
-<div class="mt-4" style="height:100px;overflow-y:auto">
-
-### Aggregate Function Modifiers
-- **-If** suffix: Conditional aggregation (e.g., `countIf(condition)`)
-- **-Array** suffix: Aggregation over arrays (e.g., `sumArray(array_column)`)
-- **Combinators** like **-State**, **-Merge** for partial aggregations
-
 </div>
 
 ---
@@ -2876,62 +2780,58 @@ layout: default
 <div>
 
 ```sql{all|2-8|10-17|all}
--- Daily payment totals
+-- Daily policy issuance
 SELECT 
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    count() AS num_payments,
-    sum(payment_amount) AS daily_total
-FROM attachments
-GROUP BY date, payment_currency
-ORDER BY date DESC, payment_currency;
+    toDate(effective_date) AS date,
+    policy_type,
+    count() AS policies_issued,
+    sum(coverage_amount) AS daily_coverage
+FROM policies
+GROUP BY date, policy_type
+ORDER BY date DESC, policy_type;
 
--- Weekly summaries
+-- Weekly claims summaries
 SELECT 
-    toStartOfWeek(uploaded_at) AS week_start,
-    payment_currency,
-    count() AS payment_count,
-    sum(payment_amount) AS weekly_total
-FROM attachments
-GROUP BY week_start, payment_currency
-ORDER BY week_start DESC, payment_currency;
+    toStartOfWeek(reported_date) AS week_start,
+    claim_type,
+    count() AS claim_count,
+    sum(claim_amount) AS weekly_claims
+FROM claims
+GROUP BY week_start, claim_type
+ORDER BY week_start DESC, claim_type;
 ```
 
 </div>
 <div style="height:350px;overflow-y:auto">
 
 ```sql{all|2-11|13-21|all}
--- Payment success rate by month
+-- Claims processing efficiency by month
 SELECT 
-    toStartOfMonth(uploaded_at) AS month,
-    count() AS total_payments,
-    countIf(payment_status = 'paid') AS paid_payments,
-    countIf(payment_status = 'pending') AS pending_payments,
-    countIf(payment_status = 'canceled') AS canceled_payments,
-    round(countIf(payment_status = 'paid') / count() * 100, 2) AS success_rate
-FROM attachments
-WHERE uploaded_at >= '2023-01-01'
+    toStartOfMonth(reported_date) AS month,
+    count() AS total_claims,
+    countIf(claim_status = 'Paid') AS paid_claims,
+    countIf(claim_status = 'Processing') AS processing_claims,
+    countIf(claim_status = 'Denied') AS denied_claims,
+    round(countIf(claim_status = 'Paid') / count() * 100, 2) AS payout_rate
+FROM claims
+WHERE reported_date >= '2024-01-01'
 GROUP BY month
 ORDER BY month;
 
--- Moving average of payment amounts
+-- Moving average of policy premiums
 SELECT 
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    avg(payment_amount) OVER 
-        (PARTITION BY payment_currency 
-         ORDER BY toDate(uploaded_at) 
-         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_7day
-FROM attachments
-WHERE payment_status = 'paid'
-ORDER BY payment_currency, date;
+    toDate(effective_date) AS date,
+    policy_type,
+    avg(premium_amount) OVER 
+        (PARTITION BY policy_type 
+         ORDER BY toDate(effective_date) 
+         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_premium
+FROM policies
+WHERE policy_status = 'Active'
+ORDER BY policy_type, date;
 ```
 
 </div>
-</div>
-
-<div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Tip:</strong> ClickHouse has many date and time functions like `toStartOfDay()`, `toStartOfWeek()`, `toStartOfMonth()`, `toStartOfQuarter()`, `toStartOfYear()` that are useful for time-based grouping.
 </div>
 
 ---
@@ -2949,15 +2849,15 @@ layout: default
 ```sql{all|6|7-12|all}
 -- ROLLUP for hierarchical summaries
 SELECT 
-    payment_currency,
-    toYear(uploaded_at) AS year,
-    sum(payment_amount) AS total
-FROM attachments
-GROUP BY payment_currency, year
+    policy_type,
+    toYear(effective_date) AS year,
+    sum(coverage_amount) AS total_coverage
+FROM policies
+GROUP BY policy_type, year
 WITH ROLLUP
 ORDER BY 
-    IF(payment_currency = '', 1, 0),
-    payment_currency,
+    IF(policy_type = '', 1, 0),
+    policy_type,
     IF(year = 0, 1, 0),
     year;
 ```
@@ -2968,17 +2868,17 @@ ORDER BY
 ```sql{all|7|9-13|all}
 -- Using HAVING to filter groups
 SELECT 
-    payment_currency,
-    payment_status,
+    policy_type,
+    policy_status,
     count() AS count,
-    sum(payment_amount) AS total
-FROM attachments
-GROUP BY payment_currency, payment_status
-HAVING count > 40000 
-   AND total > 10000
+    sum(coverage_amount) AS total_coverage
+FROM policies
+GROUP BY policy_type, policy_status
+HAVING count > 10 
+   AND total_coverage > 1000000
 ORDER BY 
-    payment_currency, 
-    payment_status;
+    policy_type, 
+    policy_status;
 ```
 
 </div>
@@ -3011,46 +2911,45 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Real-World Queries for Chat Payment Analysis
+# Real-World Queries for Life Insurance Analysis
 
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-## 1. Payment Trend Analysis
+## 1. Policy Portfolio Analysis
 
 ```sql
--- Monthly payment trends by currency
+-- Monthly policy trends by type
 SELECT 
-    toStartOfMonth(uploaded_at) AS month,
-    payment_currency,
-    count() AS payment_count,
-    sum(payment_amount) AS monthly_total,
-    round(avg(payment_amount), 2) AS average_payment
-FROM attachments
-GROUP BY month, payment_currency
-ORDER BY month DESC, payment_currency;
+    toStartOfMonth(effective_date) AS month,
+    policy_type,
+    count() AS policy_count,
+    sum(coverage_amount) AS total_coverage,
+    round(avg(premium_amount), 2) AS average_premium
+FROM policies
+GROUP BY month, policy_type
+ORDER BY month DESC, policy_type;
 ```
 
 </div>
 <div>
 
-## 2. User Payment Activity
+## 2. Customer Risk Profile
 
 ```sql
--- User payment statistics
+-- Customer policy statistics
 SELECT 
-    m.user_id,
-    uniq(m.chat_id) AS active_chats,
-    count(p.attachment_id) AS payment_count,
-    sum(p.payment_amount) AS total_amount,
-    max(p.payment_amount) AS largest_payment,
-    min(p.uploaded_at) AS first_payment,
-    max(p.uploaded_at) AS last_payment
-FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-GROUP BY m.user_id
-HAVING payment_count > 0
-ORDER BY total_amount DESC;
+    p.customer_id,
+    count(p.policy_id) AS policy_count,
+    sum(p.coverage_amount) AS total_coverage,
+    sum(p.premium_amount) AS total_premiums,
+    max(p.coverage_amount) AS largest_policy,
+    min(p.effective_date) AS first_policy,
+    max(p.effective_date) AS latest_policy
+FROM policies p
+GROUP BY p.customer_id
+HAVING policy_count > 0
+ORDER BY total_coverage DESC;
 ```
 
 </div>
@@ -3068,41 +2967,41 @@ layout: default
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-## 3. Payment Status Flow
+## 3. Claims Analysis
 
 ```sql
--- Status distribution by month
+-- Claims ratio by policy type
 SELECT 
-    toStartOfMonth(uploaded_at) AS month,
-    payment_status,
-    count() AS count,
-    round(count() / sum(count()) OVER (PARTITION BY month) * 100, 2) AS percentage
-FROM attachments
-GROUP BY month, payment_status
-ORDER BY month DESC, payment_status;
+    p.policy_type,
+    count(DISTINCT p.policy_id) AS total_policies,
+    count(c.claim_id) AS total_claims,
+    round(count(c.claim_id) / count(DISTINCT p.policy_id) * 100, 2) AS claims_ratio
+FROM policies p
+LEFT JOIN claims c ON p.policy_id = c.policy_id
+GROUP BY p.policy_type
+ORDER BY claims_ratio DESC;
 ```
 
 </div>
 <div>
 
-## 4. Large Payment Alert Report
+## 4. High-Value Policy Alert Report
 
 ```sql
--- Find large payments for review
+-- Find high-value policies for review
 SELECT 
-    p.attachment_id,
-    m.chat_id,
-    m.user_id,
-    p.payment_amount,
-    p.payment_currency,
-    p.payment_status,
-    p.uploaded_at,
-    p.file_path
-FROM attachments p
-JOIN messages m ON p.message_id = m.message_id
-WHERE p.payment_amount > 5000
-  AND p.payment_status = 'pending'
-ORDER BY p.payment_amount DESC;
+    p.policy_id,
+    p.customer_id,
+    p.agent_id,
+    p.policy_number,
+    p.coverage_amount,
+    p.premium_amount,
+    p.policy_type,
+    p.effective_date
+FROM policies p
+WHERE p.coverage_amount > 1000000
+  AND p.policy_status = 'Active'
+ORDER BY p.coverage_amount DESC;
 ```
 
 </div>
@@ -3134,7 +3033,7 @@ layout: default
 4. **Batch inserts for better performance**
    - Aim for 1000+ rows per insert
 
-5. **Use LowCardinality for repeated values**
+5. **Use appropriate data types**
    - Improves compression and query speed
 
 </div>
@@ -3153,7 +3052,7 @@ SELECT
     memory_usage
 FROM system.query_log
 WHERE type = 'QueryFinish'
-  AND query LIKE '%payment_attachments%'
+  AND query LIKE '%policies%'
   AND event_time > now() - INTERVAL 1 HOUR
 ORDER BY query_duration_ms DESC
 LIMIT 10;
@@ -3177,8 +3076,8 @@ class: text-center
 
 ## What We've Covered
 
-- Creating databases and tables
-- Inserting data into ClickHouse
+- Creating databases and tables for life insurance
+- Inserting policy and claims data
 - Basic SELECT queries
 - Filtering with WHERE clauses
 - Sorting with ORDER BY and LIMIT
@@ -3190,8 +3089,8 @@ class: text-center
 ## Next Steps
 
 - Advanced ClickHouse features
-- Materialized views
-- Window functions
+- Materialized views for insurance reporting
+- Window functions for actuarial analysis
 - Array and map data types
 - Performance optimization
 - Distributed ClickHouse clusters
@@ -3205,7 +3104,6 @@ class: text-center
   </span>
 </div>
 
-
 ---
 layout: section
 ---
@@ -3215,8 +3113,7 @@ layout: section
 
 # Session 4: ClickHouse Advanced Querying
 
-## Mastering Complex Analytics for Chat Payment Data
-
+## Mastering Complex Analytics for Life Insurance Data
 
 ---
 layout: default
@@ -3240,15 +3137,15 @@ layout: default
 </div>
 <div>
 
-## Use Case: Chat App with Payments
-- Messaging platform with payment features
-- Users can share invoices and receipts
-- Finance team needs detailed analytics
+## Use Case: Life Insurance Management System
+- Policy administration and claims processing
+- Premium collection and commission tracking
+- Customer and agent data management
+- Actuarial analysis and risk assessment
 - High-volume data requiring optimization
 
 </div>
 </div>
-
 
 ---
 layout: section
@@ -3273,22 +3170,22 @@ layout: default
 
 ## INNER JOIN
 ```sql{all|1-2|3|4-6|all}
--- Match messages with their payment attachments
-SELECT m.message_id, m.chat_id, m.user_id, 
-       p.payment_amount, p.payment_currency
-FROM messages m
-INNER JOIN attachments p 
-ON m.message_id = p.message_id;
+-- Match policies with their claims
+SELECT p.policy_id, p.customer_id, p.policy_number, 
+       c.claim_amount, c.claim_type
+FROM policies p
+INNER JOIN claims c 
+ON p.policy_id = c.policy_id;
 ```
 
 ## LEFT JOIN
 ```sql{all|3|4-6|all}
--- Get all messages and any payment attachments
-SELECT m.message_id, m.content, 
-       p.payment_amount, p.payment_status
-FROM messages m
-LEFT JOIN attachments p 
-ON m.message_id = p.message_id;
+-- Get all policies and any claims
+SELECT p.policy_id, p.policy_number, 
+       c.claim_amount, c.claim_status
+FROM policies p
+LEFT JOIN claims c 
+ON p.policy_id = c.policy_id;
 ```
 
 </div>
@@ -3296,32 +3193,27 @@ ON m.message_id = p.message_id;
 
 ## RIGHT JOIN
 ```sql{all|4-6|all}
--- Get all payments and their messages
-SELECT m.message_id, m.content, 
-       p.payment_amount, p.payment_status
-FROM messages m
-RIGHT JOIN attachments p 
-ON m.message_id = p.message_id
-Limit 100;
+-- Get all claims and their policies
+SELECT p.policy_id, p.policy_number, 
+       c.claim_amount, c.claim_status
+FROM policies p
+RIGHT JOIN claims c 
+ON p.policy_id = c.policy_id
+LIMIT 100;
 ```
 
 ## FULL JOIN
 ```sql{all|4-6|all}
--- Get all messages and all payments
-SELECT m.message_id, m.content, 
-       p.attachment_id, p.payment_amount
-FROM messages m
-FULL JOIN attachments p 
-ON m.message_id = p.message_id
-Limit 100
-;
+-- Get all policies and all claims
+SELECT p.policy_id, p.policy_number, 
+       c.claim_id, c.claim_amount
+FROM policies p
+FULL JOIN claims c 
+ON p.policy_id = c.policy_id
+LIMIT 100;
 ```
 
 </div>
-</div>
-
-<div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>ClickHouse JOIN Behavior:</strong> By default, ClickHouse executes JOIN operations in memory and loads the right table completely. For large tables, use the JOIN hint or distributed JOINs.
 </div>
 
 ---
@@ -3336,33 +3228,32 @@ layout: two-cols
 <div style="height:400px;overflow-y:auto;">
 
 ```sql{all|1-2|4-10|12-14|all}
--- Payment data with message and user information
+-- Claims data with policy and customer information
 SELECT 
-    -- User information
-    u.user_id,
-    u.username,
-    u.company_id,
+    -- Customer information
+    cu.customer_id,
+    cu.first_name,
+    cu.last_name,
     
-    -- Message information
-    m.chat_id,
-    m.message_type,
-    m.sent_timestamp,
+    -- Policy information
+    p.policy_number,
+    p.policy_type,
+    p.effective_date,
     
-    -- Payment information
-    p.payment_amount,
-    p.payment_currency,
-    p.payment_status
-FROM messages m
-JOIN attachments p 
-    ON m.message_id = p.message_id
-JOIN users u 
-    ON m.user_id = u.user_id
-WHERE p.payment_status = 'paid'
-  AND m.sent_timestamp >= '2024-04-01 00:00:00'
-  AND m.sent_timestamp < '2024-05-01 00:00:00'
-ORDER BY p.payment_amount DESC
-LIMIT 100
-;
+    -- Claim information
+    c.claim_amount,
+    c.claim_type,
+    c.claim_status
+FROM policies p
+JOIN claims c 
+    ON p.policy_id = c.policy_id
+JOIN customers cu 
+    ON p.customer_id = cu.customer_id
+WHERE c.claim_status = 'Approved'
+  AND c.reported_date >= '2024-01-01 00:00:00'
+  AND c.reported_date < '2024-07-01 00:00:00'
+ORDER BY c.claim_amount DESC
+LIMIT 100;
 ```
 
 </div>
@@ -3378,8 +3269,8 @@ LIMIT 100
 - **Filter data before joining** to reduce the size of the dataset
 - **Consider using the JOIN HINTS**:
   ```sql
-  SELECT ... FROM table1
-  JOIN[GLOBAL | LOCAL] table2 ON ...
+  SELECT ... FROM policies
+  JOIN[GLOBAL | LOCAL] claims ON ...
   ```
 - **For distributed tables**, GLOBAL JOIN broadcasts the right table to all nodes
 
@@ -3403,22 +3294,22 @@ layout: default
 
 ## CROSS JOIN
 ```sql{all|3-5|all}
--- All possible combinations
-SELECT u.user_id, u.username, c.currency_code
+-- All possible combinations of policy types and agents
+SELECT pt.policy_type, a.agent_id, a.first_name
 FROM 
-(SELECT distinct payment_currency AS currency_code
- FROM attachments) AS c
+(SELECT DISTINCT policy_type
+ FROM policies) AS pt
 CROSS JOIN 
-(SELECT user_id, username FROM users LIMIT 10) AS u;
+(SELECT agent_id, first_name FROM agents LIMIT 10) AS a;
 ```
 
 ## JOIN with USING
 ```sql{all|4|all}
 -- Simplified join syntax when column names match
-SELECT m.chat_id, m.user_id, p.payment_amount
-FROM messages m
-JOIN attachments p
-USING (message_id);
+SELECT p.policy_number, p.customer_id, c.claim_amount
+FROM policies p
+JOIN claims c
+USING (policy_id);
 ```
 
 </div>
@@ -3426,29 +3317,29 @@ USING (message_id);
 
 ## JOIN with Complex Conditions
 ```sql{all|4-6|all}
--- Matching payments within a time window
-SELECT m.message_id,m.sent_timestamp, m.content, p.payment_amount,  p.uploaded_at
-FROM messages m
-JOIN attachments p
-ON p.message_id = m.message_id
-   AND p.uploaded_at > m.sent_timestamp
-   AND p.uploaded_at < m.sent_timestamp + INTERVAL 1 DAY;
+-- Matching claims within policy coverage period
+SELECT p.policy_id, p.effective_date, p.policy_number, c.claim_amount, c.incident_date
+FROM policies p
+JOIN claims c
+ON c.policy_id = p.policy_id
+   AND c.incident_date >= p.effective_date
+   AND c.incident_date <= COALESCE(p.termination_date, today());
 ```
 
 ## ARRAY JOIN
 ```sql{all|2-3|all}
--- Explode array values into rows
-SELECT user_id, tag
-FROM users
-ARRAY JOIN splitByChar(',', tags) AS tag
-WHERE length(tag) > 0;
+-- Explode beneficiary arrays into rows
+SELECT customer_id, beneficiary
+FROM customers
+ARRAY JOIN splitByChar(',', beneficiaries) AS beneficiary
+WHERE length(beneficiary) > 0;
 ```
 
 </div>
 </div>
 
 <div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Performance Note:</strong> ARRAY JOIN is a powerful ClickHouse feature that expands arrays into separate rows, useful for analyzing array data. It's more efficient than doing this expansion in application code.
+<strong>Performance Note:</strong> ARRAY JOIN is a powerful ClickHouse feature that expands arrays into separate rows, useful for analyzing array data like beneficiaries or coverage details.
 </div>
 
 ---
@@ -3458,59 +3349,56 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Real-World JOIN Queries for Payment Analysis
+# Real-World JOIN Queries for Insurance Analysis
 
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-## Monthly Payment Summaries by Company
+## Monthly Premium Collection by Agent
 ```sql{all|1-5|7-11|13-15|all}
 SELECT 
-    toStartOfMonth(p.uploaded_at) AS month,
-    u.company_id,
-    count() AS payment_count,
-    sum(p.payment_amount) AS total_amount
+    toStartOfMonth(p.effective_date) AS month,
+    a.agent_id,
+    a.first_name,
+    a.last_name,
+    count() AS policies_sold,
+    sum(p.premium_amount) AS total_premiums
     
-FROM attachments p
-JOIN messages m 
-    ON p.message_id = m.message_id
-JOIN users u 
-    ON m.user_id = u.user_id
+FROM policies p
+JOIN agents a 
+    ON p.agent_id = a.agent_id
     
-WHERE p.payment_status = 'paid'
-GROUP BY month, u.company_id
-ORDER BY month DESC, total_amount DESC;
+WHERE p.policy_status = 'Active'
+GROUP BY month, a.agent_id, a.first_name, a.last_name
+ORDER BY month DESC, total_premiums DESC;
 ```
 
 </div>
 <div>
 
-## User Payment History with Chat Context
+## Customer Policy History with Claims
 ```sql{all|1-8|10-13|15-16|all}
 SELECT 
-    u.username,
-    m.chat_id,
-    p.payment_amount,
-    p.payment_currency,
-    p.payment_status,
-    p.uploaded_at,
-    m.content AS message_content
+    c.first_name,
+    c.last_name,
+    p.policy_number,
+    p.coverage_amount,
+    p.premium_amount,
+    cl.claim_amount,
+    cl.claim_status,
+    cl.reported_date
     
-FROM users u
-JOIN messages m 
-    ON u.user_id = m.user_id
-JOIN attachments p 
-    ON m.message_id = p.message_id
+FROM customers c
+JOIN policies p 
+    ON c.customer_id = p.customer_id
+LEFT JOIN claims cl 
+    ON p.policy_id = cl.policy_id
     
-WHERE u.user_id = 1001
-ORDER BY p.uploaded_at DESC;
+WHERE c.customer_id = 1001
+ORDER BY cl.reported_date DESC;
 ```
 
 </div>
-</div>
-
-<div class="mt-4 bg-yellow-50 p-4 rounded">
-<strong>Query Planning Tip:</strong> When joining multiple tables, start with the most restrictive filters to minimize the data volume early in the query execution plan.
 </div>
 
 ---
@@ -3523,6 +3411,18 @@ layout: section
 # 2. Window Functions
 
 ---
+layout: default
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+<div style="display: flex; justify-content: center; align-items: center; margin: 0.5rem auto;">
+  <img src="./images/session4/window_functions_infographic.svg" style="width: 90%; height: 450px;" />
+</div>
+
+---
 layout: two-cols
 ---
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
@@ -3531,33 +3431,36 @@ layout: two-cols
 
 # Window Functions Basics
 
+<div style="height:400px;overflow-y:auto;">
+
 ```sql{all|6-9|11-14|16-18|20|all}
 -- Basic window function example
 SELECT 
-    payment_currency,
-    uploaded_at,
-    payment_amount,
-    sum(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY uploaded_at
-    ) AS running_total,
+    policy_type,
+    effective_date,
+    premium_amount,
+    sum(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY effective_date
+    ) AS running_premium_total,
    
     row_number() OVER (
-        PARTITION BY payment_currency
-        ORDER BY uploaded_at  -- Added ORDER BY clause
-    ) AS row_num,
+        PARTITION BY policy_type
+        ORDER BY effective_date
+    ) AS policy_sequence,
         
-    avg(payment_amount) OVER (
-        PARTITION BY payment_currency
-    ) AS currency_avg,
+    avg(premium_amount) OVER (
+        PARTITION BY policy_type
+    ) AS type_avg_premium,
         
-    avg(payment_amount) OVER () AS overall_avg
+    avg(premium_amount) OVER () AS overall_avg_premium
     
-FROM chat_payments.attachments
-WHERE payment_status = 'paid'
-and date(uploaded_at) = '2024-04-15'
-ORDER BY payment_currency, uploaded_at;
+FROM life_insurance.policies
+WHERE policy_status = 'Active'
+  AND date(effective_date) = '2024-04-15'
+ORDER BY policy_type, effective_date;
 ```
+</div>
 
 ::right::
 
@@ -3574,10 +3477,6 @@ ORDER BY payment_currency, uploaded_at;
 - **Aggregate**: sum(), avg(), count(), etc.
 - **Ranking**: row_number(), rank(), dense_rank()
 - **Value**: first_value(), last_value(), lead(), lag()
-
-<div class="mt-6 bg-blue-50 p-4 rounded">
-<strong>ClickHouse Note:</strong> Window functions were introduced in version 21.3 and continue to be enhanced. They work well for analytical queries but may have performance implications on very large datasets.
-</div>
 
 </div>
 
@@ -3596,28 +3495,29 @@ layout: default
 ## Ranking Functions
 ```sql{all|4-8|10-14|16-20|all}
 SELECT 
-    payment_currency,
-    payment_amount,
+    policy_type,
+    coverage_amount,
     -- Regular rank (with gaps)
     rank() OVER (
-        PARTITION BY payment_currency 
-        ORDER BY payment_amount DESC
-    ) AS payment_rank,
+        PARTITION BY policy_type 
+        ORDER BY coverage_amount DESC
+    ) AS coverage_rank,
     
     -- Dense rank (no gaps)
     dense_rank() OVER (
-        PARTITION BY payment_currency 
-        ORDER BY payment_amount DESC
-    ) AS dense_payment_rank,
+        PARTITION BY policy_type 
+        ORDER BY coverage_amount DESC
+    ) AS dense_coverage_rank,
     
     -- Percentile rank
     percent_rank() OVER (
-        PARTITION BY payment_currency 
-        ORDER BY payment_amount
+        PARTITION BY policy_type 
+        ORDER BY coverage_amount
     ) AS percentile
     
-FROM attachments
-WHERE payment_status = 'paid' and  date(uploaded_at) = '2024-04-15';
+FROM policies
+WHERE policy_status = 'Active' 
+  AND date(effective_date) = '2024-04-15';
 ```
 
 </div>
@@ -3626,46 +3526,44 @@ WHERE payment_status = 'paid' and  date(uploaded_at) = '2024-04-15';
 ## Row Position Functions
 ```sql{all|4-8|10-15|17-22|all}
 SELECT 
-    payment_currency,
-    uploaded_at,
+    policy_type,
+    effective_date,
     -- Row number
     row_number() OVER (
-        PARTITION BY payment_currency 
-        ORDER BY uploaded_at
+        PARTITION BY policy_type 
+        ORDER BY effective_date
     ) AS row_num,
     
-    -- Previous row's value (instead of lag)
-    anyLast(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY uploaded_at
+    -- Previous row's premium
+    anyLast(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY effective_date
         ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
-    ) AS previous_payment,
+    ) AS previous_premium,
     
-    -- Next row's value (instead of lead)
-    any(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY uploaded_at
+    -- Next row's premium
+    any(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY effective_date
         ROWS BETWEEN 1 FOLLOWING AND 1 FOLLOWING
-    ) AS next_payment
+    ) AS next_premium
     
-    
-FROM attachments
-WHERE payment_status = 'paid' 
-  AND date(uploaded_at) = '2024-04-15'
-ORDER BY payment_currency, uploaded_at;
+FROM policies
+WHERE policy_status = 'Active' 
+  AND date(effective_date) = '2024-04-15'
+ORDER BY policy_type, effective_date;
 ```
 
 </div>
 </div>
 
 <div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Use Case:</strong> Ranking functions are excellent for identifying top performers, while lag/lead functions help with time-series analysis, detecting changes between consecutive values.
+<strong>Use Case:</strong> Ranking functions are excellent for identifying top-performing agents or high-value policies, while lag/lead functions help with policy sequence analysis and detecting premium changes.
 </div>
 
 ---
 layout: default
 ---
-
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
@@ -3678,24 +3576,24 @@ layout: default
 ## Running Aggregates
 ```sql{all|4-8|10-14|all}
 SELECT 
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    payment_amount,
-    -- Running sum (cumulative total)
-    sum(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY toDate(uploaded_at)
-    ) AS running_total,
+    toDate(effective_date) AS date,
+    policy_type,
+    premium_amount,
+    -- Running sum (cumulative premiums)
+    sum(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY toDate(effective_date)
+    ) AS running_premium_total,
     
     -- Daily total
-    sum(payment_amount) OVER (
-        PARTITION BY payment_currency, toDate(uploaded_at)
-    ) AS daily_total
+    sum(premium_amount) OVER (
+        PARTITION BY policy_type, toDate(effective_date)
+    ) AS daily_premium_total
     
-FROM attachments
-WHERE payment_status = 'paid' AND date(uploaded_at) = '2023-01-01' 
-ORDER BY payment_currency, date;
-
+FROM policies
+WHERE policy_status = 'Active' 
+  AND date(effective_date) = '2024-01-01' 
+ORDER BY policy_type, date;
 ```
 
 </div>
@@ -3704,35 +3602,35 @@ ORDER BY payment_currency, date;
 ## Moving Averages
 ```sql{all|4-9|11-16|all}
 SELECT 
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    payment_amount,
-    -- 7-day moving average using ROWS
-    avg(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY toDate(uploaded_at)
+    toDate(effective_date) AS date,
+    policy_type,
+    premium_amount,
+    -- 7-day moving average of premiums
+    avg(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY toDate(effective_date)
         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
     ) AS moving_avg_7day,
     
-    -- Alternative moving average also using ROWS
-    avg(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY toDate(uploaded_at)
+    -- Alternative moving average calculation
+    avg(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY toDate(effective_date)
         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
     ) AS moving_avg_7day_alt
 
-FROM attachments
-WHERE payment_status = 'paid' 
-  AND toDate(uploaded_at) >= '2023-01-01'
-  AND toDate(uploaded_at) <= '2023-01-07'
-ORDER BY payment_currency, date;
+FROM policies
+WHERE policy_status = 'Active' 
+  AND toDate(effective_date) >= '2024-01-01'
+  AND toDate(effective_date) <= '2024-01-07'
+ORDER BY policy_type, date;
 ```
 
 </div>
 </div>
 
 <div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Window Frame Types:</strong> ROWS defines a frame based on physical row count, while RANGE uses a value range for the ordering column. RANGE works well with dates for time-based windows.
+<strong>Window Frame Types:</strong> ROWS defines a frame based on physical row count, while RANGE uses a value range for the ordering column. RANGE works well with dates for time-based analysis.
 </div>
 
 ---
@@ -3743,79 +3641,79 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Practical Window Function Examples for Payment Analysis
+# Practical Window Function Examples for Insurance Analysis
 
 <div class="grid grid-cols-2 gap-4"  style="height:400px;overflow-y:auto;">
 <div>
 
-## Payment Trend Analysis
+## Policy Issuance Trend Analysis
 ```sql{all|1-6|8-13|15-20|all}
 SELECT 
-    toDate(p.uploaded_at) AS date,
-    p.payment_currency,
-    count() AS payment_count,
-    sum(p.payment_amount) AS daily_total,
+    toDate(p.effective_date) AS date,
+    p.policy_type,
+    count() AS policies_issued,
+    sum(p.premium_amount) AS daily_premium_total,
     
     -- 7-day moving average of daily totals
-    avg(daily_total) OVER (
-        PARTITION BY p.payment_currency 
+    avg(daily_premium_total) OVER (
+        PARTITION BY p.policy_type 
         ORDER BY date
         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
     ) AS moving_avg_7day,
     
     -- Month-to-date running total
-    sum(daily_total) OVER (
-        PARTITION BY p.payment_currency, toStartOfMonth(date)
+    sum(daily_premium_total) OVER (
+        PARTITION BY p.policy_type, toStartOfMonth(date)
         ORDER BY date
     ) AS month_to_date_total
     
-FROM attachments p
-WHERE payment_status = 'paid' 
-  AND toDate(uploaded_at) >= '2023-01-01'
-  AND toDate(uploaded_at) <= '2023-01-07'
+FROM policies p
+WHERE policy_status = 'Active' 
+  AND toDate(effective_date) >= '2024-01-01'
+  AND toDate(effective_date) <= '2024-01-07'
 GROUP BY 
     date,
-    p.payment_currency
-ORDER BY p.payment_currency, date;
+    p.policy_type
+ORDER BY p.policy_type, date;
 ```
 
 </div>
 <div>
 
-## User Payment Behavior
+## Customer Policy Pattern Analysis
 ```sql{all|1-4|6-11|13-19|all}
 SELECT 
-    u.user_id,
-    u.username,
-    p.payment_amount,
-    p.uploaded_at,
-    -- Difference from user's average
-    p.payment_amount - avg(p.payment_amount) OVER (
-        PARTITION BY u.user_id
-    ) AS diff_from_user_avg,
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    p.coverage_amount,
+    p.effective_date,
+    -- Difference from customer's average
+    p.coverage_amount - avg(p.coverage_amount) OVER (
+        PARTITION BY c.customer_id
+    ) AS diff_from_customer_avg,
     
-    -- Rank of payments per user
+    -- Rank of policies per customer
     rank() OVER (
-        PARTITION BY u.user_id 
-        ORDER BY p.payment_amount DESC
-    ) AS payment_rank_for_user,
+        PARTITION BY c.customer_id 
+        ORDER BY p.coverage_amount DESC
+    ) AS coverage_rank_for_customer,
     
-    -- Days since previous payment using anyLast
+    -- Days since previous policy
     dateDiff('day',
-        anyLast(p.uploaded_at) OVER (
-            PARTITION BY u.user_id 
-            ORDER BY p.uploaded_at
+        anyLast(p.effective_date) OVER (
+            PARTITION BY c.customer_id 
+            ORDER BY p.effective_date
             ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
         ),
-        p.uploaded_at
-    ) AS days_since_previous
+        p.effective_date
+    ) AS days_since_previous_policy
 
-FROM attachments p
-JOIN messages m ON p.message_id = m.message_id
-JOIN users u ON m.user_id = u.user_id
-WHERE p.payment_status = 'paid' 
-  AND toDate(p.uploaded_at) >= '2023-01-01'
-ORDER BY u.user_id, p.uploaded_at;
+FROM policies p
+JOIN customers c ON p.customer_id = c.customer_id
+WHERE p.policy_status = 'Active' 
+  AND toDate(p.effective_date) >= '2024-01-01'
+ORDER BY c.customer_id, p.effective_date;
 ```
 
 </div>
@@ -3842,25 +3740,25 @@ layout: two-cols
 ```sql{all|2-5|7-11|13-16|all}
 -- Subquery in WHERE clause
 SELECT *
-FROM attachments
-WHERE payment_amount > (
-    SELECT avg(payment_amount) FROM attachments
-) limit 100;
+FROM policies
+WHERE coverage_amount > (
+    SELECT avg(coverage_amount) FROM policies
+) LIMIT 100;
 
 -- Subquery in FROM clause
-SELECT currency, avg_amount
+SELECT policy_type, avg_coverage
 FROM (
-    SELECT payment_currency AS currency, avg(payment_amount) AS avg_amount
-    FROM attachments
-    GROUP BY payment_currency
-) AS currency_avgs;
+    SELECT policy_type, avg(coverage_amount) AS avg_coverage
+    FROM policies
+    GROUP BY policy_type
+) AS type_averages;
 
 -- Subquery in SELECT clause
 SELECT 
-    payment_currency,
-    payment_amount,
-    payment_amount / (SELECT avg(payment_amount) FROM attachments) AS relative_to_avg
-FROM attachments limit 100;
+    policy_type,
+    coverage_amount,
+    coverage_amount / (SELECT avg(coverage_amount) FROM policies) AS relative_to_avg
+FROM policies LIMIT 100;
 ```
 
 ::right::
@@ -3897,34 +3795,34 @@ layout: default
 
 ## Correlated Subqueries
 ```sql{all|5-9|all}
--- Find payments above average for their currency
+-- Find policies above average for their type
 SELECT 
-    p1.payment_currency,
-    p1.payment_amount
-FROM attachments p1
+    p1.policy_type,
+    p1.coverage_amount
+FROM policies p1
 JOIN (
     SELECT 
-        payment_currency,
-        avg(payment_amount) as avg_amount
-    FROM attachments 
-    GROUP BY payment_currency
-) p2 ON p1.payment_currency = p2.payment_currency
-WHERE p1.payment_amount > p2.avg_amount
-ORDER BY p1.payment_currency, p1.payment_amount DESC
+        policy_type,
+        avg(coverage_amount) as avg_coverage
+    FROM policies 
+    GROUP BY policy_type
+) p2 ON p1.policy_type = p2.policy_type
+WHERE p1.coverage_amount > p2.avg_coverage
+ORDER BY p1.policy_type, p1.coverage_amount DESC
 LIMIT 100;
-
 ```
 
 ## Subqueries with EXISTS
 ```sql{all|5-9|all}
--- Find users who have made payments
+-- Find customers who have filed claims
 SELECT DISTINCT
-    u.user_id,
-    u.username
-FROM users u
-JOIN messages m ON m.user_id = u.user_id
-JOIN attachments p ON m.message_id = p.message_id
-ORDER BY u.user_id;
+    c.customer_id,
+    c.first_name,
+    c.last_name
+FROM customers c
+JOIN policies p ON p.customer_id = c.customer_id
+JOIN claims cl ON p.policy_id = cl.policy_id
+ORDER BY c.customer_id;
 ```
 
 </div>
@@ -3932,30 +3830,31 @@ ORDER BY u.user_id;
 
 ## Subqueries with IN
 ```sql{all|5-10|all}
--- Find messages with paid payments
+-- Find policies with approved claims
 SELECT 
-    message_id,
-    content
-FROM messages
-WHERE message_id IN (
-    SELECT message_id
-    FROM attachments
-    WHERE payment_status = 'paid'
-    AND payment_amount > 1000
+    policy_id,
+    policy_number,
+    coverage_amount
+FROM policies
+WHERE policy_id IN (
+    SELECT policy_id
+    FROM claims
+    WHERE claim_status = 'Approved'
+    AND claim_amount > 50000
 );
 ```
 
 ## Subqueries with ANY/ALL
 ```sql{all|5-9|all}
--- Find payments greater than ANY USD payment
+-- Find claims greater than ANY Term policy premium
 SELECT 
-    payment_currency,
-    payment_amount
-FROM attachments
-WHERE payment_amount > ANY (
-    SELECT payment_amount
-    FROM attachments
-    WHERE payment_currency = 'USD'
+    claim_type,
+    claim_amount
+FROM claims
+WHERE claim_amount > ANY (
+    SELECT premium_amount
+    FROM policies
+    WHERE policy_type = 'Term'
 ) LIMIT 100;
 ```
 
@@ -3973,74 +3872,71 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Practical Subquery Examples for Payment Analysis
+# Practical Subquery Examples for Insurance Analysis
 
 <div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
-## Top Paying Users by Currency
+## Top Customers by Coverage by Policy Type
 ```sql{all|1-7|9-17|all}
--- Find top 3 users by total payment for each currency
+-- Find top 3 customers by total coverage for each policy type
 SELECT 
-    currency_ranking.payment_currency,
-    currency_ranking.user_id,
-    currency_ranking.username,
-    currency_ranking.total_amount
+    type_ranking.policy_type,
+    type_ranking.customer_id,
+    type_ranking.first_name,
+    type_ranking.last_name,
+    type_ranking.total_coverage
 FROM (
     SELECT 
-        p.payment_currency,
-        u.user_id as user_id,
-        u.username,
-        sum(p.payment_amount) AS total_amount,
+        p.policy_type,
+        c.customer_id,
+        c.first_name,
+        c.last_name,
+        sum(p.coverage_amount) AS total_coverage,
         row_number() OVER (
-            PARTITION BY p.payment_currency 
-            ORDER BY sum(p.payment_amount) DESC
-        ) AS currency_rank
-    FROM attachments p
-    JOIN messages m ON p.message_id = m.message_id
-    JOIN users u ON m.user_id = u.user_id
-    WHERE p.payment_status = 'paid'
-    GROUP BY p.payment_currency, u.user_id, u.username
-) AS currency_ranking
-WHERE currency_ranking.currency_rank <= 3
-ORDER BY currency_ranking.payment_currency, currency_ranking.currency_rank;
-
+            PARTITION BY p.policy_type 
+            ORDER BY sum(p.coverage_amount) DESC
+        ) AS type_rank
+    FROM policies p
+    JOIN customers c ON p.customer_id = c.customer_id
+    WHERE p.policy_status = 'Active'
+    GROUP BY p.policy_type, c.customer_id, c.first_name, c.last_name
+) AS type_ranking
+WHERE type_ranking.type_rank <= 3
+ORDER BY type_ranking.policy_type, type_ranking.type_rank;
 ```
 
 </div>
 <div>
 
-## Payments Above Daily Average
+## Claims Above Daily Average
 ```sql{all|1-8|10-16|all}
--- Find payments that exceed the daily average by 50%+
-SELECT p1.*,
-    m.user_id
+-- Find claims that exceed the daily average by 50%+
+SELECT c1.*, p.policy_number, cu.first_name
 FROM (
-        SELECT toDate(uploaded_at) AS date,
-            payment_currency,
-            payment_amount,
-            payment_status,
-            message_id
-        FROM attachments
-    ) p1
-    JOIN messages m ON p1.message_id = m.message_id
+        SELECT toDate(reported_date) AS date,
+            claim_type,
+            claim_amount,
+            claim_status,
+            policy_id
+        FROM claims
+    ) c1
+    JOIN policies p ON c1.policy_id = p.policy_id
     JOIN (
-        select avg(payment_amount) * 1.5 as payment_amount,
-            payment_currency,
-            toDate(uploaded_at) AS date
-        from attachments
-        group by payment_currency,
-            date
-    ) p2 On p1.date = p2.date
-Where p1.payment_amount > p2.payment_amount
-
+        SELECT avg(claim_amount) * 1.5 as avg_claim_amount,
+            claim_type,
+            toDate(reported_date) AS date
+        FROM claims
+        GROUP BY claim_type, date
+    ) c2 ON c1.date = c2.date AND c1.claim_type = c2.claim_type
+WHERE c1.claim_amount > c2.avg_claim_amount;
 ```
 
 </div>
 </div>
 
 <div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Insight:</strong> Subqueries shine for complex analytical questions that require multiple steps of filtering or calculations, especially when working with aggregated data.
+<strong>Insight:</strong> Subqueries excel for complex analytical questions requiring multiple filtering steps, especially when working with aggregated insurance data for risk assessment.
 </div>
 
 ---
@@ -4063,24 +3959,24 @@ layout: two-cols
 
 ```sql{all|1-5|7-13|15-19|all}
 -- Basic WITH clause example
-WITH avg_by_currency AS (
-    SELECT payment_currency, avg(payment_amount) AS avg_amount
-    FROM attachments
-    GROUP BY payment_currency
+WITH avg_by_policy_type AS (
+    SELECT policy_type, avg(premium_amount) AS avg_premium
+    FROM policies
+    GROUP BY policy_type
 )
 
 SELECT 
-    p.payment_currency,
-    p.payment_amount,
-    a.avg_amount,
-    p.payment_amount - a.avg_amount AS diff_from_avg
-FROM attachments p
-JOIN avg_by_currency a ON p.payment_currency = a.payment_currency
-WHERE p.payment_status = 'paid'
+    p.policy_type,
+    p.premium_amount,
+    a.avg_premium,
+    p.premium_amount - a.avg_premium AS diff_from_avg
+FROM policies p
+JOIN avg_by_policy_type a ON p.policy_type = a.policy_type
+WHERE p.policy_status = 'Active'
 
 -- Filter results after joining with CTE
-HAVING p.payment_amount > a.avg_amount * 1.5
-ORDER BY p.payment_currency, diff_from_avg DESC;
+HAVING p.premium_amount > a.avg_premium * 1.5
+ORDER BY p.policy_type, diff_from_avg DESC;
 ```
 
 ::right::
@@ -4118,31 +4014,32 @@ layout: default
 
 ## Multiple CTEs
 ```sql{all|1-5|7-12|14-19|21-27|all}
--- Calculate daily totals
-WITH daily_totals AS (
-    SELECT toDate(uploaded_at) AS date, sum(payment_amount) AS total
-    FROM attachments
+-- Calculate daily policy issuance
+WITH daily_policies AS (
+    SELECT toDate(effective_date) AS date, count() AS policies_issued
+    FROM policies
     GROUP BY date
 ),
 
--- Calculate daily active users
-daily_users AS (
-    SELECT toDate(sent_timestamp) AS date, count(DISTINCT user_id) AS active_users
-    FROM messages
-    WHERE has_attachment = 1
+-- Calculate daily claims
+daily_claims AS (
+    SELECT toDate(reported_date) AS date, count() AS claims_reported
+    FROM claims
     GROUP BY date
 )
 
--- Combine the CTEs to get metrics
+-- Combine the CTEs to get daily metrics
 SELECT 
-    d.date,
-    d.total AS daily_payment_total,
-    u.active_users,
-    d.total / u.active_users AS avg_payment_per_user
-FROM daily_totals d
-JOIN daily_users u ON d.date = u.date
-WHERE d.date >= '2023-04-01'
-  AND d.date <= '2025-04-30'
+    dp.date,
+    dp.policies_issued,
+    COALESCE(dc.claims_reported, 0) AS claims_reported,
+    CASE WHEN dp.policies_issued > 0 
+         THEN dc.claims_reported / dp.policies_issued 
+         ELSE 0 END AS claims_to_policy_ratio
+FROM daily_policies dp
+LEFT JOIN daily_claims dc ON dp.date = dc.date
+WHERE dp.date >= '2024-01-01'
+  AND dp.date <= '2024-01-31'
 ORDER BY d.date;
 ```
 
@@ -4151,23 +4048,22 @@ ORDER BY d.date;
 
 ## Chained CTEs
 ```sql{all|1-6|8-15|17-25|all}
--- Step 1: Get payment data by user
-WITH user_payments AS (
-    SELECT m.user_id, p.payment_amount, p.payment_currency
-    FROM messages m
-    JOIN attachments p ON m.message_id = p.message_id
-    WHERE p.payment_status = 'paid'
+-- Step 1: Get policy data by customer
+WITH customer_policies AS (
+    SELECT customer_id, coverage_amount, premium_amount, policy_type
+    FROM policies
+    WHERE policy_status = 'Active'
 ),
 
--- Step 2: Aggregate by user
-user_totals AS (
+-- Step 2: Aggregate by customer
+customer_totals AS (
     SELECT 
-        user_id,
-        sum(payment_amount) AS total_paid,
-        count() AS payment_count,
-        avg(payment_amount) AS avg_payment
-    FROM user_payments
-    GROUP BY user_id
+        customer_id,
+        sum(coverage_amount) AS total_coverage,
+        count() AS policy_count,
+        avg(premium_amount) AS avg_premium
+    FROM customer_policies
+    GROUP BY customer_id
 )
 
 -- Step 3: Categorize users
@@ -4187,7 +4083,7 @@ ORDER BY t.total_paid DESC;
 </div>
 
 <div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Readability Tip:</strong> CTEs are especially valuable for step-by-step data transformations, making the query logic easier to follow and debug.
+<strong>Readability Tip:</strong> CTEs are especially valuable for step-by-step data transformations in insurance analytics, making complex actuarial calculations easier to follow and debug.
 </div>
 
 ---
@@ -4197,80 +4093,80 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# Real-World CTE Examples for Payment Analytics
+# Real-World CTE Examples for Insurance Analytics
 
 <div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
-## Monthly Payment Trends
+## Monthly Policy Performance Trends
 ```sql{all|1-10|12-22|24-33|all}
--- Step 1: Calculate monthly totals by currency
-WITH monthly_by_currency AS (
+-- Step 1: Calculate monthly totals by policy type
+WITH monthly_by_type AS (
     SELECT 
-        toStartOfMonth(uploaded_at) AS month,
-        payment_currency,
-        count() AS payment_count,
-        sum(payment_amount) AS monthly_total,
-        avg(payment_amount) AS avg_payment
-    FROM attachments
-    WHERE payment_status = 'paid'
-    GROUP BY month, payment_currency
+        toStartOfMonth(effective_date) AS month,
+        policy_type,
+        count() AS policies_issued,
+        sum(coverage_amount) AS total_coverage,
+        sum(premium_amount) AS total_premiums
+    FROM policies
+    WHERE policy_status = 'Active'
+    GROUP BY month, policy_type
 ),
 
--- Step 2: Calculate previous month metrics using anyLast
+-- Step 2: Calculate previous month metrics
 monthly_with_previous AS (
     SELECT 
         m1.month,
-        m1.payment_currency,
-        m1.payment_count,
-        m1.monthly_total,
-        m1.avg_payment,
-        anyLast(m1.monthly_total) OVER (
-            PARTITION BY m1.payment_currency 
+        m1.policy_type,
+        m1.policies_issued,
+        m1.total_coverage,
+        m1.total_premiums,
+        anyLast(m1.total_premiums) OVER (
+            PARTITION BY m1.policy_type 
             ORDER BY m1.month
             ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
-        ) AS prev_month_total,
-        anyLast(m1.payment_count) OVER (
-            PARTITION BY m1.payment_currency 
+        ) AS prev_month_premiums,
+        anyLast(m1.policies_issued) OVER (
+            PARTITION BY m1.policy_type 
             ORDER BY m1.month
             ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
         ) AS prev_month_count
-    FROM monthly_by_currency m1
-    ORDER BY m1.month, m1.payment_currency
+    FROM monthly_by_type m1
+    ORDER BY m1.month, m1.policy_type
 )
 
--- Step 3: Calculate growth rates with null checks
+-- Step 3: Calculate growth rates
 SELECT 
     month,
-    payment_currency,
-    payment_count,
-    monthly_total,
-    prev_month_total,
+    policy_type,
+    policies_issued,
+    total_premiums,
+    prev_month_premiums,
     CASE 
-        WHEN prev_month_total > 0 
-        THEN round((monthly_total - prev_month_total) / prev_month_total * 100, 1)
+        WHEN prev_month_premiums > 0 
+        THEN round((total_premiums - prev_month_premiums) / prev_month_premiums * 100, 1)
         ELSE NULL
-    END AS month_over_month_growth,
+    END AS premium_growth,
     CASE 
         WHEN prev_month_count > 0 
-        THEN round((payment_count - prev_month_count) / prev_month_count * 100, 1)
+        THEN round((policies_issued - prev_month_count) / prev_month_count * 100, 1)
         ELSE NULL
-    END AS count_growth
+    END AS policy_count_growth
 FROM monthly_with_previous
-WHERE prev_month_total IS NOT NULL
-ORDER BY month DESC, payment_currency;
+WHERE prev_month_premiums IS NOT NULL
+ORDER BY month DESC, policy_type;
 ```
 
 </div>
 <div>
 
-## User Cohort Analysis
+## Customer Risk Cohort Analysis
 ```sql{all|1-9|11-20|22-31|all}
--- Step 1: Get user's first payment month
-WITH user_first_payment AS (
+-- Step 1: Get customer's first policy month
+WITH customer_first_policy AS (
     SELECT 
-        m.user_id,
-        min(toStartOfMonth(p.uploaded_at)) AS first_payment_month
+        customer_id,
+        min(toStartOfMonth(p.effective_date)) AS first_policy_month
     FROM messages m
     JOIN attachments p ON m.message_id = p.message_id
     WHERE p.payment_status = 'paid'
@@ -4313,581 +4209,18 @@ layout: section
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-# 5. Query Optimization Techniques
-
----
-layout: two-cols
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Understanding ClickHouse Query Execution
-
-<div style="height:400px;overflow-y:auto;">
-
-```sql{all}
--- Examine query execution plan
-EXPLAIN
-SELECT 
-    m.chat_id,
-    toDate(p.uploaded_at) AS date,
-    sum(p.payment_amount) AS total_amount
-FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-WHERE m.chat_id IN (100, 101, 102)
-  AND p.payment_status = 'paid'
-  AND p.uploaded_at >= '2023-04-01'
-  AND p.uploaded_at < '2023-05-01'
-GROUP BY m.chat_id, date
-ORDER BY m.chat_id, date;
-```
-
-**EXPLAIN Output Analysis:**
-- How tables are accessed
-- Join algorithms used
-- Filter application order
-- Sorting method
-- Aggregation approach
-
-</div>
-
-::right::
-
-<div class="ml-4">
-
-# Optimization Considerations
-
-### Key Factors Affecting Performance
-- Table engine selection
-- Schema design (data types, columns)
-- Partitioning strategy
-- Primary key (ORDER BY) selection
-- Join order and conditions
-- Filter selectivity
-- Aggregation complexity
-
-<div class="mt-6 bg-blue-50 p-4 rounded">
-<strong>ClickHouse Query Profiling:</strong> Besides EXPLAIN, use the system.query_log table and EXPLAIN ANALYZE to identify bottlenecks in your queries.
-</div>
-
-</div>
-
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Optimizing Filters and Data Skipping
-
-<div class="grid grid-cols-2 gap-4">
-<div>
-
-## Leverage the Primary Key
-```sql{all|3-4|all}
--- Efficient: Uses primary key for data skipping
-select count(*) from chat_payments.messages 
-where sent_timestamp > '2023-04-01' 
-and sent_timestamp < '2025-04-02';
-
--- Less efficient: Cannot use primary key effectively
-select count(*) from chat_payments.messages 
-where content like '%content%';
-```
-
-## Use Partition Pruning
-```sql{all|3|all}
--- Efficient: Scans only April 2023 partition
-SELECT count(*)
-FROM messages
-WHERE toYYYYMM(sent_timestamp) = 202304;
-```
-
-</div>
-<div>
-
-## Avoid Transforming Filtered Columns
-```sql{all|3|7|all}
--- Bad: Function on column prevents index use
-SELECT count(*)
-FROM messages
-WHERE toString(chat_id) = '100';
-
--- Good: Keep indexed column as is
-SELECT count(*)
-FROM messages
-WHERE chat_id = 100;
-```
-
-## Using Secondary Indexes
-```sql{all|7-8|all}
--- Create a secondary index
-ALTER TABLE chat_payments.messages
-ADD INDEX idx_user_id user_id TYPE minmax GRANULARITY 8192;
-
--- Query using the index
-select * from chat_payments.messages 
-where   user_id = 1000;
-```
-
-</div>
-</div>
-
-<div class="mt-4 bg-yellow-50 p-4 rounded">
-<strong>Best Practice:</strong> Always filter on columns that are part of the primary key or partition key first, and avoid transformations on these columns to ensure data skipping works efficiently.
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# JOIN Optimization Strategies
-
-<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;" >
-<div>
-
-## Choose the Right JOIN Type
-```sql{all|4|all}
--- Use JOIN HINTS to control execution
-SELECT m.chat_id, p.payment_amount
-FROM messages m
-JOIN /* LOCAL */  attachments p 
-ON m.message_id = p.message_id
-WHERE m.chat_id = 100;
-```
-
-## Filter Before Joining
-```sql{all|4-6|9-11|all}
--- Less efficient: Join then filter
-SELECT m.chat_id, p.payment_amount
-FROM messages m
-JOIN attachments p 
-ON m.message_id = p.message_id
-WHERE m.chat_id = 197319
-  AND p.payment_status = 'paid'
-  --LIMIT 100;
-
--- More efficient: Filter then join
-SELECT 
-    m.chat_id, 
-    p.payment_amount
-FROM 
-    (SELECT message_id, chat_id 
-     FROM messages 
-     WHERE chat_id = 197319 ) m
-JOIN 
-    (SELECT message_id, payment_amount 
-     FROM attachments 
-     WHERE payment_status = 'paid') p
-ON m.message_id = p.message_id
---Limit 100
-;
-```
-
-</div>
-<div>
-
-## Optimize Join Order
-```sql{all|3-6|all}
--- Put smaller filtered result sets first in joins
-SELECT u.username, COUNT(p.attachment_id)
-FROM (
-    SELECT  * FROM attachments
-    WHERE payment_status = 'paid'
-    AND uploaded_at > '2023-04-01'
-) AS p
-JOIN messages m ON p.message_id = m.message_id
-JOIN users u ON m.user_id = u.user_id
-GROUP BY u.username;
-```
-
-## Use USING Instead of ON When Possible
-```sql{all|3|all}
--- Simplified join syntax
-SELECT m.chat_id, p.payment_amount
-FROM messages m
-JOIN attachments p USING (message_id)
-WHERE m.chat_id = 100;
-```
-
-</div>
-</div>
-
-<div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Performance Insight:</strong> For distributed ClickHouse clusters, be aware of network transfer costs. Use the GLOBAL hint when the right-side table is small and needs to be broadcast to all nodes.
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Aggregation and GROUP BY Optimization
-
-<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
-<div>
-
-## Pre-filter Data
-```sql{all|3-5|all}
--- Pre-filter before expensive aggregation
-SELECT 
-    chat_id,
-    count() AS message_count
-FROM messages
-WHERE sent_timestamp >= '2023-04-01'
-  AND sent_timestamp < '2023-05-01'
-GROUP BY chat_id;
-```
-
-## Use Efficient Aggregation Functions
-```sql{all|3|7|all}
--- Approximate count distinct (faster)
-SELECT 
-    uniq(user_id) AS approx_unique_users
-FROM messages
-WHERE chat_id = 100;
-
--- Exact count distinct (slower)
-SELECT 
-    count(DISTINCT user_id) AS exact_unique_users
-FROM messages
-WHERE chat_id = 100;
-```
-
-</div>
-<div>
-
-## Consider Materialized Views
-```sql{all|1-10|12-17|all}
--- Create a materialized view for common aggregations
-CREATE MATERIALIZED VIEW payment_daily_mv
-ENGINE = SummingMergeTree()
-PARTITION BY toYYYYMM(date)
-ORDER BY (date, payment_currency)
-AS
-SELECT
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    sum(payment_amount) AS daily_total
-FROM attachments
-GROUP BY date, payment_currency;
-
--- Query the materialized view (much faster)
-SELECT
-    month
-    payment_currency,
-    sum(daily_total) AS monthly_total
-FROM payment_daily_mv
-WHERE toYYYYMM(date) = 202304
-GROUP BY toStartOfMonth(date) AS month, payment_currency;
-
-
-```
-
-</div>
-</div>
-
-<div class="mt-4 bg-yellow-50 p-4 rounded">
-<strong>Optimization Tip:</strong> For recurring analytical queries, consider using materialized views that pre-aggregate data. This is especially effective for time-series data with regular aggregation patterns.
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Optimizing Complex Queries
-
-<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
-<div>
-
-## Break Down Complex Queries
-```sql{all|1-6|8-14|16-21|all}
--- Step 1: Create a temporary table for filtered data
-CREATE TABLE filtered_payments 
-ENGINE = Memory
-AS
-SELECT *
-FROM attachments
-WHERE payment_status = 'paid'
-  AND uploaded_at >= '2023-01-01';
-
-
--- Step 2: Create a temporary table for aggregated data
-CREATE TABLE payment_summary 
-Engine = Memory
-AS
-SELECT
-    toStartOfMonth(uploaded_at) AS month,
-    payment_currency,
-    sum(payment_amount) AS total_amount
-FROM filtered_payments
-GROUP BY month, payment_currency;
-
--- Step 3: Query the prepared data
-SELECT
-    formatDateTime(month, '%Y-%m') AS month_str,
-    payment_currency,
-    total_amount
-FROM payment_summary
-ORDER BY month, payment_currency;
-
-```
-
-</div>
-<div style="height:400px;overflow-y:auto;">
-
-## Use CTEs for Better Readability and Optimization
-```sql{all|1-7|9-17|19-28|all}
--- Clear structure helps the optimizer
-WITH filtered_data AS (
-    SELECT *
-    FROM attachments
-    WHERE payment_status = 'paid'
-      AND uploaded_at >= '2023-01-01'
-      AND payment_amount > 100
-),
-
-monthly_stats AS (
-    SELECT
-        toStartOfMonth(uploaded_at) AS month,
-        payment_currency,
-        count() AS payment_count,
-        sum(payment_amount) AS total_amount,
-        avg(payment_amount) AS avg_amount
-    FROM filtered_data
-    GROUP BY month, payment_currency
-)
-
--- Final analysis with organized data
-SELECT
-    formatDateTime(month, '%Y-%m') AS month_str,
-    payment_currency,
-    payment_count,
-    total_amount,
-    avg_amount,
-    total_amount / payment_count AS avg_transaction
-FROM monthly_stats
-ORDER BY month, payment_currency;
-```
-
-</div>
-</div>
-
-<div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Complexity Management:</strong> Breaking complex queries into logical steps not only helps readability but also can help the optimizer better understand your intentions.
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Query Monitoring and Tuning
-
-<div class="grid grid-cols-2 gap-4">
-<div>
-
-## Analyzing Query Performance
-```sql{all|3-9|11-15|all}
--- Find slow queries
-SELECT
-    query_id,
-    query_duration_ms,
-    query,
-    read_rows,
-    read_bytes,
-    memory_usage
-FROM system.query_log
-WHERE type = 'QueryFinish'
-  AND query_duration_ms > 1000
-  AND event_time > now() - INTERVAL 1 DAY
-  AND query LIKE '%attachments%'
-ORDER BY query_duration_ms DESC
-LIMIT 10;
-```
-
-</div>
-<div>
-
-## Configuration Settings for Optimization
-```sql{all|2|5|8|11|all}
--- Adjust max memory usage per query (in bytes)
-SET max_memory_usage = 20000000000; -- 20 GB
-
--- Control parallel processing
-SET max_threads = 8;
-
--- Optimize distributed queries
-SET optimize_skip_unused_shards = 1;
-
--- Adjust join execution
-SET join_algorithm = 'hash';
-```
-
-<div class="mt-8 bg-yellow-50 p-4 rounded">
-<strong>Optimization Strategy:</strong> Start with schema and query structure optimization, then fine-tune settings, and finally consider hardware scaling or distribution strategies.
-</div>
-
-</div>
-</div>
-
-<div class="mt-4">
-
-## Performance Testing Approach
-1. Benchmark current performance with representative queries
-2. Make targeted changes one at a time
-3. Re-test with the same queries to measure improvement
-4. Document what works and what doesn't
-
-</div>
-
----
-layout: default
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
-# Real-World Optimization Example: Chat Payment Analysis
-
-<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
-<div>
-
-## Original Slow Query
-```sql{all}
--- Complex, inefficient query
-
-SELECT 
-    u.username,
-    m.chat_id,
-    p.month,
-    count() AS payment_count,
-    sum(p.payment_amount) AS total_amount
-FROM (
-    SELECT 
-        message_id,
-        payment_amount,
-        toStartOfMonth(uploaded_at) AS month
-    FROM attachments
-    WHERE uploaded_at BETWEEN 
-        '2023-01-01 00:00:00' AND '2023-12-31 23:59:59'
-) p
-JOIN messages m ON p.message_id = m.message_id
-JOIN users u ON m.user_id = u.user_id
-GROUP BY u.username, m.chat_id, p.month
-ORDER BY total_amount DESC;
-
-```
-- Execution time: 0.65 seconds
-- Full table scan on customers
-- Temporary table for join results
-
-</div>
-<div>
-
-## Optimized Query
-```sql{all|1-7|9-16|18-29|all}
-
-SELECT 
-    u.username,
-    m.chat_id,
-    toStartOfMonth(p.uploaded_at) AS month,
-    count() AS payment_count,
-    sum(p.payment_amount) AS total_amount
-FROM users u
-JOIN messages m ON u.user_id = m.user_id
-JOIN attachments p ON m.message_id = p.message_id
-WHERE p.uploaded_at BETWEEN 
-    '2023-01-01 00:00:00' AND '2023-12-31 23:59:59'
-GROUP BY u.username, m.chat_id, month
-ORDER BY total_amount DESC;
-
-WITH 
-filtered_data AS (
-    SELECT 
-        u.username,
-        m.chat_id,
-        toStartOfMonth(p.uploaded_at) AS month,
-        p.payment_amount
-    FROM attachments p
-    JOIN messages m ON p.message_id = m.message_id
-    JOIN users u ON m.user_id = u.user_id
-    WHERE p.uploaded_at BETWEEN 
-        '2023-01-01 00:00:00' AND '2023-12-31 23:59:59'
-)
-
-SELECT 
-    username,
-    chat_id,
-    month,
-    count() AS payment_count,
-    sum(payment_amount) AS total_amount
-FROM filtered_data
-GROUP BY 
-    username,
-    chat_id,
-    month
-ORDER BY total_amount DESC;
-```
-
-</div>
-</div>
-
-<div class="mt-4 bg-green-50 p-4 rounded">
-<strong>Performance Impact:</strong> The optimized query can reduce execution time by 80-95% by filtering early, joining efficiently, and limiting the final result set.
-</div>
-
----
-layout: center
-class: text-center
----
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
-
 # Session Summary
 
-<div class="grid grid-cols-2 gap-4">
-<div>
+<div class="text-left">
 
-## Advanced Query Techniques
-- JOIN operations for combining data
-- Window functions for analytics
-- Subqueries for complex filtering
-- CTEs for readability and structure
-- Query optimization strategies
-
-</div>
-<div>
-
-## Key Optimization Principles
-- Filter early and use primary keys
-- Join in the right order with proper hints
-- Use appropriate aggregation functions
-- Break complex queries into logical steps
-- Monitor and analyze performance
-
-</div>
+## Advanced Query Techniques for Life Insurance Analytics
+- JOIN operations for combining policy, customer, and claims data
+- Window functions for actuarial analysis and trend identification
+- Subqueries for complex risk assessment filtering
+- CTEs for readable policy portfolio analysis and reporting
 </div>
 
-<div class="pt-12">
-  <span class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
-    Questions?
-  </span>
-</div>
+
 
 ---
 layout: section
@@ -4895,7 +4228,7 @@ layout: section
 
 # Session 5: Data Management
 
-## Optimizing Operations for Chat Payment Apps
+## Optimizing Operations for Life Insurance Systems
 
 ---
 layout: default
@@ -4920,12 +4253,13 @@ layout: default
 </div>
 <div>
 
-## Use Case: Chat App with Payments
-- Messaging platform with attached invoices
-- Payment processing through chat interface
-- High volume of messages and attachments
-- Need for efficient data operations
+## Use Case: Life Insurance Management System
+- Policy administration and claims processing
+- Premium collection and commission tracking
+- Customer and agent data management
+- High volume of policies and claims
 - Critical financial data requiring protection
+- Regulatory compliance and audit requirements
 
 </div>
 </div>
@@ -4948,15 +4282,14 @@ layout: default
 ## INSERT FROM SELECT
 ```sql{all|1-7|all}
 -- Copy data from one table to another
-CREATE TABLE attachments_backup AS attachments;
+CREATE TABLE claims_backup AS claims;
 
-Insert into attachments_backup
-  SELECT *
-FROM attachments
-WHERE toYear(uploaded_at) = 2023
-  AND payment_status = 'paid'
-  AND payment_amount > 1000;
-
+INSERT INTO claims_backup
+SELECT *
+FROM claims
+WHERE toYear(reported_date) = 2023
+  AND claim_status = 'Paid'
+  AND claim_amount > 50000;
 ```
 </div>
 </div>
@@ -4972,33 +4305,35 @@ layout: default
 ---
 
 # Batch Insert Best Practices
-
+<div style="height:400px; overflow-y:auto;">
 ```sql{all|1-8|10-11|13-17|all}
--- Prepare a large batch of messages
-INSERT INTO messages
+-- Prepare a large batch of policies
+INSERT INTO policies
 SELECT
-    generateUUIDv4() as message_id,
-    toUInt64(rand() % 1000) as chat_id,
-    toUInt32(rand() % 10000) as user_id,
-    now() - toIntervalDay(rand() % 30) as sent_timestamp,
+    generateUUIDv4() as policy_id,
+    toUInt64(rand() % 100000) as customer_id,
+    toUInt32(rand() % 1000) as agent_id,
+    'LIFE-' || toString(toYear(now())) || '-' || toString(number) as policy_number,
     CAST(
         multiIf(
-            rand() % 4 = 0, 'text',
-            rand() % 4 = 1, 'image',
-            rand() % 4 = 2, 'invoice',
-            'receipt'
-        ) AS Enum8('text' = 1, 'image' = 2, 'invoice' = 3, 'receipt' = 4)
-    ) as message_type,
-    'Batch generated message ' || toString(number) as content,
-    rand() % 2 as has_attachment,
+            rand() % 4 = 0, 'Term',
+            rand() % 4 = 1, 'Whole',
+            rand() % 4 = 2, 'Universal',
+            'Variable'
+        ) AS Enum8('Term' = 1, 'Whole' = 2, 'Universal' = 3, 'Variable' = 4)
+    ) as policy_type,
+    round(rand() * 1000000 + 100000, 2) as coverage_amount,
+    round(rand() * 5000 + 500, 2) as premium_amount,
+    CAST('Active' AS Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3)) as policy_status,
+    now() - toIntervalDay(rand() % 365) as effective_date,
     1 as sign
-FROM numbers(1_000_000);  -- Generate 1 million rows
-
--- Optimal batch size in production
-SET max_insert_block_size = 1000000;  -- Default is 1048576
-SET min_insert_block_size_rows = 10000;
-SET min_insert_block_size_bytes = 10000000;
+FROM numbers(1_000_000)  
+SETTINGS 
+    max_insert_block_size = 10_000_000,
+    min_insert_block_size_rows = 100_000,
+    min_insert_block_size_bytes = 100_000_000;
 ```
+</div>
 
 ---
 layout: default
@@ -5016,7 +4351,7 @@ SELECT
     written_rows,
     memory_usage
 FROM system.query_log
-WHERE query LIKE '%INSERT INTO messages%'
+WHERE query LIKE '%INSERT INTO policies%'
   AND event_time > now() - INTERVAL 1 HOUR
   AND type = 'QueryFinish'
 ORDER BY event_time DESC
@@ -5032,14 +4367,14 @@ SELECT
     modification_time
 FROM system.parts
 WHERE active = 1
-  AND table = 'attachments'
+  AND table = 'claims'
 ORDER BY modification_time DESC
 LIMIT 20;
 ```
 </div>
 
 <div class="mt-4 bg-yellow-50 p-4 rounded">
-<strong>Balance Strategy:</strong> For chat payment data, consider using different batch strategies for different data: smaller, more frequent batches for critical payment events, and larger batches for routine messages.
+<strong>Balance Strategy:</strong> For life insurance data, consider using different batch strategies: smaller, more frequent batches for critical claim events, and larger batches for routine policy updates and premium calculations.
 </div>
 
 ---
@@ -5055,34 +4390,26 @@ layout: two-cols
 # Understanding Duplication Challenges
 
 ```sql{all|1-8|10-17|all}
--- Check for duplicate messages
+-- Check for duplicate policies
 SELECT
-    message_id,
+    policy_id,
     COUNT(*) as count
-FROM messages
-GROUP BY message_id
+FROM policies
+GROUP BY policy_id
 HAVING count > 1
 ORDER BY count DESC;
 
--- Check for duplicate payment attachments
+-- Check for duplicate claims
 SELECT
-    attachment_id,
+    claim_id,
     COUNT(*) as count
-FROM attachments
-GROUP BY attachment_id
+FROM claims
+GROUP BY claim_id
 HAVING count > 1
 ORDER BY count DESC;
-
 ```
 
 <div class="mt-4">
-
-**Common Sources of Duplication:**
-- Message retransmission due to network issues
-- Duplicated payment processing events
-- Backup and restore operations
-- Parallel load processes
-- Retry mechanisms in application code
 
 </div>
 
@@ -5100,15 +4427,11 @@ ORDER BY count DESC;
 ### 2. CollapsingMergeTree
 - Uses a "sign" column (+1/-1)
 - Collapses pairs of rows with opposite signs
-- Good for updating/deleting events
+- Good for policy updates and claim corrections
 
 ### 3. AggregatingMergeTree
 - Combines duplicate rows using aggregate functions
-- Good for pre-aggregated data
-
-### 4. ReplicatedMergeTree
-- Built-in deduplication for replicated tables
-- Uses a hash of the insert query batch
+- Good for pre-aggregated premium data
 
 <div class="mt-6 bg-blue-50 p-4 rounded">
 <strong>Key Consideration:</strong> Deduplication in ClickHouse happens during merge operations, not at insert time. It's eventually consistent, not immediate.
@@ -5127,46 +4450,50 @@ layout: default
 
 ## Basic Implementation
 ```sql{all|1-10|12-16|all}
--- Using ReplacingMergeTree for payment attachments
-CREATE TABLE attachments_dedup
+-- Using ReplacingMergeTree for claims
+CREATE TABLE claims_dedup
 (
-   attachment_id UUID,
-    message_id UUID,
-    payment_amount Decimal64(2),
-    payment_currency LowCardinality(String),
-    invoice_date Date,
-    payment_status Enum8(
-        'pending' = 1, 'paid' = 2, 'canceled' = 3
+    claim_id UUID,
+    policy_id UUID,
+    customer_id UInt64,
+    claim_amount Decimal64(2),
+    claim_type Enum8(
+        'Death' = 1, 'Disability' = 2, 
+        'Maturity' = 3, 'Surrender' = 4
     ),
-    file_path String,
-    file_size UInt32,
-    uploaded_at DateTime,
-    sign Int8,
-) ENGINE = ReplacingMergeTree(uploaded_at)
-PARTITION BY toYYYYMM(uploaded_at)
-ORDER BY (message_id, attachment_id);
+    claim_status Enum8(
+        'Submitted' = 1, 'Processing' = 2, 
+        'Approved' = 3, 'Paid' = 4, 'Denied' = 5
+    ),
+    incident_date Date,
+    reported_date DateTime,
+    processed_date DateTime,
+    sign Int8
+) ENGINE = ReplacingMergeTree(reported_date)
+PARTITION BY toYYYYMM(reported_date)
+ORDER BY (policy_id, claim_id);
 
 -- Fill the table with deduplicated data
-INSERT INTO attachments_dedup
+INSERT INTO claims_dedup
 SELECT *
-FROM attachments
-
+FROM claims
+LIMIT 100;
 
 SELECT *
-FROM attachments
-limit 100
+FROM claims
+LIMIT 100;
 
 SELECT
-    message_id,
+    policy_id,
     COUNT(*) as count
-FROM attachments_dedup FINAL
-GROUP BY message_id
+FROM claims_dedup FINAL
+GROUP BY policy_id
 HAVING count > 1
 ORDER BY count DESC;
 
-select * from attachments_dedup 
-where attachment_id = 'c9e6be4b-3a7b-45de-8003-b68b027736f7'
-ORDER BY attachment_id;
+SELECT * FROM claims_dedup 
+WHERE claim_id = 'c9e6be4b-3a7b-45de-8003-b68b027736f7'
+ORDER BY claim_id;
 ```
 
 </div>
@@ -5175,14 +4502,14 @@ ORDER BY attachment_id;
 ## Force Merge for Deduplication
 ```sql{all|2|all}
 -- Trigger merges to eliminate duplicates
-OPTIMIZE TABLE attachments_dedup FINAL;
+OPTIMIZE TABLE claims_dedup FINAL;
 
 -- Verify deduplication
 SELECT
-    attachment_id,
+    claim_id,
     COUNT(*) as count
-FROM attachments_dedup
-GROUP BY attachment_id
+FROM claims_dedup
+GROUP BY claim_id
 HAVING count > 1;
 ```
 
@@ -5190,17 +4517,16 @@ HAVING count > 1;
 ```sql{all|1-9|11-15|all}
 -- ReplacingMergeTree doesn't guarantee deduplication
 -- This query can still return duplicates before merge
-select * from attachments_dedup 
-where attachment_id = 'c9e6be4b-3a7b-45de-8003-b68b027736f7'
-ORDER BY attachment_id;
-
+SELECT * FROM claims_dedup 
+WHERE claim_id = 'c9e6be4b-3a7b-45de-8003-b68b027736f7'
+ORDER BY claim_id;
 ```
 
 </div>
 </div>
 
 <div class="mt-4 bg-yellow-50 p-4 rounded">
-<strong>Payment Processing Tip:</strong> For financial data like payments, consider using a combination of ReplacingMergeTree with application-level deduplication based on transaction IDs to ensure no duplicate payments are processed.
+<strong>Insurance Processing Tip:</strong> For financial data like claims and premium payments, consider using a combination of ReplacingMergeTree with application-level deduplication based on transaction IDs to ensure no duplicate payments are processed.
 </div>
 
 ---
@@ -5225,7 +4551,7 @@ SELECT
     data_uncompressed_bytes,
     round(data_uncompressed_bytes / data_compressed_bytes, 2) as compression_ratio
 FROM system.columns
-WHERE table = 'attachments';
+WHERE table = 'claims';
 
 -- Check compression ratio for tables
 SELECT
@@ -5266,7 +4592,7 @@ ORDER BY ratio DESC;
 layout: default
 ---
 
-# Optimizing Compression for Chat Payment Data
+# Optimizing Compression for Life Insurance Data
 
 <div class="grid grid-cols-2 gap-4">
 <div>
@@ -5274,26 +4600,25 @@ layout: default
 ## Column-Specific Compression
 ```sql{all|1-11|13-24|all}
 -- Create table with column-specific compression
-CREATE TABLE attachments_compressed
+CREATE TABLE claims_compressed
 (
-    attachment_id UUID CODEC(ZSTD(1)),
-    message_id UUID CODEC(ZSTD(1)),
-    payment_amount Decimal(18, 2) CODEC(Delta, ZSTD(1)),
-    payment_currency LowCardinality(String) CODEC(ZSTD(1)),
-    invoice_date Date CODEC(Delta, ZSTD(1)),
-    payment_status Enum8('pending' = 1, 'paid' = 2, 'canceled' = 3) CODEC(ZSTD(1)),
-    file_path String CODEC(ZSTD(3)),
-    file_size UInt32 CODEC(Delta, ZSTD(1)),
-    uploaded_at DateTime CODEC(Delta, ZSTD(1)),
+    claim_id UUID CODEC(ZSTD(1)),
+    policy_id UUID CODEC(ZSTD(1)),
+    customer_id UInt64 CODEC(Delta, ZSTD(1)),
+    claim_amount Decimal(18, 2) CODEC(Gorilla, ZSTD(1)),
+    claim_type Enum8('Death' = 1, 'Disability' = 2, 'Maturity' = 3, 'Surrender' = 4) CODEC(ZSTD(1)),
+    claim_status Enum8('Submitted' = 1, 'Processing' = 2, 'Approved' = 3, 'Paid' = 4, 'Denied' = 5) CODEC(ZSTD(1)),
+    incident_date Date CODEC(Delta, ZSTD(1)),
+    reported_date DateTime CODEC(Delta, ZSTD(1)),
+    processed_date DateTime CODEC(Delta, ZSTD(1)),
     sign Int8 CODEC(Delta, ZSTD(1))
 ) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(uploaded_at)
-ORDER BY (message_id, uploaded_at);
+PARTITION BY toYYYYMM(reported_date)
+ORDER BY (policy_id, reported_date);
 
 -- Fill with existing data
-INSERT INTO attachments_compressed
-SELECT * FROM attachments;
-
+INSERT INTO claims_compressed
+SELECT * FROM claims;
 
 SELECT 
     table,
@@ -5306,10 +4631,9 @@ SELECT
     sum(data_uncompressed_bytes) as uncompressed_size,
     round(sum(data_compressed_bytes) / sum(data_uncompressed_bytes), 3) as compression_ratio
 FROM system.parts
-WHERE active AND database = 'chat_payments' AND table in ('attachments', 'attachments_compressed')
+WHERE active AND database = 'life_insurance' AND table in ('claims', 'claims_compressed')
 GROUP BY table
 ORDER BY bytes_size DESC;
-
 ```
 
 </div>
@@ -5334,14 +4658,14 @@ SET default_compression_codec = 'ZSTD';
 </div>
 
 <div class="mt-4 bg-yellow-50 p-4 rounded">
-<strong>Chat App Strategy:</strong> For invoice and payment data: use Delta+ZSTD for dates/timestamps, ZSTD(3) for text fields like file paths, and LZ4 (default) for frequently queried fields to balance compression and query speed.
+<strong>Insurance Strategy:</strong> For policy and claims data: use Delta+ZSTD for dates/timestamps and customer IDs, Gorilla+ZSTD for monetary amounts, and ZSTD(3) for text fields like policy descriptions, balancing compression and query speed.
 </div>
 
 ---
 layout: default
 ---
 
-# Real-World Compression Results: Chat Payment App
+# Real-World Compression Results: Life Insurance System
 
 <div class="grid grid-cols-2 gap-4">
 <div>
@@ -5357,34 +4681,34 @@ layout: default
 </thead>
 <tbody>
   <tr>
-    <td class="border p-2">User IDs</td>
+    <td class="border p-2">Customer IDs</td>
     <td class="border p-2">Delta, LZ4</td>
+    <td class="border p-2">12:1</td>
+  </tr>
+  <tr>
+    <td class="border p-2">Policy Numbers</td>
+    <td class="border p-2">ZSTD(3)</td>
     <td class="border p-2">8:1</td>
   </tr>
   <tr>
-    <td class="border p-2">Chat IDs</td>
-    <td class="border p-2">Delta, LZ4</td>
-    <td class="border p-2">6:1</td>
-  </tr>
-  <tr>
-    <td class="border p-2">Timestamps</td>
+    <td class="border p-2">Dates/Timestamps</td>
     <td class="border p-2">Delta, ZSTD</td>
-    <td class="border p-2">20:1</td>
+    <td class="border p-2">25:1</td>
   </tr>
   <tr>
-    <td class="border p-2">Message Content</td>
-    <td class="border p-2">ZSTD(3)</td>
-    <td class="border p-2">4:1</td>
-  </tr>
-  <tr>
-    <td class="border p-2">Payment Amounts</td>
+    <td class="border p-2">Premium Amounts</td>
     <td class="border p-2">Gorilla, ZSTD</td>
-    <td class="border p-2">10:1</td>
+    <td class="border p-2">15:1</td>
   </tr>
   <tr>
-    <td class="border p-2">File Paths</td>
+    <td class="border p-2">Coverage Amounts</td>
+    <td class="border p-2">Gorilla, ZSTD</td>
+    <td class="border p-2">18:1</td>
+  </tr>
+  <tr>
+    <td class="border p-2">Agent Names</td>
     <td class="border p-2">ZSTD(5)</td>
-    <td class="border p-2">7:1</td>
+    <td class="border p-2">6:1</td>
   </tr>
 </tbody>
 </table>
@@ -5396,28 +4720,29 @@ layout: default
 
 <div class="mt-4" >
 <strong>Storage Reduction:</strong>
-- Messages table: 6.8x smaller
-- Payment attachments: 8.2x smaller
-- Total storage savings: ~85%
+- Policies table: 9.2x smaller
+- Claims table: 11.5x smaller
+- Total storage savings: ~88%
 </div>
 
 <div class="mt-6">
 <strong>Performance Impact:</strong>
-- SELECT queries: 5-15% faster (less I/O)
-- INSERT operations: 2-5% slower (compression overhead)
-- Overall system throughput: 10% higher
+- SELECT queries: 8-20% faster (less I/O)
+- INSERT operations: 3-7% slower (compression overhead)
+- Overall system throughput: 15% higher
 </div>
 
 <div class="mt-6">
 <strong>Cost Implications:</strong>
-- Reduced storage costs
+- Reduced storage costs for compliance data
 - Less network bandwidth for replication
 - Fewer server resources needed
 - Improved backup/restore speed
+- Lower archival costs
 </div>
 
 <div class="mt-6 bg-green-50 p-4 rounded">
-<strong>ROI:</strong> For our chat payment app with 500 million messages and 50 million payment attachments, optimized compression saved approximately 12TB of storage.
+<strong>ROI:</strong> For our life insurance system with 100 million policies and 10 million claims, optimized compression saved approximately 45TB of storage and improved query performance by 15%.
 </div>
 
 </div>
@@ -5434,6 +4759,7 @@ layout: two-cols
 ---
 
 # ClickHouse Backup Approaches
+<div style="height:400px;overflow-y:auto;">
 
 ```sql{all|1-5|7-12|14-19|all}
 -- 1. Using clickhouse-backup tool (external)
@@ -5450,42 +4776,159 @@ $ systemctl stop clickhouse-server
 $ cp -r /var/lib/clickhouse /backup/clickhouse-data
 
 -- 3. Using BACKUP command (21.8+)
-BACKUP DATABASE chat_payments 
-TO Disk('backups', 'chat_payments_backup')
+BACKUP DATABASE life_insurance 
+TO Disk('backups', 'life_insurance_backup')
 SETTINGS compression_level = 4;
 
-BACKUP TABLE chat_payments.attachments TO Disk('backups', 'attachements.zip')
+BACKUP TABLE life_insurance.claims 
+TO Disk('backups', 'claims_backup.zip');
 
-select count(*) from chat_payments.attachments
-truncate table chat_payments.attachments 
+SELECT count(*) FROM life_insurance.claims;
+TRUNCATE TABLE life_insurance.claims;
 
-RESTORE TABLE chat_payments.attachments FROM Disk('backups', 'attachements.zip')
+RESTORE TABLE life_insurance.claims 
+FROM Disk('backups', 'claims_backup.zip');
 ```
+</div>
 
 ::right::
 
 <div class="ml-4">
 
-# Backup Strategies
+# Backup Strategies for Insurance
 
 ### Full Backup
-- Complete copy of all data
-- Easiest to restore
+- Complete copy of all policy/claims data
+- Easiest to restore for compliance
 - Most storage intensive
-- Slowest to create
+- Required for regulatory audits
 
 ### Incremental Backup
 - Only changes since last backup
-- Faster creation
+- Faster for large policy databases
 - More complex restore process
-- Requires tracking changes
+- Good for daily operational backups
 
 ### Backup Targets
-- Local disk
-- Network storage (NFS, SMB)
-- Object storage (S3, GCS)
-- Cloud backups (managed services)
+- Local disk (compliance requirements)
+- Network storage (disaster recovery)
+- Object storage (long-term retention)
+- Cloud backups (regulatory compliance)
 
+<div class="mt-6 bg-red-50 p-4 rounded">
+<strong>Regulatory Note:</strong> Insurance data often has strict retention and recovery requirements. Plan backup strategies to meet regulatory compliance needs.
+</div>
+
+</div>
+
+---
+layout: default
+---
+
+# Insurance-Specific Backup Considerations
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Regulatory Compliance Backup
+```sql{all|1-8|10-15|17-22|all}
+-- Backup critical regulatory data
+BACKUP TABLE life_insurance.policies 
+TO Disk('compliance_backups', 'policies_regulatory_2024')
+SETTINGS 
+    compression_level = 6,
+    allow_non_empty_tables = 1,
+    structure_only = 0,
+    async = 0;
+
+-- Backup claims for audit trail
+BACKUP TABLE life_insurance.claims 
+TO Disk('audit_backups', 'claims_audit_trail_2024')
+SETTINGS 
+    compression_level = 9,
+    password = 'audit_password_2024';
+
+-- Schedule automatic backups for different retention periods
+-- Daily: 30 days retention
+-- Weekly: 1 year retention  
+-- Monthly: 7 years retention (regulatory requirement)
+-- Annual: Permanent retention
+```
+
+</div>
+<div>
+
+## Point-in-Time Recovery
+```sql{all|1-6|8-13|15-20|all}
+-- Create incremental backup
+BACKUP DATABASE life_insurance 
+TO Disk('incremental_backups', 'daily_backup_2024_03_15')
+SETTINGS 
+    base_backup = Disk('incremental_backups', 'full_backup_2024_03_01'),
+    async = 1;
+
+-- Restore to specific point in time
+RESTORE DATABASE life_insurance 
+FROM Disk('incremental_backups', 'daily_backup_2024_03_15')
+SETTINGS 
+    allow_non_empty_tables = 1,
+    structure_only = 0;
+
+-- Verify restoration integrity
+SELECT 
+    table,
+    count(*) as row_count,
+    max(effective_date) as latest_policy_date,
+    max(reported_date) as latest_claim_date
+FROM (
+    SELECT 'policies' as table, count(*) as count, max(effective_date) as effective_date, NULL as reported_date FROM policies
+    UNION ALL
+    SELECT 'claims' as table, count(*) as count, NULL as effective_date, max(reported_date) as reported_date FROM claims
+) GROUP BY table;
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-blue-50 p-4 rounded">
+<strong>Insurance Best Practice:</strong> Implement automated backup validation by periodically restoring backups to test environments and running data integrity checks to ensure policy and claims data can be recovered accurately.
+</div>
+
+---
+layout: default
+---
+
+# Session Summary
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Data Management for Life Insurance
+
+- **Efficient data insertion** for high-volume policy and claims processing
+- **Batch processing optimization** for premium calculations and bulk operations
+- **Deduplication strategies** to ensure data integrity in financial systems
+- **Compression techniques** to optimize storage costs for compliance data
+- **Backup and restore procedures** to meet regulatory requirements
+
+</div>
+<div>
+
+## Key Benefits
+
+- **Reduced storage costs** by 85-90% through compression
+- **Improved query performance** through optimized data organization
+- **Enhanced data integrity** through deduplication
+- **Regulatory compliance** through proper backup strategies
+- **Operational efficiency** through automated batch processes
+
+</div>
+</div>
+
+<div class="pt-12">
+  <span class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
+    Questions?
+  </span>
 </div>
 
 ---
@@ -5514,12 +4957,12 @@ layout: default
 </div>
 <div>
 
-## Use Case: Chat App with Payments
-- Growing message volume
-- Complex payment analytics needs
-- High-cardinality user and chat data
+## Use Case: Life Insurance Management System
+- Growing policy and claims volume
+- Complex actuarial analytics needs
+- High-cardinality customer and agent data
 - Need for both real-time and historical analytics
-- Ensuring sub-second response times
+- Ensuring sub-second response times for regulatory reporting
 
 </div>
 </div>
@@ -5533,72 +4976,61 @@ layout: default
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-## Messages Table
+## Policies Table
 ```sql
-CREATE TABLE chat_payments.messages (
-    message_id UUID,
-    chat_id UInt64,
-    user_id UInt32,
-    sent_timestamp DateTime,
-    message_type Enum8(
-        'text' = 1, 'image' = 2, 
-        'invoice' = 3, 'receipt' = 4
+CREATE TABLE life_insurance.policies (
+    policy_id UUID,
+    customer_id UInt64,
+    agent_id UInt32,
+    policy_number String,
+    policy_type Enum8(
+        'Term' = 1, 'Whole' = 2, 
+        'Universal' = 3, 'Variable' = 4
     ),
-    content String,
-    has_attachment UInt8,
+    coverage_amount Decimal64(2),
+    premium_amount Decimal64(2),
+    policy_status Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3),
+    effective_date Date,
     sign Int8,
-    INDEX message_type_idx message_type TYPE bloom_filter GRANULARITY 1
+    INDEX policy_type_idx policy_type TYPE bloom_filter GRANULARITY 1
 ) ENGINE = CollapsingMergeTree(sign)
-Primary Key (message_id)
-PARTITION BY toYYYYMM(sent_timestamp)
-ORDER BY (message_id, chat_id, sent_timestamp);
+PRIMARY KEY (policy_id)
+PARTITION BY toYYYYMM(effective_date)
+ORDER BY (policy_id, customer_id, effective_date);
 ```
 
 </div>
 <div>
 
-## Payment Attachments Table
+## Claims Table
 ```sql
-CREATE TABLE chat_payments.attachments (
-    attachment_id UUID,
-    message_id UUID,
-    payment_amount Decimal64(2),
-    payment_currency LowCardinality(String),
-    invoice_date Date,
-    payment_status Enum8(
-        'pending' = 1, 'paid' = 2, 'canceled' = 3
+CREATE TABLE life_insurance.claims (
+    claim_id UUID,
+    policy_id UUID,
+    customer_id UInt64,
+    claim_amount Decimal64(2),
+    claim_type Enum8(
+        'Death' = 1, 'Disability' = 2, 
+        'Maturity' = 3, 'Surrender' = 4
     ),
-    file_path String,
-    file_size UInt32,
-    uploaded_at DateTime,
+    claim_status Enum8(
+        'Submitted' = 1, 'Processing' = 2, 
+        'Approved' = 3, 'Paid' = 4, 'Denied' = 5
+    ),
+    incident_date Date,
+    reported_date DateTime,
+    processed_date DateTime,
     sign Int8,
-    INDEX payment_status_idx payment_status TYPE set(0) GRANULARITY 1,
-    INDEX currency_idx payment_currency TYPE set(0) GRANULARITY 1
+    INDEX claim_status_idx claim_status TYPE set(0) GRANULARITY 1,
+    INDEX claim_type_idx claim_type TYPE set(0) GRANULARITY 1
 ) ENGINE = CollapsingMergeTree(sign)
-Primary Key (attachment_id)
-PARTITION BY toYYYYMM(uploaded_at)
-ORDER BY (attachment_id, message_id, uploaded_at);
+PRIMARY KEY (claim_id)
+PARTITION BY toYYYYMM(reported_date)
+ORDER BY (claim_id, policy_id, reported_date);
 ```
 
 </div>
 </div>
-
----
-layout: default
----
-
-## Users Table
-```sql
-CREATE TABLE users (
-    user_id UInt64,
-    username String,
-    email String,
-    company_id UInt16,
-    created_at DateTime
-) ENGINE = ReplacingMergeTree(created_at)
-Primary Key (user_id)
-ORDER BY user_id;
-```
 
 ---
 layout: section
@@ -5618,24 +5050,25 @@ layout: default
 ## Primary Key (Sparse Index)
 ```sql{all|9|all}
 -- Primary key defined by ORDER BY
-CREATE TABLE messages (
-    message_id UUID,
-    chat_id UInt64,
-    user_id UInt32,
-    sent_timestamp DateTime,
-    message_type Enum8('text'=1, 'image'=2, 
-                    'invoice'=3, 'receipt'=4)
+CREATE TABLE policies (
+    policy_id UUID,
+    customer_id UInt64,
+    agent_id UInt32,
+    policy_number String,
+    policy_type Enum8('Term'=1, 'Whole'=2, 
+                    'Universal'=3, 'Variable'=4),
+    coverage_amount Decimal64(2),
     /* other fields */
 ) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(sent_timestamp)
-ORDER BY (chat_id, sent_timestamp);
+PARTITION BY toYYYYMM(effective_date)
+ORDER BY (customer_id, effective_date);
 
 -- Primary key doesn't have to match ORDER BY
 -- But it usually should
 CREATE TABLE example (...)
 ENGINE = MergeTree()
-ORDER BY (chat_id, sent_timestamp)
-PRIMARY KEY (chat_id);
+ORDER BY (customer_id, effective_date)
+PRIMARY KEY (customer_id);
 ```
 
 </div>
@@ -5672,35 +5105,37 @@ layout: two-cols
 
 # Skip Indexes
 
+<div style="height:400px;overflow-y:auto;">
+
 ```sql{all|1-6|8-18|20-25|all}
 -- Create a new index on an existing table
-ALTER TABLE attachments
-ADD INDEX payment_status_idx
-payment_status TYPE set(0)
+ALTER TABLE claims
+ADD INDEX claim_status_idx
+claim_status TYPE set(0)
 GRANULARITY 3;
 
 -- Create a table with a secondary index
-CREATE TABLE invoices (
-    invoice_id UUID,
-    customer_id UInt32,
-    amount Decimal64(2),
-    status Enum8('draft'=1, 'sent'=2, 'paid'=3, 'overdue'=4),
-    created_at DateTime,
+CREATE TABLE policies_indexed (
+    policy_id UUID,
+    customer_id UInt64,
+    coverage_amount Decimal64(2),
+    policy_status Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3, 'Matured'=4),
+    effective_date Date,
     /* other fields */
     
-    INDEX status_idx status TYPE set(100) GRANULARITY 4,
-    INDEX amount_idx amount TYPE minmax GRANULARITY 4
+    INDEX status_idx policy_status TYPE set(100) GRANULARITY 4,
+    INDEX coverage_idx coverage_amount TYPE minmax GRANULARITY 4
 ) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(created_at)
-ORDER BY (customer_id, created_at);
+PARTITION BY toYYYYMM(effective_date)
+ORDER BY (customer_id, effective_date);
 
 -- Forcing the use of a secondary index
-
- SELECT count(*) FROM attachments
-WHERE payment_status = 'paid'
+SELECT count(*) FROM claims
+WHERE claim_status = 'Approved'
 SETTINGS use_skip_indexes = 1,
          force_index_by_date = 0;
 ```
+</div>
 
 ::right::
 
@@ -5723,7 +5158,6 @@ SETTINGS use_skip_indexes = 1,
 - Probabilistic data structure
 - `TYPE bloom_filter(false_positive)`
 
-
 <div class="mt-6 bg-yellow-50 p-4 rounded">
 <strong>Performance Impact:</strong> Secondary indexes can improve query performance by 10-1000x for specific filters, but add storage overhead and slow down INSERTs.
 </div>
@@ -5734,39 +5168,41 @@ SETTINGS use_skip_indexes = 1,
 layout: default
 ---
 
-# Optimizing Indexes for Chat Payment Data
+# Optimizing Indexes for Life Insurance Data
 
 <div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Primary Key Optimization
 ```sql{all|4-5|all}
--- Optimizing messages table primary key
-CREATE TABLE chat_payments.messages_optimized (
-    message_id UUID,
-    chat_id UInt64,
-    user_id UInt32,
-    sent_timestamp DateTime,
-    message_type Enum8(
-        'text' = 1, 'image' = 2, 
-        'invoice' = 3, 'receipt' = 4
+-- Optimizing policies table primary key
+CREATE TABLE life_insurance.policies_optimized (
+    policy_id UUID,
+    customer_id UInt64,
+    agent_id UInt32,
+    policy_number String,
+    policy_type Enum8(
+        'Term' = 1, 'Whole' = 2, 
+        'Universal' = 3, 'Variable' = 4
     ),
-    content String,
-    has_attachment UInt8,
+    coverage_amount Decimal64(2),
+    premium_amount Decimal64(2),
+    policy_status Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3),
+    effective_date Date,
     sign Int8
 ) ENGINE = CollapsingMergeTree(sign)
-PARTITION BY toYYYYMM(sent_timestamp)
-ORDER BY (chat_id, toStartOfDay(sent_timestamp), message_type, user_id);
+PARTITION BY toYYYYMM(effective_date)
+ORDER BY (customer_id, toStartOfMonth(effective_date), policy_type, agent_id);
 
 -- Query using optimized primary key
 SELECT 
-    toDate(sent_timestamp) AS date,
-    count() AS message_count
-FROM messages_optimized
-WHERE chat_id = 100
-  AND sent_timestamp >= '2023-04-01'
-  AND sent_timestamp < '2023-04-30'
-  AND message_type = 'invoice' 
+    toDate(effective_date) AS date,
+    count() AS policies_issued
+FROM policies_optimized
+WHERE customer_id = 1001
+  AND effective_date >= '2024-01-01'
+  AND effective_date < '2024-12-31'
+  AND policy_type = 'Term' 
 GROUP BY date
 ORDER BY date;
 ```
@@ -5776,29 +5212,33 @@ ORDER BY date;
 
 ## Skip Index Recommendations
 ```sql{all|10-12|all}
--- Optimized payment_attachments with strategic indexes
-CREATE TABLE chat_payments.attachments_optimized (
-    attachment_id UUID CODEC(ZSTD(1)),
-    message_id UUID CODEC(ZSTD(1)),
-    payment_amount Decimal64(2) CODEC(Delta, ZSTD(1)),
-    payment_currency LowCardinality(String) CODEC(ZSTD(1)),
-    invoice_date Date CODEC(Delta, ZSTD(1)),
-    payment_status Enum8(
-        'pending' = 1, 'paid' = 2, 'canceled' = 3
+-- Optimized claims with strategic indexes
+CREATE TABLE life_insurance.claims_optimized (
+    claim_id UUID CODEC(ZSTD(1)),
+    policy_id UUID CODEC(ZSTD(1)),
+    customer_id UInt64 CODEC(Delta, ZSTD(1)),
+    claim_amount Decimal64(2) CODEC(Gorilla, ZSTD(1)),
+    claim_type Enum8(
+        'Death' = 1, 'Disability' = 2, 
+        'Maturity' = 3, 'Surrender' = 4
     ) CODEC(ZSTD(1)),
-    file_path String CODEC(ZSTD(3)),
-    file_size UInt32 CODEC(Delta, ZSTD(1)),
-    uploaded_at DateTime CODEC(Delta, ZSTD(1)),
+    claim_status Enum8(
+        'Submitted' = 1, 'Processing' = 2, 
+        'Approved' = 3, 'Paid' = 4, 'Denied' = 5
+    ) CODEC(ZSTD(1)),
+    incident_date Date CODEC(Delta, ZSTD(1)),
+    reported_date DateTime CODEC(Delta, ZSTD(1)),
+    processed_date DateTime CODEC(Delta, ZSTD(1)),
     sign Int8 CODEC(Delta, ZSTD(1)),
     
     -- Improved indexes
-    INDEX payment_status_idx payment_status TYPE minmax GRANULARITY 1,
-    INDEX currency_idx payment_currency TYPE set(8) GRANULARITY 1,
-    INDEX file_size_idx file_size TYPE minmax GRANULARITY 1,
-    INDEX payment_amount_idx payment_amount TYPE minmax GRANULARITY 1
+    INDEX claim_status_idx claim_status TYPE minmax GRANULARITY 1,
+    INDEX claim_type_idx claim_type TYPE set(8) GRANULARITY 1,
+    INDEX claim_amount_idx claim_amount TYPE minmax GRANULARITY 1,
+    INDEX customer_idx customer_id TYPE minmax GRANULARITY 1
 ) ENGINE = CollapsingMergeTree(sign)
-PARTITION BY toYYYYMM(uploaded_at)
-ORDER BY (message_id, uploaded_at, attachment_id)
+PARTITION BY toYYYYMM(reported_date)
+ORDER BY (policy_id, reported_date, claim_id)
 SETTINGS 
     index_granularity = 8192,
     min_bytes_for_wide_part = 10485760,
@@ -5810,17 +5250,16 @@ SELECT
     name,
     data_uncompressed_bytes,
     data_compressed_bytes,
-   data_compressed_bytes / data_uncompressed_bytes as ratio
+    data_compressed_bytes / data_uncompressed_bytes as ratio
 FROM system.data_skipping_indices
-WHERE table = 'attachments_optimized';
-
+WHERE table = 'claims_optimized';
 ```
 
 </div>
 </div>
 
 <div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Chat App Strategy:</strong> For a chat app with payment processing, consider composite primary keys that include message_type to optimize filtering for invoice/receipt messages, and add secondary indexes on payment_status and amount ranges.
+<strong>Insurance Strategy:</strong> For life insurance systems, consider composite primary keys that include policy_type to optimize filtering for specific product lines, and add secondary indexes on claim_status and coverage amount ranges for actuarial analysis.
 </div>
 
 ---
@@ -5836,22 +5275,21 @@ layout: default
 ```sql{all|2-3|5-13|all}
 -- Check if a query uses the index
 EXPLAIN indexes = 1
-SELECT * FROM payment_attachments WHERE payment_status = 'paid';
+SELECT * FROM claims WHERE claim_status = 'Approved';
 
 -- Analyze missed index opportunities
-  SELECT
+SELECT
     query_id,
     query,
     read_rows,
     read_bytes,
     query_duration_ms
 FROM system.query_log
-WHERE query LIKE '%attachments%'
+WHERE query LIKE '%claims%'
     AND read_rows > 1000000
     AND event_time > now() - INTERVAL 1 DAY
-    AND type = 'QueryFinish'  -- Only show completed queries
+    AND type = 'QueryFinish'
 ORDER BY query_duration_ms DESC;
-
 ```
 
 ## Common Index Mistakes
@@ -5864,14 +5302,12 @@ ORDER BY query_duration_ms DESC;
 </div>
 <div>
 
-
 ## Index Maintenance
 ```sql{all}
 -- Rebuild all secondary indexes
-ALTER TABLE attachments
-DROP INDEX payment_status_idx,
-ADD INDEX payment_status_idx payment_status TYPE set(0) GRANULARITY 4;
-
+ALTER TABLE claims
+DROP INDEX claim_status_idx,
+ADD INDEX claim_status_idx claim_status TYPE set(0) GRANULARITY 4;
 
 SELECT 
     database,
@@ -5893,7 +5329,6 @@ SELECT
 FROM system.tables
 WHERE engine LIKE '%MergeTree'
 ORDER BY database, table;
-
 ```
 
 </div>
@@ -5917,17 +5352,16 @@ layout: two-cols
 
 ```sql{all|1-2|4-12|all}
 -- View the query execution plan
-EXPLAIN SELECT * FROM chat_payments.attachments WHERE payment_status = 'paid';
+EXPLAIN SELECT * FROM life_insurance.claims WHERE claim_status = 'Approved';
 -- More detailed explain with settings
 EXPLAIN pipeline
 SELECT
-    user_id,
-    count() AS message_count,
-    sum(if(message_type = 'invoice', 1, 0)) AS invoice_count
-FROM chat_payments.messages
-WHERE chat_id IN (100, 101, 102)
-GROUP BY user_id
-
+    customer_id,
+    count() AS policy_count,
+    sum(if(policy_type = 'Term', 1, 0)) AS term_count
+FROM life_insurance.policies
+WHERE customer_id IN (1001, 1002, 1003)
+GROUP BY customer_id;
 ```
 
 <div class="mt-4">
@@ -5986,25 +5420,25 @@ layout: default
 ## Filter Optimization Principles
 ```sql{all|3-5|7-10|12-16|all}
 -- Bad: Non-indexed filter first
-SELECT count(*) FROM messages
-WHERE message_type = 'invoice'
-  AND chat_id = 100
-  AND sent_timestamp >= '2023-04-01';
+SELECT count(*) FROM policies
+WHERE policy_type = 'Term'
+  AND customer_id = 1001
+  AND effective_date >= '2024-01-01';
 
 -- Good: Primary key columns first
-SELECT count(*) FROM messages
-WHERE chat_id = 100
-  AND sent_timestamp >= '2023-04-01'
-  AND message_type = 'invoice';
+SELECT count(*) FROM policies
+WHERE customer_id = 1001
+  AND effective_date >= '2024-01-01'
+  AND policy_type = 'Term';
 
 -- Avoid transformations on indexed columns
 -- Bad:
-SELECT count(*) FROM messages
-WHERE toDate(sent_timestamp) = '2023-04-01';
+SELECT count(*) FROM policies
+WHERE toDate(effective_date) = '2024-01-01';
 -- Good:
-SELECT count(*) FROM messages
-WHERE sent_timestamp >= '2023-04-01 00:00:00'
-  AND sent_timestamp < '2023-04-02 00:00:00';
+SELECT count(*) FROM policies
+WHERE effective_date >= '2024-01-01'
+  AND effective_date < '2024-01-02';
 ```
 
 </div>
@@ -6013,18 +5447,13 @@ WHERE sent_timestamp >= '2023-04-01 00:00:00'
 ## Partition Pruning
 ```sql{all|3|all}
 -- Efficient: Scans only specific partitions
-SELECT * FROM messages
-WHERE toYYYYMM(sent_timestamp) = 202304
-  AND chat_id = 100;
-
-/*SELECT * FROM messages
-WHERE  chat_id = 100
-AND sent_timestamp >= '2023-04-01 00:00:00'
-  AND sent_timestamp < '2023-04-30 00:00:00';*/
+SELECT * FROM policies
+WHERE toYYYYMM(effective_date) = 202401
+  AND customer_id = 1001;
 
 -- Force partition pruning
-SELECT count(*) FROM attachments
-WHERE toYYYYMM(uploaded_at) = 202304
+SELECT count(*) FROM claims
+WHERE toYYYYMM(reported_date) = 202401
 SETTINGS force_optimize_skip_unused_shards = 1;
 ```
 
@@ -6032,18 +5461,16 @@ SETTINGS force_optimize_skip_unused_shards = 1;
 ```sql{all|3-7|9-12|all}
 -- Optimize large IN lists
 -- Bad: Large inline list
-SELECT count(*) FROM messages
-WHERE chat_id IN (
-    100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+SELECT count(*) FROM policies
+WHERE customer_id IN (
+    1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010,
     /* hundreds more values */
 );
 
 -- Better: Use a temporary table
-
-WITH [100, 101, 102, 103, 104, 105, 106, 107, 108, 109] as ids
-SELECT count(*) FROM messages
-WHERE chat_id IN ids;
-
+WITH [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010] as customer_ids
+SELECT count(*) FROM policies
+WHERE customer_id IN customer_ids;
 ```
 
 </div>
@@ -6065,29 +5492,28 @@ layout: default
 ## JOIN Strategies
 ```sql{all|3-6|8-12|14-19|all}
 -- Filter before joining
-SELECT m.chat_id, p.payment_amount
+SELECT p.customer_id, c.claim_amount
 FROM (
-    SELECT * FROM messages 
-    WHERE chat_id = 100 
-) AS m
-JOIN attachments p ON m.message_id = p.message_id;
-
+    SELECT * FROM policies 
+    WHERE customer_id = 1001 
+) AS p
+JOIN claims c ON p.policy_id = c.policy_id;
 
 -- Use JOIN hints
-SELECT m.chat_id, p.payment_amount
-FROM messages m
-JOIN /* LOCAL */ attachments p
-ON m.message_id = p.message_id
-WHERE m.chat_id = 100;
+SELECT p.customer_id, c.claim_amount
+FROM policies p
+JOIN /* LOCAL */ claims c
+ON p.policy_id = c.policy_id
+WHERE p.customer_id = 1001;
 
-
--- ASOF JOIN for time-based matching
-SELECT m.user_id, m.sent_timestamp, p.payment_amount
-FROM messages m
-ASOF JOIN attachments p
-ON m.user_id = p.user_id
-AND m.sent_timestamp >= p.uploaded_at
-WHERE m.message_type = 'receipt';
+-- JOIN for time-based matching
+SELECT p.customer_id, p.effective_date, c.claim_amount
+FROM policies p
+JOIN claims c
+USING (policy_id)
+JOIN customers cu
+USING (customer_id)
+WHERE c.claim_type = 'Death';
 ```
 
 </div>
@@ -6096,20 +5522,23 @@ WHERE m.message_type = 'receipt';
 ## JOIN Algorithm Selection
 ```sql{all|3|9|all}
 -- Hash join (default, good for equality joins)
-SELECT   toDate(invoice_date) invoice_date ,sum(payment_amount) total_amount, payment_currency FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-group by invoice_date, payment_currency
+SELECT toDate(incident_date) incident_date, sum(claim_amount) total_amount, claim_type 
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id
+GROUP BY incident_date, claim_type
 SETTINGS join_algorithm = 'hash';
 
 -- Grace hash join (for large tables)
-SELECT   toDate(invoice_date) invoice_date ,sum(payment_amount) total_amount, payment_currency FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-group by invoice_date, payment_currency
+SELECT toDate(incident_date) incident_date, sum(claim_amount) total_amount, claim_type 
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id
+GROUP BY incident_date, claim_type
 SETTINGS join_algorithm = 'grace_hash';
 
-SELECT   toDate(invoice_date) invoice_date ,sum(payment_amount) total_amount, payment_currency FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-group by invoice_date, payment_currency
+SELECT toDate(incident_date) incident_date, sum(claim_amount) total_amount, claim_type 
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id
+GROUP BY incident_date, claim_type
 SETTINGS join_algorithm = 'parallel_hash';
 ```
 
@@ -6130,7 +5559,7 @@ SET optimize_distributed_group_by_sharding_key = 1;
 </div>
 
 <div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Chat App JOIN Strategy:</strong> For joining message data with payment attachments, pre-filter both tables aggressively. Consider creating a specialized joining table if the same joins are performed frequently in reports.
+<strong>Insurance JOIN Strategy:</strong> For joining policy data with claims, pre-filter both tables aggressively by date ranges and customer segments. Consider creating specialized joining tables if the same joins are performed frequently in actuarial reports.
 </div>
 
 ---
@@ -6146,22 +5575,22 @@ layout: default
 ```sql{all|3-4|6-7|9-13|all}
 -- Use specialized aggregate functions
 -- For approximate distinct counts
-SELECT uniq(user_id) FROM messages;
--- Instead of: SELECT count(DISTINCT user_id) FROM messages;
+SELECT uniq(customer_id) FROM policies;
+-- Instead of: SELECT count(DISTINCT customer_id) FROM policies;
 
 -- For quantiles
-SELECT quantileTDigest(0.95)(toFloat64(payment_amount)) FROM attachments;
+SELECT quantileTDigest(0.95)(toFloat64(claim_amount)) FROM claims;
 
 -- Instead of sorting and manual calculation
 
 -- Combine multiple aggregations
 SELECT
-    payment_status,
+    claim_status,
     count() AS count,
-    sum(payment_amount) AS total,
-    round(avg(payment_amount), 2) AS average
-FROM attachments
-GROUP BY payment_status;
+    sum(claim_amount) AS total,
+    round(avg(claim_amount), 2) AS average
+FROM claims
+GROUP BY claim_status;
 ```
 
 </div>
@@ -6171,23 +5600,24 @@ GROUP BY payment_status;
 ```sql{all|1-8|10-17|all}
 -- Leverage ORDER BY for grouped data
 SELECT
-    chat_id,
-    toDate(sent_timestamp) AS date,
-    count() AS message_count
-FROM messages
-WHERE chat_id IN (100, 101, 102)
-GROUP BY chat_id, date
-ORDER BY chat_id, date;
+    customer_id,
+    toDate(effective_date) AS date,
+    count() AS policy_count
+FROM policies
+WHERE customer_id IN (1001, 1002, 1003)
+GROUP BY customer_id, date
+ORDER BY customer_id, date;
 
 -- Use WITH TOTALS for summary rows
 SELECT
-    payment_currency,
-    payment_status,
-    sum(payment_amount) AS total
-FROM attachments
-GROUP BY payment_currency, payment_status
+    policy_type,
+    claim_status,
+    sum(claim_amount) AS total
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id
+GROUP BY policy_type, claim_status
 WITH TOTALS
-ORDER BY payment_currency, payment_status;
+ORDER BY policy_type, claim_status;
 ```
 
 ## Memory Settings for Aggregation
@@ -6201,7 +5631,7 @@ SET group_by_overflow_mode = 'any';
 </div>
 
 <div class="mt-4 bg-yellow-50 p-4 rounded">
-<strong>Insight:</strong> ClickHouse shines at aggregation queries. For complex analytics on payment data, consider pre-aggregating common metrics in materialized views rather than calculating them repeatedly.
+<strong>Insight:</strong> ClickHouse shines at aggregation queries. For complex actuarial analytics on policy and claims data, consider pre-aggregating common metrics in materialized views rather than calculating them repeatedly.
 </div>
 
 ---
@@ -6210,25 +5640,25 @@ layout: default
 
 # Other Query Optimization Techniques
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:450px;overflow-y:auto;">
 <div>
 
 ## LIMIT Optimization
 ```sql{all|1-5|7-12|all}
 -- Use LIMIT with ORDER BY
-SELECT * FROM messages
-WHERE chat_id = 100
-ORDER BY sent_timestamp DESC
+SELECT * FROM policies
+WHERE customer_id = 1001
+ORDER BY effective_date DESC
 LIMIT 100;
 
 -- Using LIMIT BY for top-N per group
 SELECT
-    user_id,
-    sent_timestamp,
-    content
-FROM messages
-ORDER BY sent_timestamp DESC
-LIMIT 5 BY user_id;
+    customer_id,
+    effective_date,
+    policy_number
+FROM policies
+ORDER BY effective_date DESC
+LIMIT 5 BY customer_id;
 ```
 
 </div>
@@ -6238,30 +5668,21 @@ LIMIT 5 BY user_id;
 ```sql{all|3-4|6-8|all}
 -- Avoid expensive string operations
 -- Bad
-SELECT * FROM messages WHERE content LIKE '%payment%';
+SELECT * FROM policies WHERE policy_number LIKE '%TERM%';
 
 -- Better - use a secondary index
 -- tokenbf_v1(size_of_bloom_filter_in_bytes, number_of_hash_functions, random_seed)
 
-ALTER TABLE messages
-ADD INDEX content_idx content TYPE tokenbf_v1(512, 3, 0)
+ALTER TABLE policies
+ADD INDEX policy_number_idx policy_number TYPE tokenbf_v1(512, 3, 0)
 GRANULARITY 4;
 ```
 
 ## Query Cache
 ```sql{all}
--- Enable query cache (if supported in your version)
-SET use_query_cache = 1;
-SET query_cache_min_query_duration = 10;
-SET query_cache_min_result_size = 1048576;
-SET query_cache_max_entries = 1000000;
-
--- Check query cache status
-SELECT 
-    metric, 
-    value 
-FROM system.metrics 
-WHERE metric LIKE '%Cache%';
+SELECT some_expensive_calculation(coverage_amount, premium_amount)
+FROM policies
+SETTINGS use_query_cache = true, query_cache_min_query_duration = 5000;
 ```
 
 </div>
@@ -6284,33 +5705,32 @@ layout: two-cols
 # Materialized View Basics
 
 ```sql{all|1-9|11-21|all}
--- Simple materialized view for message counts
-CREATE MATERIALIZED VIEW message_counts_mv
+-- Simple materialized view for policy counts
+CREATE MATERIALIZED VIEW policy_counts_mv
 ENGINE = SummingMergeTree()
-ORDER BY (chat_id, date)
+ORDER BY (customer_id, date)
 AS
 SELECT
-    chat_id,
-    toDate(sent_timestamp) AS date,
-    count() AS message_count
-FROM messages
-GROUP BY chat_id, date;
+    customer_id,
+    toDate(effective_date) AS date,
+    count() AS policy_count
+FROM policies
+GROUP BY customer_id, date;
 
-
--- Materialized view for payment statistics
-CREATE MATERIALIZED VIEW payment_stats_mv
+-- Materialized view for claims statistics
+CREATE MATERIALIZED VIEW claims_stats_mv
 ENGINE = SummingMergeTree()
 PARTITION BY toYYYYMM(date)
-ORDER BY (payment_currency, payment_status, date)
+ORDER BY (claim_type, claim_status, date)
 AS
 SELECT
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    payment_status,
-    count() AS payment_count,
-    sum(payment_amount) AS total_amount
-FROM attachments
-GROUP BY date, payment_currency, payment_status;
+    toDate(reported_date) AS date,
+    claim_type,
+    claim_status,
+    count() AS claim_count,
+    sum(claim_amount) AS total_amount
+FROM claims
+GROUP BY date, claim_type, claim_status;
 ```
 
 ::right::
@@ -6326,19 +5746,19 @@ GROUP BY date, payment_currency, payment_status;
 - Can transform data during insertion
 
 ### Common Use Cases
-- Pre-aggregated metrics and KPIs
-- Dimensional data models
-- Custom data transformations
-- Real-time dashboards
+- Pre-aggregated actuarial metrics and KPIs
+- Policy and claims dimensional data models
+- Custom data transformations for reporting
+- Real-time regulatory dashboards
 
 ### Benefits
 - Dramatically faster queries (10-1000x)
 - Reduced computational load
-- Simplified complex queries
+- Simplified complex actuarial queries
 - Better resource utilization
 
 <div class="mt-6 bg-blue-50 p-4 rounded">
-<strong>Storage Trade-off:</strong> Materialized views consume additional storage but can pay for themselves in query performance, especially for frequently run reports.
+<strong>Storage Trade-off:</strong> Materialized views consume additional storage but can pay for themselves in query performance, especially for frequently run regulatory reports.
 </div>
 
 </div>
@@ -6355,23 +5775,23 @@ layout: default
 ## SummingMergeTree
 ```sql{all|2|8-17|all}
 -- Aggregates numeric columns during merges
-CREATE MATERIALIZED VIEW daily_payments_mv
+CREATE MATERIALIZED VIEW daily_claims_mv
 ENGINE = SummingMergeTree()
 PARTITION BY toYYYYMM(date)
-ORDER BY (date, payment_currency)
+ORDER BY (date, claim_type)
 AS
 SELECT
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    count() AS payment_count,
-    sum(payment_amount) AS total_amount,
-    min(payment_amount) AS min_amount,
-    max(payment_amount) AS max_amount,
-    uniq(message_id) AS unique_messages,
-    uniqExact(user_id) AS unique_users
-FROM attachments p
-JOIN messages m ON p.message_id = m.message_id
-GROUP BY date, payment_currency;
+    toDate(reported_date) AS date,
+    claim_type,
+    count() AS claim_count,
+    sum(claim_amount) AS total_amount,
+    min(claim_amount) AS min_amount,
+    max(claim_amount) AS max_amount,
+    uniq(policy_id) AS unique_policies,
+    uniqExact(customer_id) AS unique_customers
+FROM claims c
+JOIN policies p ON c.policy_id = p.policy_id
+GROUP BY date, claim_type;
 ```
 
 </div>
@@ -6380,39 +5800,39 @@ GROUP BY date, payment_currency;
 ## AggregatingMergeTree
 ```sql{all|2|5-12|all}
 -- More flexible aggregation with state functions
-CREATE MATERIALIZED VIEW payment_stats_aggr_mv
+CREATE MATERIALIZED VIEW claims_stats_aggr_mv
 ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(date)
-ORDER BY (date, payment_currency)
+ORDER BY (date, claim_type)
 AS
 SELECT
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    countState() AS payment_count,           -- Changed count() to countState()
-    sumState(payment_amount) AS sum_amount,
-    avgState(payment_amount) AS avg_amount,
-    quantilesState(0.5, 0.9, 0.95)(payment_amount) AS amount_quantiles
-FROM attachments
-GROUP BY date, payment_currency;
+    toDate(reported_date) AS date,
+    claim_type,
+    countState() AS claim_count,
+    sumState(claim_amount) AS sum_amount,
+    avgState(claim_amount) AS avg_amount,
+    quantilesState(0.5, 0.9, 0.95)(claim_amount) AS amount_quantiles
+FROM claims
+GROUP BY date, claim_type;
 
 -- Then query with corresponding Merge functions
 SELECT
     date,
-    payment_currency,
-    countMerge(payment_count) AS payment_count,
+    claim_type,
+    countMerge(claim_count) AS claim_count,
     sumMerge(sum_amount) AS total_amount,
     avgMerge(avg_amount) AS average_amount,
     quantilesMerge(0.5, 0.9, 0.95)(amount_quantiles) AS quantiles
-FROM payment_stats_aggr_mv
-GROUP BY date, payment_currency
-ORDER BY date ASC, payment_currency ASC;
+FROM claims_stats_aggr_mv
+GROUP BY date, claim_type
+ORDER BY date ASC, claim_type ASC;
 ```
 
 </div>
 </div>
 
 <div class="mt-4 bg-yellow-50 p-4 rounded">
-<strong>Engine Selection:</strong> For payment analytics in a chat app, use SummingMergeTree for straightforward counting and summing, but consider AggregatingMergeTree when you need complex statistical aggregates like percentiles.
+<strong>Engine Selection:</strong> For actuarial analytics in life insurance, use SummingMergeTree for straightforward counting and summing, but consider AggregatingMergeTree when you need complex statistical aggregates like percentiles for risk assessment.
 </div>
 
 ---
@@ -6427,77 +5847,74 @@ layout: default
 ## TO Syntax for Automatic Updates
 ```sql{all|1-9|all}
 -- Creates view and populates from new inserts
-CREATE MATERIALIZED VIEW invoice_summary_mv
-TO invoice_summary
+CREATE MATERIALIZED VIEW policy_summary_mv
+TO policy_summary
 AS
 SELECT
-    toDate(a.uploaded_at) AS date,
-    count() AS invoice_count,
-    sum(a.payment_amount) AS total_amount
-FROM attachments a 
-JOIN messages m on a.message_id = m.message_id 
-WHERE m.message_type = 'invoice'
+    toDate(p.effective_date) AS date,
+    count() AS policy_count,
+    sum(p.coverage_amount) AS total_coverage
+FROM policies p 
+WHERE p.policy_type = 'Term'
 GROUP BY date;
 
 -- View will be populated automatically when
--- new data is inserted into payment_attachments
+-- new data is inserted into policies
 ```
 
 ## Initial Population
 ```sql{all}
 -- Populate view with existing data
-INSERT INTO invoice_summary_mv
+INSERT INTO policy_summary_mv
 SELECT
-    toDate(a.uploaded_at) AS date,
-    count() AS invoice_count,
-    sum(a.payment_amount) AS total_amount
-FROM attachments a 
-JOIN messages m on a.message_id = m.message_id 
-WHERE m.message_type = 'invoice'
+    toDate(p.effective_date) AS date,
+    count() AS policy_count,
+    sum(p.coverage_amount) AS total_coverage
+FROM policies p 
+WHERE p.policy_type = 'Term'
 GROUP BY date;
 ```
 
 </div>
 <div>
 
-
 ## Live Dashboards with Materialized Views
 ```sql{all|1-12|14-22|all}
--- Creating a real-time dashboard source
-CREATE MATERIALIZED VIEW payment_dashboard_mv
+-- Creating a real-time regulatory dashboard source
+CREATE MATERIALIZED VIEW regulatory_dashboard_mv
 ENGINE = SummingMergeTree()
 PARTITION BY toStartOfDay(event_time)
 ORDER BY (event_time, dimension)
-TTL event_time + INTERVAL 30 DAY
+TTL event_time + INTERVAL 90 DAY
 AS
 SELECT
-    toStartOfHour(uploaded_at) AS event_time,
-    payment_status AS dimension,
+    toStartOfHour(reported_date) AS event_time,
+    claim_status AS dimension,
     count() AS event_count,
-    sum(payment_amount) AS amount
-FROM attachments
-WHERE uploaded_at BETWEEN now() - INTERVAL 30 DAY AND now()
+    sum(claim_amount) AS amount
+FROM claims
+WHERE reported_date BETWEEN now() - INTERVAL 90 DAY AND now()
 GROUP BY event_time, dimension
 ORDER BY event_time DESC;
 
-insert into payment_dashboard_mv
+INSERT INTO regulatory_dashboard_mv
 SELECT
-    toStartOfHour(uploaded_at) AS event_time,
-    payment_status AS dimension,
+    toStartOfHour(reported_date) AS event_time,
+    claim_status AS dimension,
     count() AS event_count,
-    sum(payment_amount) AS amount
-FROM attachments
-WHERE uploaded_at BETWEEN now() - INTERVAL 30 DAY AND now()
+    sum(claim_amount) AS amount
+FROM claims
+WHERE reported_date BETWEEN now() - INTERVAL 90 DAY AND now()
 GROUP BY event_time, dimension
 ORDER BY event_time DESC;
 
--- Query for dashboard
+-- Query for regulatory dashboard
 SELECT
     event_time,
     dimension,
     sum(event_count) AS count,
     sum(amount) AS total_amount
-FROM payment_dashboard_mv
+FROM regulatory_dashboard_mv
 WHERE event_time >= now() - INTERVAL 24 HOUR
 GROUP BY event_time, dimension
 ORDER BY event_time;
@@ -6507,7 +5924,7 @@ ORDER BY event_time;
 </div>
 
 <div class="mt-4 bg-blue-50 p-4 rounded">
-<strong>Real-Time Strategy:</strong> For chat payment apps with real-time dashboards, create materialized views with time-based partitioning and a reasonable TTL. This gives you fast dashboard queries with minimal storage overhead.
+<strong>Regulatory Strategy:</strong> For life insurance systems with regulatory reporting requirements, create materialized views with time-based partitioning and appropriate TTL. This provides fast dashboard queries while maintaining compliance data retention.
 </div>
 
 ---
@@ -6531,26 +5948,24 @@ WHERE database = currentDatabase()
   AND engine LIKE '%Materialized%';
 
 -- Drop a materialized view
-DROP TABLE payment_stats_mv;
+DROP TABLE claims_stats_mv;
 -- or
-DROP VIEW payment_stats_mv;
+DROP VIEW claims_stats_mv;
 ```
 
 ## Refreshing a Materialized View
 ```sql{all|1-5|7-13|all}
 -- Force a full refresh by recreating
-DROP TABLE payment_stats_mv;
-CREATE MATERIALIZED VIEW payment_stats_mv
+DROP TABLE claims_stats_mv;
+CREATE MATERIALIZED VIEW claims_stats_mv
 /* same definition as before */
 AS SELECT /* ... */;
 
-insert into payment_stats_mv
+INSERT INTO claims_stats_mv
 SELECT /* ... */;
 
 -- Trigger merges to update summation
-OPTIMIZE TABLE payment_stats_mv FINAL;
-
-
+OPTIMIZE TABLE claims_stats_mv FINAL;
 ```
 
 </div>
@@ -6570,24 +5985,23 @@ WHERE engine = 'MaterializedView'
 ORDER BY database, view_name;
 
 -- Monitor query performance with materialized views
-  select * FROM system.query_log
-  WHERE query LIKE '%payment_stats_mv%'
-  AND type = 'QueryFinish';
-
+SELECT * FROM system.query_log
+WHERE query LIKE '%claims_stats_mv%'
+AND type = 'QueryFinish';
 ```
 
 ## Best Practices
-- Keep materialized views focused on specific needs
+- Keep materialized views focused on specific actuarial needs
 - Monitor storage usage and update frequency
 - Consider a TTL for time-series materialized views
 - Use DETACH/ATTACH for maintenance
-- Use TO syntax for real-time dashboards
+- Use TO syntax for real-time regulatory dashboards
 
 </div>
 </div>
 
 <div class="mt-4 bg-yellow-50 p-4 rounded">
-<strong>Materialized View Strategy:</strong> Create materialized views for your most common and expensive analytical queries. For a chat payment app, focus on payment trend analysis, currency aggregations, and user payment patterns.
+<strong>Materialized View Strategy:</strong> Create materialized views for your most common and expensive actuarial queries. For life insurance systems, focus on claims trend analysis, policy type aggregations, and customer risk patterns.
 </div>
 
 ---
@@ -6605,26 +6019,25 @@ layout: two-cols
 ```sql{all|1-8|10-19|all}
 -- Understanding projections vs materialized views
 -- Materialized view: separate table
-CREATE MATERIALIZED VIEW user_message_counts_mv
+CREATE MATERIALIZED VIEW customer_policy_counts_mv
 ENGINE = SummingMergeTree()
-ORDER BY user_id
+ORDER BY customer_id
 AS SELECT
-    user_id, count() AS message_count
-FROM messages GROUP BY user_id;
+    customer_id, count() AS policy_count
+FROM policies GROUP BY customer_id;
 
 -- Projection: alternate physical representation
-ALTER TABLE messages
-    ADD PROJECTION user_message_counts_proj (
+ALTER TABLE policies
+    ADD PROJECTION customer_policy_counts_proj (
         SELECT
-            user_id,
-            count() AS message_count
-        GROUP BY user_id
-    )
+            customer_id,
+            count() AS policy_count
+        GROUP BY customer_id
+    );
     
-
 -- Build the projection
-ALTER TABLE messages
-    MATERIALIZE PROJECTION user_message_counts_proj;
+ALTER TABLE policies
+    MATERIALIZE PROJECTION customer_policy_counts_proj;
 ```
 
 ::right::
@@ -6641,11 +6054,48 @@ ALTER TABLE messages
 - **Usage**: Automatic selection by optimizer
 
 ### Benefits of Projections
-- Alternate sorting orders
-- Pre-aggregated data
-- Specialized data layout
+- Alternate sorting orders for actuarial queries
+- Pre-aggregated policy/claims data
+- Specialized data layout for regulatory reporting
 - Lower maintenance overhead
 - Automatic query routing
+
+</div>
+
+---
+layout: default
+---
+
+# Session Summary
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Performance Optimization for Life Insurance
+
+- **Index optimization** for fast policy and claims lookups
+- **Query optimization** for complex actuarial analytics
+- **Materialized views** for regulatory reporting and dashboards  
+- **Projections** for automatic query acceleration
+
+</div>
+<div>
+
+## Key Performance Benefits
+
+- **10-1000x faster** analytical queries through proper indexing
+- **Sub-second response times** for regulatory reports
+- **Reduced resource usage** through query optimization
+- **Real-time dashboards** via materialized views
+- **Transparent acceleration** with projections
+
+</div>
+</div>
+
+<div class="pt-12">
+  <span class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
+    Questions?
+  </span>
 </div>
 
 ---
@@ -6685,8 +6135,634 @@ layout: default
 
 <img src="./images/session7/monitoring.png" width="500" height="500" alt="login">
 
+
+---
+layout: section
+---
+
+# Session 8: Security and Access Control
+
+## User Management, Roles, and Permissions for Life Insurance Systems
+
+---
+layout: default
+---
+
+# Session Overview
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## We'll cover:
+- User management (CREATE USER)
+- Role-based access control (CREATE ROLE)
+- GRANT and REVOKE permissions
+- Database and table access control
+- Row-level security
+- Resource limitations and quotas
+
+</div>
+<div>
+
+## Use Case: Life Insurance Management System
+- Multi-tenant environment with different user types
+- Sensitive customer and policy data protection
+- Regulatory compliance requirements (GDPR, HIPAA)
+- Agent access controls and territory restrictions
+- Audit trails and access monitoring
+- Performance resource management
+
+</div>
+</div>
+
+---
+layout: section
+---
+
+# 1. User Management
+
+---
+layout: default
+---
+
+# Creating and Managing Users
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Basic User Creation
+```sql{all|1-4|6-10|12-16|all}
+-- Create a basic user
+CREATE USER agent_john 
+IDENTIFIED WITH plaintext_password BY 'SecurePass123!'
+HOST ANY;
+
+-- Create user with specific host restrictions
+CREATE USER underwriter_mary 
+IDENTIFIED WITH sha256_password BY 'UW_SecurePass456!'
+HOST IP '192.168.1.0/24', '10.0.0.0/8'
+SETTINGS readonly = 1;
+
+-- Create user with password validation
+CREATE USER claims_adjuster_bob
+IDENTIFIED WITH sha256_password BY 'Claims_Pass789!'
+HOST REGEXP '.*\.company\.com'
+SETTINGS max_memory_usage = 1000000000; -- 1GB limit
+```
+
+</div>
+<div>
+
+## Advanced User Configuration
+```sql{all|1-8|10-16|18-22|all}
+-- Create user with profile and default database
+CREATE USER policy_analyst_alice
+IDENTIFIED WITH sha256_password BY 'Analyst_Pass2024!'
+HOST ANY
+DEFAULT DATABASE life_insurance
+SETTINGS PROFILE 'analyst_profile'
+GRANTEES agent_john, underwriter_mary
+ADD GRANTEES claims_adjuster_bob;
+
+-- Create readonly user for reporting
+CREATE USER report_viewer
+IDENTIFIED WITH plaintext_password BY 'ReadOnly_2024!'
+HOST ANY
+DEFAULT DATABASE life_insurance
+SETTINGS readonly = 2, -- Can change session settings
+         max_result_rows = 1000000,
+         max_execution_time = 300; -- 5 minutes
+
+-- Show all users
+SHOW USERS;
+
+-- Show user details
+SHOW CREATE USER agent_john;
+```
+
+</div>
+</div>
+
+<div class="mt-4 bg-blue-50 p-4 rounded">
+<strong>Security Best Practice:</strong> Always use strong passwords and restrict host access. For life insurance systems, consider using sha256_password or better authentication methods and implement IP whitelisting.
+</div>
+
+---
+layout: section
+---
+
+# 2. Role-Based Access Control
+
+---
+layout: default
+---
+
+# Creating and Managing Roles
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Basic Role Creation
+```sql{all|1-3|5-8|10-13|all}
+-- Create roles for different job functions
+CREATE ROLE agent_role;
+CREATE ROLE underwriter_role;
+CREATE ROLE claims_adjuster_role;
+
+-- Create role with settings
+CREATE ROLE analyst_role
+SETTINGS readonly = 1,
+         max_memory_usage = 2000000000; -- 2GB
+
+-- Create role with default grants
+CREATE ROLE manager_role
+SETTINGS readonly = 0,
+         max_execution_time = 1800; -- 30 minutes
+```
+
+</div>
+<div>
+
+## Role Assignment
+```sql{all|1-4|6-10|12-16|all}
+-- Assign roles to users
+GRANT agent_role TO agent_john;
+GRANT underwriter_role TO underwriter_mary;
+GRANT claims_adjuster_role TO claims_adjuster_bob;
+
+-- Assign multiple roles
+GRANT agent_role, analyst_role TO policy_analyst_alice;
+
+-- Set default role
+ALTER USER agent_john DEFAULT ROLE agent_role;
+
+-- Grant role with ADMIN option
+GRANT manager_role TO senior_manager 
+WITH ADMIN OPTION;
+
+-- Show user's roles
+SHOW GRANTS FOR agent_john;
+```
+
+</div>
+</div>
+
+---
+layout: section
+---
+
+# 3. GRANT and REVOKE Permissions
+
+---
+layout: default
+---
+
+# Database and Table Permissions
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Database Level Permissions
+```sql{all|1-4|6-9|11-14|all}
+-- Grant database access
+GRANT SHOW DATABASES ON *.* TO agent_role;
+GRANT SHOW TABLES ON life_insurance.* TO agent_role;
+GRANT SHOW COLUMNS ON life_insurance.* TO agent_role;
+
+-- Grant database-wide permissions
+GRANT SELECT ON life_insurance.* TO analyst_role;
+GRANT INSERT ON life_insurance.* TO data_entry_role;
+GRANT CREATE TABLE ON life_insurance.* TO admin_role;
+
+-- Grant all permissions on database
+GRANT ALL ON life_insurance.* TO dba_role;
+REVOKE DROP ON life_insurance.* FROM dba_role; -- Except DROP
+```
+
+</div>
+<div>
+
+## Table Level Permissions
+```sql{all|1-5|7-12|14-18|all}
+-- Grant table-specific permissions
+GRANT SELECT ON life_insurance.policies TO agent_role;
+GRANT INSERT ON life_insurance.policies TO underwriter_role;
+GRANT UPDATE ON life_insurance.policies TO underwriter_role;
+GRANT DELETE ON life_insurance.policies TO manager_role;
+
+-- Grant column-specific permissions
+GRANT SELECT(policy_id, customer_id, policy_type, coverage_amount) 
+ON life_insurance.policies TO agent_role;
+
+-- Exclude sensitive columns
+GRANT SELECT ON life_insurance.customers TO agent_role;
+REVOKE SELECT(ssn, bank_account) ON life_insurance.customers FROM agent_role;
+
+-- Grant ALTER permissions
+GRANT ALTER ON life_insurance.policies TO underwriter_role;
+GRANT ALTER COLUMN ON life_insurance.claims TO claims_manager_role;
+GRANT ALTER DELETE ON life_insurance.temp_data TO cleanup_role;
+```
+
+</div>
+</div>
+
+---
+layout: default
+---
+
+# Advanced Permission Control
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## SELECT, INSERT, ALTER Examples
+```sql{all|1-6|8-13|15-20|all}
+-- Detailed SELECT permissions
+GRANT SELECT ON life_insurance.policies TO agent_role;
+GRANT SELECT(policy_id, coverage_amount, premium_amount) 
+ON life_insurance.policies TO limited_agent_role;
+
+-- Fine-grained SELECT with conditions
+GRANT SELECT ON life_insurance.claims TO claims_adjuster_role;
+
+-- INSERT permissions with restrictions
+GRANT INSERT ON life_insurance.new_policies TO underwriter_role;
+GRANT INSERT(customer_id, policy_type, coverage_amount) 
+ON life_insurance.applications TO agent_role;
+
+-- Comprehensive INSERT example
+GRANT INSERT ON life_insurance.claims TO claims_adjuster_role;
+
+-- ALTER permissions for schema changes
+GRANT ALTER ON life_insurance.policies TO schema_admin_role;
+GRANT ALTER ADD COLUMN ON life_insurance.* TO developer_role;
+GRANT ALTER MODIFY COLUMN ON life_insurance.claims TO claims_manager_role;
+```
+
+</div>
+<div>
+
+## System and Administrative Permissions
+```sql{all|1-5|7-11|13-17|all}
+-- System monitoring permissions
+GRANT SELECT ON system.query_log TO monitoring_role;
+GRANT SELECT ON system.processes TO monitoring_role;
+GRANT SELECT ON system.metrics TO monitoring_role;
+GRANT SHOW PROCESSLIST ON *.* TO monitoring_role;
+
+-- Administrative permissions
+GRANT CREATE USER ON *.* TO user_admin_role;
+GRANT CREATE ROLE ON *.* TO user_admin_role;
+GRANT ALTER USER ON *.* TO user_admin_role;
+GRANT DROP USER ON *.* TO user_admin_role;
+
+-- Checking permissions
+SHOW GRANTS FOR agent_john;
+SHOW GRANTS FOR ROLE agent_role;
+
+-- Check current user permissions
+SHOW GRANTS;
+```
+
+</div>
+</div>
+
+---
+layout: section
+---
+
+# 4. Row-Level Security
+
+---
+layout: default
+---
+
+# Implementing Row-Level Security
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Row Policy Basics
+```sql{all|1-6|8-15|17-23|all}
+-- Create row policy for agent territory restrictions
+CREATE ROW POLICY agent_territory_policy ON life_insurance.policies
+FOR SELECT USING agent_id = currentUser()
+TO agent_role;
+
+-- Row policy with custom conditions
+CREATE ROW POLICY agent_access_policy ON life_insurance.policies
+FOR SELECT USING agent_id IN (
+    SELECT agent_id FROM life_insurance.agent_territories 
+    WHERE territory = getUserTerritory(currentUser())
+    AND territory_status = 'Active'
+)
+TO agent_role;
+
+-- Row policy for customer data protection
+CREATE ROW POLICY customer_privacy_policy ON life_insurance.customers
+FOR SELECT USING customer_id IN (
+    SELECT customer_id FROM life_insurance.policies 
+    WHERE agent_id = currentUser()
+    AND policy_status = 'Active'
+)
+TO agent_role;
+```
+
+</div>
+<div>
+
+## Advanced Row Limitations
+```sql{all|1-10|12-19|21-26|all}
+-- Time-based and status-based access control
+CREATE ROW POLICY recent_claims_policy ON life_insurance.claims
+FOR SELECT USING 
+    reported_date >= now() - INTERVAL 90 DAY
+    AND (
+        claim_status != 'Confidential' 
+        OR hasRole(currentUser(), 'senior_adjuster_role')
+    )
+    AND claim_amount <= getUserClaimLimit(currentUser())
+TO claims_adjuster_role;
+
+-- Multi-condition row policy for underwriters
+CREATE ROW POLICY underwriter_policy ON life_insurance.policies
+FOR ALL USING 
+    (policy_status = 'Active' OR hasRole(currentUser(), 'manager_role'))
+    AND (coverage_amount <= 1000000 OR hasRole(currentUser(), 'senior_underwriter_role'))
+    AND effective_date >= now() - INTERVAL 2 YEAR
+TO underwriter_role;
+
+-- Show row policies
+SHOW ROW POLICIES;
+SHOW CREATE ROW POLICY agent_territory_policy ON life_insurance.policies;
+
+-- Drop row policy
+DROP ROW POLICY agent_territory_policy ON life_insurance.policies;
+```
+
+</div>
+</div>
+
+---
+layout: section
+---
+
+# 5. Resource Limitations and Memory Control
+
+---
+layout: default
+---
+
+# Memory and Execution Limits
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## User-Level Resource Limits
+```sql{all|1-8|10-17|19-24|all}
+-- Set memory limits for users
+ALTER USER agent_john 
+SETTINGS max_memory_usage = 1000000000, -- 1GB
+         max_memory_usage_for_user = 2000000000, -- 2GB total
+         max_execution_time = 300, -- 5 minutes
+         max_result_rows = 1000000,
+         max_result_bytes = 100000000; -- 100MB
+
+-- Set limits for reporting users
+ALTER USER report_viewer
+SETTINGS max_memory_usage = 4000000000, -- 4GB
+         max_execution_time = 1800, -- 30 minutes
+         max_result_rows = 10000000,
+         readonly = 2,
+         max_concurrent_queries_for_user = 3;
+
+-- Set limits for batch processing users
+ALTER USER etl_user
+SETTINGS max_memory_usage = 8000000000, -- 8GB
+         max_execution_time = 7200, -- 2 hours
+         max_insert_block_size = 1000000,
+         max_concurrent_queries_for_user = 2;
+```
+
+</div>
+<div>
+
+## Role-Level Resource Limits
+```sql{all|1-7|9-15|17-22|all}
+-- Set limits for roles
+ALTER ROLE analyst_role
+SETTINGS max_memory_usage = 2000000000,
+         max_execution_time = 600,
+         max_result_rows = 5000000,
+         readonly = 1,
+         max_concurrent_queries_for_user = 2;
+
+-- Set limits for agent role
+ALTER ROLE agent_role
+SETTINGS max_memory_usage = 500000000, -- 500MB
+         max_execution_time = 120, -- 2 minutes
+         max_result_rows = 100000,
+         readonly = 1;
+
+-- Create resource profile
+CREATE SETTINGS PROFILE heavy_computation_profile
+SETTINGS max_memory_usage = 16000000000, -- 16GB
+         max_execution_time = 3600, -- 1 hour
+         max_threads = 8;
+```
+
+</div>
+</div>
+
+---
+layout: default
+---
+
+# Query and Connection Quotas
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Query Quotas
+```sql{all|1-7|9-14|16-21|all}
+-- Create quota for different user types
+CREATE QUOTA agent_quota 
+FOR INTERVAL 1 HOUR MAX queries = 1000, errors = 100, result_rows = 10000000
+FOR INTERVAL 1 DAY MAX queries = 5000, errors = 200, result_rows = 50000000
+TO agent_role;
+
+-- Create quota for analysts
+CREATE QUOTA analyst_quota
+FOR INTERVAL 1 HOUR MAX queries = 100, errors = 20, result_rows = 100000000, execution_time = 3600
+FOR INTERVAL 1 DAY MAX queries = 500, errors = 50, result_rows = 1000000000, execution_time = 14400
+TO analyst_role;
+
+-- Create quota for reporting
+CREATE QUOTA reporting_quota
+FOR INTERVAL 1 HOUR MAX queries = 50, errors = 10, execution_time = 7200
+FOR INTERVAL 1 DAY MAX queries = 200, errors = 20, execution_time = 28800
+TO report_viewer;
+
+-- Show quotas
+SHOW QUOTAS;
+SHOW CREATE QUOTA agent_quota;
+```
+
+</div>
+<div>
+
+## Quota Management
+```sql{all|1-5|7-11|13-17|all}
+-- Modify existing quota
+ALTER QUOTA agent_quota 
+FOR INTERVAL 1 HOUR MAX queries = 1500, errors = 150
+TO agent_role, senior_agent_role;
+
+-- Drop quota
+DROP QUOTA old_quota;
+
+-- Show quota usage
+SELECT * FROM system.quota_usage WHERE quota_name = 'agent_quota';
+
+-- Show current user's quota limits
+SELECT * FROM system.quotas_usage WHERE user_name = currentUser();
+
+-- Create unlimited quota for admin
+CREATE QUOTA admin_quota 
+FOR INTERVAL 1 HOUR MAX queries = 0, errors = 0 -- 0 means unlimited
+TO admin_role;
+```
+
+</div>
+</div>
+
+---
+layout: section
+---
+
+# 6. Security Best Practices
+
+---
+layout: default
+---
+
+# Security Implementation Best Practices
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Authentication and Authorization
+```sql{all|1-8|10-17|19-25|all}
+-- 1. Use strong authentication
+CREATE USER secure_analyst
+IDENTIFIED WITH sha256_password BY 'StrongP@ssw0rd2024!'
+HOST IP '10.0.0.0/8'
+SETTINGS readonly = 1,
+         max_memory_usage = 2000000000
+DEFAULT ROLE analyst_role;
+
+-- 2. Implement role hierarchy
+CREATE ROLE base_user_role 
+SETTINGS readonly = 1, max_execution_time = 300;
+
+CREATE ROLE insurance_agent_role 
+SETTINGS max_memory_usage = 1000000000;
+
+GRANT base_user_role TO insurance_agent_role;
+
+-- 3. Use row-level security for data isolation
+CREATE ROW POLICY agent_data_isolation ON life_insurance.policies
+FOR SELECT USING agent_id IN (
+    SELECT agent_id FROM life_insurance.agent_assignments 
+    WHERE user_name = currentUser()
+)
+TO insurance_agent_role;
+```
+
+</div>
+<div>
+
+## Monitoring and Auditing
+```sql{all|1-8|10-16|18-23|all}
+-- 1. Monitor user activities
+SELECT 
+    user,
+    query_start_time,
+    query_duration_ms,
+    read_rows,
+    read_bytes,
+    query
+FROM system.query_log 
+WHERE event_time > now() - INTERVAL 1 DAY
+ORDER BY query_start_time DESC;
+
+-- 2. Track permission changes
+SELECT 
+    event_time,
+    user,
+    command,
+    thread_id
+FROM system.query_log 
+WHERE query LIKE '%GRANT%' OR query LIKE '%REVOKE%'
+ORDER BY event_time DESC;
+
+-- 3. Monitor resource usage
+SELECT 
+    user,
+    quota_name,
+    max_queries,
+    queries,
+    max_errors,
+    errors
+FROM system.quota_usage;
+```
+
+</div>
+</div>
+
+---
+layout: center
+class: text-center
+---
+
+# Session Summary
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+
+## Security and Access Control
+
+- **User Management**: CREATE USER with strong authentication
+- **Role-Based Access**: CREATE ROLE with hierarchical permissions  
+- **GRANT/REVOKE**: Database, table, SELECT, INSERT, ALTER permissions
+- **Row-Level Security**: Data isolation and territory restrictions
+- **Resource Limits**: Memory, execution time, and query quotas
+- **Compliance**: Audit trails and regulatory requirements
+
+</div>
+<div>
+
+## Key Security Benefits
+
+- **Data Protection**: Row-level security and column restrictions
+- **Resource Management**: Prevent resource exhaustion attacks
+- **Audit Compliance**: Complete activity tracking and monitoring
+- **Role Separation**: Clear separation of duties and responsibilities
+- **Scalable Security**: Role-based system scales with organization
+- **Regulatory Compliance**: Meet insurance industry requirements
+
+</div>
+</div>
+
+<div class="pt-12">
+  <span class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
+    Questions?
+  </span>
+</div>
+
 ---
 layout: end
 ---
 
-# Thank you 
+# Thank you

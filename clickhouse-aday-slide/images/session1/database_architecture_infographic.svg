@@ -1,0 +1,214 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc"/>
+      <stop offset="100%" style="stop-color:#e2e8f0"/>
+    </linearGradient>
+    
+    <!-- Layer gradients -->
+    <linearGradient id="transportGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#1e40af"/>
+    </linearGradient>
+    
+    <linearGradient id="queryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#059669"/>
+    </linearGradient>
+    
+    <linearGradient id="executionGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#d97706"/>
+    </linearGradient>
+    
+    <linearGradient id="storageGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ef4444"/>
+      <stop offset="100%" style="stop-color:#dc2626"/>
+    </linearGradient>
+    
+    <!-- Box shadows -->
+    <filter id="boxShadow">
+      <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.2"/>
+    </filter>
+    
+    <filter id="glowEffect">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="url(#bgGradient)"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#1e293b">
+    Fundamental Database Architecture
+  </text>
+  
+  <!-- Transport Layer -->
+  <g id="transport-layer">
+    <!-- Layer background -->
+    <rect x="100" y="80" width="1000" height="100" rx="10" fill="url(#transportGrad)" opacity="0.1" filter="url(#boxShadow)"/>
+    
+    <!-- Layer title -->
+    <text x="120" y="105" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1e40af">Transport</text>
+    
+    <!-- Cluster Communication -->
+    <rect x="200" y="110" width="200" height="50" rx="8" fill="#3b82f6" filter="url(#boxShadow)"/>
+    <text x="300" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Cluster</text>
+    <text x="300" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Communication</text>
+    
+    <!-- Bidirectional arrow -->
+    <path d="M 420 135 L 480 135" stroke="#1e293b" stroke-width="3" marker-end="url(#arrowhead)" marker-start="url(#arrowhead)"/>
+    
+    <!-- Client Communication -->
+    <rect x="500" y="110" width="200" height="50" rx="8" fill="#60a5fa" filter="url(#boxShadow)"/>
+    <text x="600" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Client</text>
+    <text x="600" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Communication</text>
+  </g>
+  
+  <!-- Query Processor Layer -->
+  <g id="query-layer">
+    <!-- Layer background -->
+    <rect x="100" y="200" width="1000" height="120" rx="10" fill="url(#queryGrad)" opacity="0.1" filter="url(#boxShadow)"/>
+    
+    <!-- Layer title -->
+    <text x="120" y="225" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#059669">Query Processor</text>
+    
+    <!-- Query Parser -->
+    <rect x="200" y="240" width="500" height="30" rx="6" fill="#10b981" filter="url(#boxShadow)"/>
+    <text x="450" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">Query Parser</text>
+    
+    <!-- Query Optimizer -->
+    <rect x="200" y="280" width="500" height="30" rx="6" fill="#059669" filter="url(#boxShadow)"/>
+    <text x="450" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">Query Optimizer</text>
+    
+    <!-- Down arrow -->
+    <path d="M 450 320 L 450 360" stroke="#1e293b" stroke-width="3" marker-end="url(#arrowhead)"/>
+  </g>
+  
+  <!-- Execution Engine Layer -->
+  <g id="execution-layer">
+    <!-- Layer background -->
+    <rect x="100" y="380" width="1000" height="100" rx="10" fill="url(#executionGrad)" opacity="0.1" filter="url(#boxShadow)"/>
+    
+    <!-- Layer title -->
+    <text x="120" y="405" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#d97706">Execution Engine</text>
+    
+    <!-- Remote Execution -->
+    <rect x="200" y="410" width="200" height="50" rx="8" fill="#f59e0b" filter="url(#boxShadow)"/>
+    <text x="300" y="430" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Remote</text>
+    <text x="300" y="445" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Execution</text>
+    
+    <!-- Bidirectional arrow -->
+    <path d="M 420 435 L 480 435" stroke="#1e293b" stroke-width="3" marker-end="url(#arrowhead)" marker-start="url(#arrowhead)"/>
+    
+    <!-- Local Execution -->
+    <rect x="500" y="410" width="200" height="50" rx="8" fill="#fbbf24" filter="url(#boxShadow)"/>
+    <text x="600" y="430" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Local</text>
+    <text x="600" y="445" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Execution</text>
+    
+    <!-- Down arrow -->
+    <path d="M 450 480 L 450 520" stroke="#1e293b" stroke-width="3" marker-end="url(#arrowhead)"/>
+  </g>
+  
+  <!-- Storage Engine Layer -->
+  <g id="storage-layer">
+    <!-- Layer background -->
+    <rect x="100" y="540" width="1000" height="180" rx="10" fill="url(#storageGrad)" opacity="0.1" filter="url(#boxShadow)"/>
+    
+    <!-- Layer title -->
+    <text x="120" y="565" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#dc2626">Storage Engine</text>
+    
+    <!-- Transaction Manager -->
+    <rect x="200" y="580" width="180" height="40" rx="6" fill="#ef4444" filter="url(#boxShadow)"/>
+    <text x="290" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Transaction</text>
+    <text x="290" y="610" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Manager</text>
+    
+    <!-- Lock Manager -->
+    <rect x="400" y="580" width="180" height="40" rx="6" fill="#f87171" filter="url(#boxShadow)"/>
+    <text x="490" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Lock</text>
+    <text x="490" y="610" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">Manager</text>
+    
+    <!-- Access Methods -->
+    <rect x="200" y="640" width="380" height="30" rx="6" fill="#dc2626" filter="url(#boxShadow)"/>
+    <text x="390" y="660" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">Access Methods</text>
+    
+    <!-- Buffer Manager -->
+    <rect x="200" y="680" width="180" height="30" rx="6" fill="#fca5a5" filter="url(#boxShadow)"/>
+    <text x="290" y="700" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Buffer Manager</text>
+    
+    <!-- Recovery Manager -->
+    <rect x="400" y="680" width="180" height="30" rx="6" fill="#fca5a5" filter="url(#boxShadow)"/>
+    <text x="490" y="700" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">Recovery Manager</text>
+  </g>
+  
+  <!-- Side decorative elements -->
+  <g id="decorative-elements">
+    <!-- Left side icons -->
+    <circle cx="50" cy="130" r="15" fill="#3b82f6" opacity="0.3"/>
+    <circle cx="50" cy="260" r="15" fill="#10b981" opacity="0.3"/>
+    <circle cx="50" cy="430" r="15" fill="#f59e0b" opacity="0.3"/>
+    <circle cx="50" cy="630" r="15" fill="#ef4444" opacity="0.3"/>
+    
+    <!-- Right side data flow visualization -->
+    <g transform="translate(750, 200)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#64748b">Data Flow</text>
+      <circle cx="20" cy="20" r="8" fill="#3b82f6" opacity="0.8">
+        <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="20" cy="50" r="8" fill="#10b981" opacity="0.8">
+        <animate attributeName="r" values="8;12;8" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="20" cy="80" r="8" fill="#f59e0b" opacity="0.8">
+        <animate attributeName="r" values="8;12;8" dur="2s" begin="1s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="20" cy="110" r="8" fill="#ef4444" opacity="0.8">
+        <animate attributeName="r" values="8;12;8" dur="2s" begin="1.5s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+  </g>
+  
+  <!-- Arrow marker definitions -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+            refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1e293b"/>
+    </marker>
+  </defs>
+  
+  <!-- Performance indicators -->
+  <g id="performance-indicators" transform="translate(850, 100)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#64748b">Key Metrics</text>
+    
+    <!-- Throughput -->
+    <rect x="0" y="20" width="100" height="15" rx="7" fill="#e5e7eb"/>
+    <rect x="0" y="20" width="75" height="15" rx="7" fill="#10b981">
+      <animate attributeName="width" values="0;75;0" dur="3s" repeatCount="indefinite"/>
+    </rect>
+    <text x="110" y="32" font-family="Arial, sans-serif" font-size="11" fill="#64748b">Throughput</text>
+    
+    <!-- Latency -->
+    <rect x="0" y="45" width="100" height="15" rx="7" fill="#e5e7eb"/>
+    <rect x="0" y="45" width="60" height="15" rx="7" fill="#f59e0b">
+      <animate attributeName="width" values="0;60;0" dur="2.5s" repeatCount="indefinite"/>
+    </rect>
+    <text x="110" y="57" font-family="Arial, sans-serif" font-size="11" fill="#64748b">Latency</text>
+    
+    <!-- Concurrency -->
+    <rect x="0" y="70" width="100" height="15" rx="7" fill="#e5e7eb"/>
+    <rect x="0" y="70" width="85" height="15" rx="7" fill="#3b82f6">
+      <animate attributeName="width" values="0;85;0" dur="2s" repeatCount="indefinite"/>
+    </rect>
+    <text x="110" y="82" font-family="Arial, sans-serif" font-size="11" fill="#64748b">Concurrency</text>
+  </g>
+  
+  <!-- Footer -->
+  <text x="600" y="760" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#64748b">
+    Modern database systems implement these layered components for optimal performance and reliability
+  </text>
+</svg>

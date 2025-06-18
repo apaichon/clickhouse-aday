@@ -1,0 +1,160 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc"/>
+      <stop offset="100%" style="stop-color:#e2e8f0"/>
+    </linearGradient>
+    
+    <!-- Drop shadow filter -->
+    <filter id="dropShadow">
+      <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.2"/>
+    </filter>
+    
+    <!-- Glow effect for center -->
+    <filter id="centerGlow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="url(#bgGradient)"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#1e293b">
+    Overview of Native Data Types
+  </text>
+  
+  <!-- Central Node -->
+  <g id="center-node">
+    <rect x="480" y="350" width="240" height="100" rx="15" fill="#e5e7eb" stroke="#6b7280" stroke-width="3" filter="url(#centerGlow)"/>
+    <text x="600" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#374151">Type System</text>
+    <text x="600" y="405" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#374151">Native Data</text>
+    <text x="600" y="425" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#374151">Types</text>
+  </g>
+  
+  <!-- Boolean Type (Top Left) -->
+  <g id="boolean-group">
+    <rect x="150" y="150" width="200" height="80" rx="12" fill="#fed7aa" stroke="#ea580c" stroke-width="2" filter="url(#dropShadow)"/>
+    <text x="250" y="175" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#9a3412">Boolean Type</text>
+    <text x="210" y="195" font-family="monospace" font-size="12" fill="#9a3412">10010</text>
+    <text x="210" y="210" font-family="monospace" font-size="12" fill="#9a3412">01100</text>
+    <text x="210" y="220" font-family="monospace" font-size="12" fill="#9a3412">11001</text>
+    
+    <!-- Boolean subtype -->
+    <rect x="80" y="270" width="120" height="30" rx="8" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="140" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6b7280">Boolean</text>
+    
+    <!-- Connection lines -->
+    <path d="M 350 190 Q 420 190 480 350" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+    <path d="M 200 230 L 140 270" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+  </g>
+  
+  <!-- UUID Type (Top Right) -->
+  <g id="uuid-group">
+    <rect x="850" y="150" width="180" height="60" rx="12" fill="#fecaca" stroke="#ef4444" stroke-width="2" filter="url(#dropShadow)"/>
+    <text x="890" y="175" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#b91c1c">🆔</text>
+    <text x="940" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#b91c1c">UUID Type</text>
+    
+    <!-- UUID subtype -->
+    <rect x="880" y="250" width="120" height="30" rx="8" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="940" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6b7280">UUID</text>
+    
+    <!-- Connection lines -->
+    <path d="M 850 190 Q 780 190 720 350" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+    <path d="M 940 210 L 940 250" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+  </g>
+  
+  <!-- Numeric Types (Left) -->
+  <g id="numeric-group">
+    <rect x="80" y="380" width="180" height="60" rx="12" fill="#fce7f3" stroke="#ec4899" stroke-width="2" filter="url(#dropShadow)"/>
+    <text x="120" y="405" font-family="Arial, sans-serif" font-size="20" fill="#be185d">🔢</text>
+    <text x="170" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#be185d">Numeric Types</text>
+    
+    <!-- Numeric subtypes -->
+    <rect x="20" y="480" width="100" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="70" y="497" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">Integers</text>
+    
+    <rect x="20" y="515" width="140" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="90" y="532" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">Floating-point Numbers</text>
+    
+    <rect x="20" y="550" width="100" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="70" y="567" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">Decimal</text>
+    
+    <!-- Connection lines -->
+    <path d="M 260 410 Q 350 410 480 400" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+    <path d="M 120 440 L 70 480" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+    <path d="M 140 440 L 90 515" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+    <path d="M 120 440 L 70 550" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+  </g>
+  
+  <!-- Date and Time Types (Right) -->
+  <g id="datetime-group">
+    <rect x="940" y="380" width="200" height="60" rx="12" fill="#ddd6fe" stroke="#8b5cf6" stroke-width="2" filter="url(#dropShadow)"/>
+    <text x="980" y="405" font-family="Arial, sans-serif" font-size="20" fill="#5b21b6">📊</text>
+    <text x="1040" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#5b21b6">Date and Time Types</text>
+    
+    <!-- DateTime subtypes -->
+    <rect x="980" y="480" width="80" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="1020" y="497" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">Date</text>
+    
+    <rect x="980" y="515" width="80" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="1020" y="532" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">DateTime</text>
+    
+    <rect x="980" y="550" width="100" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="1030" y="567" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">DateTime64</text>
+    
+    <!-- Connection lines -->
+    <path d="M 940 410 Q 850 410 720 400" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+    <path d="M 1020 440 L 1020 480" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+    <path d="M 1020 440 L 1020 515" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+    <path d="M 1030 440 L 1030 550" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+  </g>
+  
+  <!-- String Types (Bottom Left) -->
+  <g id="string-group">
+    <rect x="250" y="550" width="180" height="60" rx="12" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2" filter="url(#dropShadow)"/>
+    <text x="290" y="575" font-family="Arial, sans-serif" font-size="20" fill="#1e40af">📄</text>
+    <text x="340" y="590" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1e40af">String Types</text>
+    
+    <!-- String subtypes -->
+    <rect x="200" y="640" width="80" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="240" y="657" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">String</text>
+    
+    <rect x="300" y="640" width="100" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="350" y="657" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">FixedString</text>
+    
+    <!-- Connection lines -->
+    <path d="M 340 550 Q 400 500 480 430" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+    <path d="M 300 610 L 240 640" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+    <path d="M 360 610 L 350 640" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+  </g>
+  
+  <!-- Enum Types (Bottom Right) -->
+  <g id="enum-group">
+    <rect x="770" y="550" width="180" height="60" rx="12" fill="#d9f99d" stroke="#65a30d" stroke-width="2" filter="url(#dropShadow)"/>
+    <text x="810" y="575" font-family="Arial, sans-serif" font-size="20" fill="#365314">📊</text>
+    <text x="860" y="590" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#365314">Enum Types</text>
+    
+    <!-- Enum subtypes -->
+    <rect x="750" y="640" width="80" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="790" y="657" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">Enum8</text>
+    
+    <rect x="850" y="640" width="80" height="25" rx="6" fill="#f9fafb" stroke="#9ca3af" stroke-width="1" filter="url(#dropShadow)"/>
+    <text x="890" y="657" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">Enum16</text>
+    
+    <!-- Connection lines -->
+    <path d="M 860 550 Q 800 500 720 430" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+    <path d="M 820 610 L 790 640" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+    <path d="M 880 610 L 890 640" stroke="#9ca3af" stroke-width="2" stroke-dasharray="3,3" fill="none"/>
+  </g>
+  
+  <!-- Footer attribution -->
+  <text x="1150" y="780" text-anchor="end" font-family="Arial, sans-serif" font-size="10" fill="#9ca3af">
+    Made with ❤️ Nankin
+  </text>
+</svg>

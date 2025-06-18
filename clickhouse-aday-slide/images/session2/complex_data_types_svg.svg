@@ -1,0 +1,196 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#ffffff"/>
+    </linearGradient>
+    
+    <!-- Card gradients -->
+    <linearGradient id="arrayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fef3c7"/>
+      <stop offset="100%" style="stop-color:#fde68a"/>
+    </linearGradient>
+    
+    <linearGradient id="tupleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ccfbf1"/>
+      <stop offset="100%" style="stop-color:#a7f3d0"/>
+    </linearGradient>
+    
+    <linearGradient id="nestedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d9f99d"/>
+      <stop offset="100%" style="stop-color:#bef264"/>
+    </linearGradient>
+    
+    <!-- Drop shadow filter -->
+    <filter id="dropShadow">
+      <feDropShadow dx="3" dy="6" stdDeviation="4" flood-opacity="0.15"/>
+    </filter>
+    
+    <!-- Glow effect -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#bgGradient)"/>
+  
+  <!-- Title -->
+  <text x="400" y="60" text-anchor="middle" font-family="Georgia, serif" font-size="36" font-weight="300" fill="#374151" font-style="italic">
+    Complex Data Types
+  </text>
+  
+  <!-- Arrays Card -->
+  <g id="arrays-card">
+    <!-- Card shape -->
+    <path d="M 80 120 L 280 120 L 280 300 L 200 350 L 80 300 Z" 
+          fill="url(#arrayGradient)" 
+          stroke="#f59e0b" 
+          stroke-width="2" 
+          filter="url(#dropShadow)"/>
+    
+    <!-- Arrays title -->
+    <text x="180" y="160" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-weight="600" fill="#92400e" font-style="italic">
+      Arrays
+    </text>
+    
+    <!-- Arrays description -->
+    <text x="180" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#78350f">
+      Ordered list of
+    </text>
+    <text x="180" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#78350f">
+      elements of the
+    </text>
+    <text x="180" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#78350f">
+      same type.
+    </text>
+    
+    <!-- Array visual representation -->
+    <g transform="translate(140, 250)">
+      <!-- Bullet points -->
+      <circle cx="0" cy="0" r="4" fill="#f59e0b"/>
+      <circle cx="0" cy="20" r="4" fill="#f59e0b"/>
+      <circle cx="0" cy="40" r="4" fill="#f59e0b"/>
+      
+      <!-- Lines representing array elements -->
+      <rect x="15" y="-2" width="50" height="4" rx="2" fill="#d97706"/>
+      <rect x="15" y="18" width="50" height="4" rx="2" fill="#d97706"/>
+      <rect x="15" y="38" width="50" height="4" rx="2" fill="#d97706"/>
+    </g>
+  </g>
+  
+  <!-- Tuples Card -->
+  <g id="tuples-card">
+    <!-- Card shape -->
+    <path d="M 340 120 L 540 120 L 540 300 L 460 350 L 340 300 Z" 
+          fill="url(#tupleGradient)" 
+          stroke="#10b981" 
+          stroke-width="2" 
+          filter="url(#dropShadow)"/>
+    
+    <!-- Tuples title -->
+    <text x="440" y="160" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-weight="600" fill="#047857" font-style="italic">
+      Tuples
+    </text>
+    
+    <!-- Tuples description -->
+    <text x="440" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#065f46">
+      Ordered sequence of
+    </text>
+    <text x="440" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#065f46">
+      elements with
+    </text>
+    <text x="440" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#065f46">
+      different types.
+    </text>
+    
+    <!-- Tuple visual representation -->
+    <g transform="translate(400, 260)">
+      <!-- Two boxes representing different types -->
+      <rect x="0" y="0" width="25" height="25" rx="4" fill="#10b981" stroke="#047857" stroke-width="2"/>
+      <rect x="35" y="0" width="25" height="25" rx="4" fill="#34d399" stroke="#047857" stroke-width="2"/>
+      
+      <!-- Type labels -->
+      <text x="12.5" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">T</text>
+      <text x="47.5" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">I</text>
+    </g>
+  </g>
+  
+  <!-- Nested Card -->
+  <g id="nested-card">
+    <!-- Card shape -->
+    <path d="M 210 380 L 410 380 L 410 520 L 350 570 L 210 520 Z" 
+          fill="url(#nestedGradient)" 
+          stroke="#65a30d" 
+          stroke-width="2" 
+          filter="url(#dropShadow)"/>
+    
+    <!-- Nested title -->
+    <text x="310" y="420" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-weight="600" fill="#365314" font-style="italic">
+      Nested
+    </text>
+    
+    <!-- Nested description -->
+    <text x="310" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#3f6212">
+      Represents a table
+    </text>
+    <text x="310" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#3f6212">
+      within a table
+    </text>
+    <text x="310" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#3f6212">
+      structure.
+    </text>
+    
+    <!-- Nested visual representation -->
+    <g transform="translate(280, 510)">
+      <!-- Table representation -->
+      <rect x="0" y="0" width="30" height="20" rx="3" fill="none" stroke="#65a30d" stroke-width="2"/>
+      <!-- Grid lines -->
+      <line x1="10" y1="0" x2="10" y2="20" stroke="#65a30d" stroke-width="1"/>
+      <line x1="20" y1="0" x2="20" y2="20" stroke="#65a30d" stroke-width="1"/>
+      <line x1="0" y1="7" x2="30" y2="7" stroke="#65a30d" stroke-width="1"/>
+      <line x1="0" y1="14" x2="30" y2="14" stroke="#65a30d" stroke-width="1"/>
+      
+      <!-- Database cylinder -->
+      <ellipse cx="45" cy="10" rx="8" ry="4" fill="#84cc16" stroke="#65a30d" stroke-width="2"/>
+      <rect x="37" y="10" width="16" height="8" fill="#84cc16"/>
+      <ellipse cx="45" cy="18" rx="8" ry="4" fill="#84cc16" stroke="#65a30d" stroke-width="2"/>
+    </g>
+  </g>
+  
+  <!-- Decorative elements -->
+  <g id="decorative-elements">
+    <!-- Background pattern -->
+    <g opacity="0.1">
+      <circle cx="650" cy="150" r="30" fill="#f59e0b"/>
+      <circle cx="700" cy="200" r="20" fill="#10b981"/>
+      <circle cx="750" cy="250" r="15" fill="#65a30d"/>
+    </g>
+    
+    <!-- Corner ornaments -->
+    <g transform="translate(50, 50)" opacity="0.3">
+      <path d="M 0 0 Q 10 0 10 10" stroke="#6b7280" stroke-width="2" fill="none"/>
+    </g>
+    
+    <g transform="translate(740, 50)" opacity="0.3">
+      <path d="M 10 0 Q 0 0 0 10" stroke="#6b7280" stroke-width="2" fill="none"/>
+    </g>
+    
+    <!-- Subtle connecting lines -->
+    <g opacity="0.2">
+      <path d="M 280 235 Q 320 235 340 235" stroke="#9ca3af" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+      <path d="M 440 300 Q 400 340 360 380" stroke="#9ca3af" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+      <path d="M 200 300 Q 220 340 240 380" stroke="#9ca3af" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+    </g>
+  </g>
+  
+  <!-- Footer text -->
+  <text x="400" y="590" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">
+    Advanced data structures for complex data modeling and analysis
+  </text>
+</svg>

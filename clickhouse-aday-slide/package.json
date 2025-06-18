@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "slidev build",
-    "dev": "slidev --open clickhouse.slides-v2.md",
+    "dev": "slidev --open clickhouse.slides.md",
     "export": "slidev export"
   },
   "dependencies": {

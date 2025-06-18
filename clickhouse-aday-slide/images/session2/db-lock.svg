@@ -1,0 +1,227 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background and Definitions -->
+    <defs>
+      <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#f8fafc"/>
+        <stop offset="100%" style="stop-color:#e2e8f0"/>
+      </linearGradient>
+      
+      <!-- Transaction gradients -->
+      <linearGradient id="transaction1Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#dc2626"/>
+        <stop offset="100%" style="stop-color:#991b1b"/>
+      </linearGradient>
+      
+      <linearGradient id="transaction2Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#2563eb"/>
+        <stop offset="100%" style="stop-color:#1d4ed8"/>
+      </linearGradient>
+      
+      <linearGradient id="resourceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#10b981"/>
+        <stop offset="100%" style="stop-color:#059669"/>
+      </linearGradient>
+      
+      <!-- Filters -->
+      <filter id="dropShadow">
+        <feDropShadow dx="3" dy="6" stdDeviation="4" flood-opacity="0.3"/>
+      </filter>
+      
+      <filter id="glowEffect">
+        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+        <feMerge> 
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+      
+      <!-- Arrow markers -->
+      <marker id="arrowRed" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto">
+        <polygon points="0 0, 12 4, 0 8" fill="#dc2626"/>
+      </marker>
+      
+      <marker id="arrowBlue" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto">
+        <polygon points="0 0, 12 4, 0 8" fill="#2563eb"/>
+      </marker>
+      
+      <marker id="arrowOrange" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto">
+        <polygon points="0 0, 12 4, 0 8" fill="#f59e0b"/>
+      </marker>
+      
+      <!-- Deadlock warning pattern -->
+      <pattern id="warningPattern" patternUnits="userSpaceOnUse" width="20" height="20">
+        <rect width="20" height="20" fill="#fef3c7"/>
+        <path d="M0,20 L20,0 M-5,5 L5,-5 M15,25 L25,15" stroke="#f59e0b" stroke-width="2"/>
+      </pattern>
+    </defs>
+    
+    <!-- Background -->
+    <rect width="1200" height="800" fill="url(#bgGradient)"/>
+    
+    <!-- Title -->
+    <text x="600" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#1e293b">
+      Database Deadlock Situation
+    </text>
+    <text x="600" y="65" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+      Circular Dependency Between Transactions and Resources
+    </text>
+    
+    <!-- Transaction 1 (Top Left) -->
+    <g id="transaction-1" transform="translate(150, 150)">
+      <ellipse cx="0" cy="0" rx="120" ry="60" fill="url(#transaction1Grad)" filter="url(#dropShadow)"/>
+      <text x="0" y="-10" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+        Transaction 1
+      </text>
+      <text x="0" y="10" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fecaca">
+        Holds: Resource 1
+      </text>
+      <text x="0" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#fecaca">
+        Wants: Resource 2
+      </text>
+    </g>
+    
+    <!-- Transaction 2 (Top Right) -->
+    <g id="transaction-2" transform="translate(900, 150)">
+      <ellipse cx="0" cy="0" rx="120" ry="60" fill="url(#transaction2Grad)" filter="url(#dropShadow)"/>
+      <text x="0" y="-10" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+        Transaction 2
+      </text>
+      <text x="0" y="10" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#bfdbfe">
+        Holds: Resource 2
+      </text>
+      <text x="0" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#bfdbfe">
+        Wants: Resource 1
+      </text>
+    </g>
+    
+    <!-- Resource 1 (Bottom Left) -->
+    <g id="resource-1" transform="translate(250, 450)">
+      <rect x="-80" y="-40" width="160" height="80" rx="15" fill="url(#resourceGrad)" filter="url(#dropShadow)"/>
+      <text x="0" y="-10" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+        Resource 1
+      </text>
+      <text x="0" y="10" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#d1fae5">
+        (Table/Row/Page)
+      </text>
+      <text x="0" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#d1fae5">
+        Locked by Trans 1
+      </text>
+    </g>
+    
+    <!-- Resource 2 (Bottom Right) -->
+    <g id="resource-2" transform="translate(800, 450)">
+      <rect x="-80" y="-40" width="160" height="80" rx="15" fill="url(#resourceGrad)" filter="url(#dropShadow)"/>
+      <text x="0" y="-10" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+        Resource 2
+      </text>
+      <text x="0" y="10" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#d1fae5">
+        (Table/Row/Page)
+      </text>
+      <text x="0" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#d1fae5">
+        Locked by Trans 2
+      </text>
+    </g>
+    
+    <!-- Connection Lines -->
+    <!-- Transaction 1 holds Resource 1 (solid line) -->
+    <path d="M 200 210 L 250 410" stroke="#dc2626" stroke-width="4" marker-end="url(#arrowRed)" fill="none"/>
+    <text x="210" y="310" font-family="Arial, sans-serif" font-size="12" fill="#dc2626" font-weight="bold">HOLDS</text>
+    
+    <!-- Transaction 2 holds Resource 2 (solid line) -->
+    <path d="M 850 210 L 800 410" stroke="#2563eb" stroke-width="4" marker-end="url(#arrowBlue)" fill="none"/>
+    <text x="810" y="310" font-family="Arial, sans-serif" font-size="12" fill="#2563eb" font-weight="bold">HOLDS</text>
+    
+    <!-- Transaction 1 wants Resource 2 (dashed line) -->
+    <path d="M 270 150 Q 600 100 780 150" stroke="#f59e0b" stroke-width="4" stroke-dasharray="10,5" marker-end="url(#arrowOrange)" fill="none"/>
+    <text x="525" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#f59e0b" font-weight="bold">WANTS</text>
+    
+    <!-- Transaction 2 wants Resource 1 (dashed line) -->
+    <path d="M 780 150 Q 450 550 270 450" stroke="#f59e0b" stroke-width="4" stroke-dasharray="10,5" marker-end="url(#arrowOrange)" fill="none"/>
+    <text x="525" y="580" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#f59e0b" font-weight="bold">WANTS</text>
+    
+    <!-- Deadlock Warning Box -->
+    <g id="deadlock-warning" transform="translate(450, 300)">
+      <rect x="-100" y="-50" width="200" height="100" rx="15" fill="url(#warningPattern)" stroke="#f59e0b" stroke-width="3" filter="url(#dropShadow)"/>
+      <text x="0" y="-20" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#92400e">
+        ⚠️ DEADLOCK!
+      </text>
+      <text x="0" y="0" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#78350f">
+        Circular Dependency
+      </text>
+      <text x="0" y="15" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#78350f">
+        Detected
+      </text>
+      <text x="0" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#78350f">
+        One transaction will be rolled back
+      </text>
+    </g>
+    
+    <!-- Steps to identify deadlock -->
+    <g id="deadlock-steps" transform="translate(50, 600)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#374151">
+        Steps to identify the deadlock as follows:
+      </text>
+      <text x="0" y="25" font-family="Arial, sans-serif" font-size="14" fill="#6b7280">
+        • See in the following example there are two transactions try to update the
+      </text>
+      <text x="0" y="40" font-family="Arial, sans-serif" font-size="14" fill="#6b7280">
+          same records 1 and 2 in different order of execution.
+      </text>
+    </g>
+    
+    <!-- SQL Examples Panel -->
+    <g id="sql-examples" transform="translate(50, 650)">
+      <!-- Transaction 1 SQL -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="520" height="120" rx="8" fill="#1f2937" stroke="#374151" stroke-width="2"/>
+        <text x="15" y="20" font-family="monospace" font-size="12" font-weight="bold" fill="#fbbf24">--Tran 1</text>
+        <text x="15" y="35" font-family="monospace" font-size="11" fill="#3b82f6">BEGIN TRAN</text>
+        <text x="15" y="50" font-family="monospace" font-size="11" fill="#ef4444">UPDATE</text>
+        <text x="70" y="50" font-family="monospace" font-size="11" fill="#f3f4f6">[dbo].[STUD1] SET [NAME]='Three' where [ID]=1</text>
+        <text x="15" y="65" font-family="monospace" font-size="11" fill="#8b5cf6">WAITFOR DELAY</text>
+        <text x="110" y="65" font-family="monospace" font-size="11" fill="#f59e0b">'00:00:10'</text>
+        <text x="15" y="80" font-family="monospace" font-size="11" fill="#ef4444">UPDATE</text>
+        <text x="70" y="80" font-family="monospace" font-size="11" fill="#f3f4f6">[dbo].[STUD1] SET [NAME]='Four' where [ID]=2</text>
+        <text x="15" y="95" font-family="monospace" font-size="11" fill="#8b5cf6">WAITFOR DELAY</text>
+        <text x="110" y="95" font-family="monospace" font-size="11" fill="#f59e0b">'00:00:10'</text>
+        <text x="15" y="110" font-family="monospace" font-size="11" fill="#10b981">COMMIT TRAN</text>
+      </g>
+      
+      <!-- Transaction 2 SQL -->
+      <g transform="translate(550, 0)">
+        <rect x="0" y="0" width="520" height="120" rx="8" fill="#1f2937" stroke="#374151" stroke-width="2"/>
+        <text x="15" y="20" font-family="monospace" font-size="12" font-weight="bold" fill="#fbbf24">--Tran 2</text>
+        <text x="15" y="35" font-family="monospace" font-size="11" fill="#3b82f6">BEGIN TRAN</text>
+        <text x="15" y="50" font-family="monospace" font-size="11" fill="#ef4444">UPDATE</text>
+        <text x="70" y="50" font-family="monospace" font-size="11" fill="#f3f4f6">[dbo].[STUD1] SET [NAME]='Three' where [ID]=2</text>
+        <text x="15" y="65" font-family="monospace" font-size="11" fill="#8b5cf6">WAITFOR DELAY</text>
+        <text x="110" y="65" font-family="monospace" font-size="11" fill="#f59e0b">'00:00:10'</text>
+        <text x="15" y="80" font-family="monospace" font-size="11" fill="#ef4444">UPDATE</text>
+        <text x="70" y="80" font-family="monospace" font-size="11" fill="#f3f4f6">[dbo].[STUD1] SET [NAME]='Four' where [ID]=1</text>
+        <text x="15" y="95" font-family="monospace" font-size="11" fill="#8b5cf6">WAITFOR DELAY</text>
+        <text x="110" y="95" font-family="monospace" font-size="11" fill="#f59e0b">'00:00:10'</text>
+        <text x="15" y="110" font-family="monospace" font-size="11" fill="#10b981">COMMIT TRAN</text>
+      </g>
+    </g>
+    
+    <!-- Legend -->
+    <g id="legend" transform="translate(950, 300)">
+      <rect x="0" y="0" width="200" height="140" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <text x="15" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#374151">Legend:</text>
+      
+      <line x1="15" y1="35" x2="45" y2="35" stroke="#dc2626" stroke-width="3"/>
+      <text x="55" y="40" font-family="Arial, sans-serif" font-size="11" fill="#374151">Holds Lock</text>
+      
+      <line x1="15" y1="55" x2="45" y2="55" stroke="#f59e0b" stroke-width="3" stroke-dasharray="5,3"/>
+      <text x="55" y="60" font-family="Arial, sans-serif" font-size="11" fill="#374151">Waiting for Lock</text>
+      
+      <circle cx="25" cy="80" r="8" fill="url(#transaction1Grad)"/>
+      <text x="40" y="85" font-family="Arial, sans-serif" font-size="11" fill="#374151">Transaction</text>
+      
+      <rect x="17" y="95" width="16" height="10" rx="2" fill="url(#resourceGrad)"/>
+      <text x="40" y="105" font-family="Arial, sans-serif" font-size="11" fill="#374151">Resource</text>
+      
+      <rect x="17" y="115" width="16" height="10" rx="2" fill="url(#warningPattern)"/>
+      <text x="40" y="125" font-family="Arial, sans-serif" font-size="11" fill="#374151">Deadlock Zone</text>
+    </g>
+  </svg>
