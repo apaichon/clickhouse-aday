@@ -1,231 +1,302 @@
 -- =============================================
--- Basic Window Function Example
+-- ClickHouse Session 4: Advanced Querying - Window Functions
+-- Life Insurance Management System
 -- =============================================
 
+USE life_insurance;
+
+-- =============================================
+-- 1. Window Functions Basics
+-- =============================================
+
+-- Basic window function example
 SELECT 
-    payment_currency,
-    uploaded_at,
-    payment_amount,
-    sum(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY uploaded_at
-    ) AS running_total,
+    policy_type,
+    start_date,
+    premium_amount,
+    sum(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY start_date
+    ) AS running_premium_total,
+   
     row_number() OVER (
-        PARTITION BY payment_currency
-        ORDER BY uploaded_at
-    ) AS row_num,
-    avg(payment_amount) OVER (
-        PARTITION BY payment_currency
-    ) AS currency_avg,
-    avg(payment_amount) OVER () AS overall_avg
-FROM chat_payments.attachments
-WHERE payment_status = 'paid'
-  AND date(uploaded_at) = '2024-04-15'
-ORDER BY payment_currency, uploaded_at;
+        PARTITION BY policy_type
+        ORDER BY start_date
+    ) AS policy_sequence,
+        
+    avg(premium_amount) OVER (
+        PARTITION BY policy_type
+    ) AS type_avg_premium,
+        
+    avg(premium_amount) OVER () AS overall_avg_premium
+    
+FROM policies
+WHERE status = 'Active'
+  AND start_date >= '2024-01-01'
+ORDER BY policy_type, start_date
+LIMIT 100;
 
 -- =============================================
--- Rank Window Functions
+-- 2. Ranking and Row Position Window Functions
 -- =============================================
 
+-- Ranking Functions
 SELECT 
-    payment_currency,
-    payment_amount,
+    policy_type,
+    coverage_amount,
     -- Regular rank (with gaps)
     rank() OVER (
-        PARTITION BY payment_currency 
-        ORDER BY payment_amount DESC
-    ) AS payment_rank,
+        PARTITION BY policy_type 
+        ORDER BY coverage_amount DESC
+    ) AS coverage_rank,
+    
     -- Dense rank (no gaps)
     dense_rank() OVER (
-        PARTITION BY payment_currency 
-        ORDER BY payment_amount DESC
-    ) AS dense_payment_rank,
+        PARTITION BY policy_type 
+        ORDER BY coverage_amount DESC
+    ) AS dense_coverage_rank,
+    
     -- Percentile rank
     percent_rank() OVER (
-        PARTITION BY payment_currency 
-        ORDER BY payment_amount
+        PARTITION BY policy_type 
+        ORDER BY coverage_amount
     ) AS percentile
-FROM attachments
-WHERE payment_status = 'paid' 
-  AND date(uploaded_at) = '2024-04-15';
+    
+FROM policies
+WHERE status = 'Active' 
+  AND start_date >= '2024-01-01'
+LIMIT 100;
 
--- =============================================
 -- Row Position Functions
--- =============================================
-
 SELECT 
-    payment_currency,
-    uploaded_at,
+    policy_type,
+    start_date,
+    premium_amount,
     -- Row number
     row_number() OVER (
-        PARTITION BY payment_currency 
-        ORDER BY uploaded_at
+        PARTITION BY policy_type 
+        ORDER BY start_date
     ) AS row_num,
-    -- Previous row's value (instead of lag)
-    anyLast(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY uploaded_at
+    
+    -- Previous row's premium (using lag equivalent)
+    anyLast(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY start_date
         ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
-    ) AS previous_payment,
-    -- Next row's value (instead of lead)
-    any(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY uploaded_at
+    ) AS previous_premium,
+    
+    -- Next row's premium (using lead equivalent)
+    any(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY start_date
         ROWS BETWEEN 1 FOLLOWING AND 1 FOLLOWING
-    ) AS next_payment
-FROM attachments
-WHERE payment_status = 'paid' 
-  AND date(uploaded_at) BETWEEN '2024-04-15' AND '2024-04-20'
-ORDER BY payment_currency, uploaded_at;
+    ) AS next_premium
+    
+FROM policies
+WHERE status = 'Active' 
+  AND start_date >= '2024-01-01'
+ORDER BY policy_type, start_date
+LIMIT 100;
 
 -- =============================================
+-- 3. Window Functions for Time Series Analysis
+-- =============================================
+
 -- Running Aggregates
--- =============================================
-
 SELECT 
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    payment_amount,
-    -- Running sum (cumulative total)
-    sum(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY toDate(uploaded_at)
-    ) AS running_total,
+    toDate(start_date) AS date,
+    policy_type,
+    premium_amount,
+    -- Running sum (cumulative premiums)
+    sum(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY toDate(start_date)
+    ) AS running_premium_total,
+    
     -- Daily total
-    sum(payment_amount) OVER (
-        PARTITION BY payment_currency, toDate(uploaded_at)
-    ) AS daily_total
-FROM attachments
-WHERE payment_status = 'paid' 
-  AND date(uploaded_at) BETWEEN '2023-01-01' AND '2023-08-07'
-ORDER BY payment_currency, date;
+    sum(premium_amount) OVER (
+        PARTITION BY policy_type, toDate(start_date)
+    ) AS daily_premium_total
+    
+FROM policies
+WHERE status = 'Active' 
+  AND start_date >= '2024-01-01' 
+ORDER BY policy_type, date
+LIMIT 100;
 
--- =============================================
 -- Moving Averages
--- =============================================
-
 SELECT 
-    toDate(uploaded_at) AS date,
-    payment_currency,
-    payment_amount,
-    -- 7-day moving average using ROWS
-    avg(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY toDate(uploaded_at)
+    toDate(start_date) AS date,
+    policy_type,
+    premium_amount,
+    -- 7-day moving average of premiums
+    avg(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY toDate(start_date)
         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
     ) AS moving_avg_7day,
-    -- Alternative moving average also using ROWS
-    avg(payment_amount) OVER (
-        PARTITION BY payment_currency 
-        ORDER BY toDate(uploaded_at)
+    
+    -- Alternative moving average calculation
+    avg(premium_amount) OVER (
+        PARTITION BY policy_type 
+        ORDER BY toDate(start_date)
         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
     ) AS moving_avg_7day_alt
-FROM attachments
-WHERE payment_status = 'paid' 
-  AND toDate(uploaded_at) >= '2023-01-01'
-  AND toDate(uploaded_at) <= '2023-08-07'
-ORDER BY payment_currency, date;
+
+FROM policies
+WHERE status = 'Active' 
+  AND toDate(start_date) >= '2024-01-01'
+  AND toDate(start_date) <= '2024-01-07'
+ORDER BY policy_type, date;
 
 -- =============================================
--- Payment Trend Analysis
+-- 4. Practical Window Function Examples for Insurance Analysis
 -- =============================================
 
+-- Policy Issuance Trend Analysis
 SELECT 
-    toDate(p.uploaded_at) AS date,
-    p.payment_currency,
-    count() AS payment_count,
-    sum(p.payment_amount) AS daily_total,
+    toDate(p.start_date) AS date,
+    p.policy_type,
+    count() AS policies_issued,
+    sum(p.premium_amount) AS daily_premium_total,
+    
     -- 7-day moving average of daily totals
-    avg(daily_total) OVER (
-        PARTITION BY p.payment_currency 
-        ORDER BY date
+    avg(sum(p.premium_amount)) OVER (
+        PARTITION BY p.policy_type 
+        ORDER BY toDate(p.start_date)
         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
     ) AS moving_avg_7day,
+    
     -- Month-to-date running total
-    sum(daily_total) OVER (
-        PARTITION BY p.payment_currency, toStartOfMonth(date)
-        ORDER BY date
+    sum(sum(p.premium_amount)) OVER (
+        PARTITION BY p.policy_type, toStartOfMonth(toDate(p.start_date))
+        ORDER BY toDate(p.start_date)
     ) AS month_to_date_total
-FROM attachments p
-WHERE payment_status = 'paid' 
-  AND toDate(uploaded_at) >= '2023-01-01'
-  AND toDate(uploaded_at) <= '2023-08-07'
+    
+FROM policies p
+WHERE status = 'Active' 
+  AND toDate(start_date) >= '2024-01-01'
+  AND toDate(start_date) <= '2024-01-31'
 GROUP BY 
-    date,
-    p.payment_currency
-ORDER BY p.payment_currency, date;
+    toDate(p.start_date),
+    p.policy_type
+ORDER BY p.policy_type, date;
 
--- =============================================
--- Sample Data for Window Functions
--- =============================================
-
--- Insert users
-INSERT INTO chat_payments.users 
-(user_id, username, email, company_id, created_at) 
-VALUES
-    (1001, 'john.doe', 'john@example.com', 101, now()),
-    (1002, 'jane.smith', 'jane@example.com', 102, now());
-
--- Insert messages
-
-INSERT INTO chat_payments.messages 
-(
-    message_id,
-    chat_id,
-    user_id,
-    sent_timestamp,
-    message_type,
-    content,
-    has_attachment,
-    sign
-)
-VALUES
-    ('11111111-1111-1111-1111-111111111111', 200, 1001, '2024-06-01 10:00:00', 'text', 'Hello, this is a sample message 1.', 1, 1),
-    ('22222222-2222-2222-2222-222222222222', 200, 1001, '2024-06-02 10:00:00', 'text', 'Hello, this is a sample message 2.', 1, 1),
-    ('33333333-3333-3333-3333-333333333333', 200, 1001, '2024-06-03 10:00:00', 'text', 'Hello, this is a sample message 3.', 1, 1),
-    ('44444444-4444-4444-4444-444444444444', 200, 1001, '2024-06-04 10:00:00', 'text', 'Hello, this is a sample message 4.', 1, 1),
-    ('55555555-5555-5555-5555-555555555555', 200, 1001, '2024-06-05 10:00:00', 'text', 'Hello, this is a sample message 5.', 1, 1);
-
--- Insert attachments
-INSERT INTO chat_payments.attachments (
-    attachment_id, message_id, payment_amount, payment_currency, invoice_date,
-    payment_status, file_path, file_size, uploaded_at, sign
-) VALUES
-    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 1250.00, 'USD', '2024-06-01', 'pending', '/storage/invoices/inv_12345.pdf', 128000, '2024-06-02 14:30:00', 1),
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 750.50, 'EUR', '2024-06-05', 'paid', '/storage/receipts/rec_75421.pdf', 98500, '2024-06-06 09:15:00', 1);
-
--- =============================================
--- User Payment Behavior Analysis
--- =============================================
-
+-- Customer Policy Pattern Analysis
 SELECT 
-    u.user_id,
-    u.username,
-    p.payment_amount,
-    p.uploaded_at,
-    -- Difference from user's average
-    p.payment_amount - avg(p.payment_amount) OVER (
-        PARTITION BY u.user_id
-    ) AS diff_from_user_avg,
-    -- Rank of payments per user
+    c.customer_id,
+    c.first_name,
+    c.last_name,
+    p.coverage_amount,
+    p.start_date,
+    -- Difference from customer's average
+    p.coverage_amount - avg(p.coverage_amount) OVER (
+        PARTITION BY c.customer_id
+    ) AS diff_from_customer_avg,
+    
+    -- Rank of policies per customer
     rank() OVER (
-        PARTITION BY u.user_id 
-        ORDER BY p.payment_amount DESC
-    ) AS payment_rank_for_user,
-    -- Days since previous payment using anyLast
+        PARTITION BY c.customer_id 
+        ORDER BY p.coverage_amount DESC
+    ) AS coverage_rank_for_customer,
+    
+    -- Days since previous policy
     dateDiff('day',
-        anyLast(p.uploaded_at) OVER (
-            PARTITION BY u.user_id 
-            ORDER BY p.uploaded_at
+        anyLast(p.start_date) OVER (
+            PARTITION BY c.customer_id 
+            ORDER BY p.start_date
             ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
         ),
-        p.uploaded_at
-    ) AS days_since_previous
-FROM attachments p
-JOIN messages m ON p.message_id = m.message_id
-JOIN users u ON m.user_id = u.user_id
-WHERE p.payment_status = 'paid' 
-  AND toDate(p.uploaded_at) >= '2023-01-01'
-ORDER BY u.user_id, p.uploaded_at;
+        p.start_date
+    ) AS days_since_previous_policy
+
+FROM policies p
+JOIN customers c ON p.customer_id = c.customer_id
+WHERE p.status = 'Active' 
+  AND toDate(p.start_date) >= '2024-01-01'
+ORDER BY c.customer_id, p.start_date
+LIMIT 100;
+
+-- =============================================
+-- 5. Advanced Window Function Patterns
+-- =============================================
+
+-- Claims Analysis with Window Functions
+SELECT 
+    c.claim_type,
+    c.reported_date,
+    c.claim_amount,
+    p.policy_type,
+    
+    -- Running total of claims by type
+    sum(c.claim_amount) OVER (
+        PARTITION BY c.claim_type
+        ORDER BY c.reported_date
+    ) AS running_claim_total,
+    
+    -- Rank claims within policy type
+    dense_rank() OVER (
+        PARTITION BY p.policy_type
+        ORDER BY c.claim_amount DESC
+    ) AS claim_rank_in_policy_type,
+    
+    -- Compare to average claim for this type
+    c.claim_amount - avg(c.claim_amount) OVER (
+        PARTITION BY c.claim_type
+    ) AS diff_from_type_avg,
+    
+    -- Days between claims for same policy
+    dateDiff('day',
+        anyLast(c.reported_date) OVER (
+            PARTITION BY c.policy_id
+            ORDER BY c.reported_date
+            ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING
+        ),
+        c.reported_date
+    ) AS days_since_last_claim
+
+FROM claims c
+JOIN policies p ON c.policy_id = p.policy_id
+WHERE c.claim_status IN ('Approved', 'Paid')
+ORDER BY c.claim_type, c.reported_date
+LIMIT 100;
+
+-- Agent Performance Ranking
+SELECT 
+    a.agent_id,
+    a.first_name,
+    a.last_name,
+    a.territory,
+    count(p.policy_id) AS policies_sold,
+    sum(p.premium_amount) AS total_premiums,
+    
+    -- Rank agents by premium volume
+    rank() OVER (
+        ORDER BY sum(p.premium_amount) DESC
+    ) AS premium_rank,
+    
+    -- Rank within territory
+    rank() OVER (
+        PARTITION BY a.territory
+        ORDER BY sum(p.premium_amount) DESC
+    ) AS territory_rank,
+    
+    -- Running total of premiums by territory
+    sum(sum(p.premium_amount)) OVER (
+        PARTITION BY a.territory
+        ORDER BY sum(p.premium_amount) DESC
+        ROWS UNBOUNDED PRECEDING
+    ) AS territory_running_total,
+    
+    -- Percentage of territory total
+    round(sum(p.premium_amount) / sum(sum(p.premium_amount)) OVER (
+        PARTITION BY a.territory
+    ) * 100, 2) AS territory_percentage
+
+FROM agents a
+LEFT JOIN policies p ON a.agent_id = p.agent_id AND p.status = 'Active'
+WHERE p.policy_id IS NOT NULL
+GROUP BY a.agent_id, a.first_name, a.last_name, a.territory
+ORDER BY premium_rank;
 
 

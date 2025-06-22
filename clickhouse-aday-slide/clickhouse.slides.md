@@ -1579,47 +1579,72 @@ layout: two-cols
 
 # ReplacingMergeTree
 
-<div class="text-sm">
+<div class="text-sm" style="height:400px;overflow-y:auto;">
 
 ## Use Case
 Life insurance policy master data with version control for policy updates.
 
 ```sql
-CREATE TABLE policy_master (
+CREATE TABLE policies
+(
     policy_id UUID,
     customer_id UInt64,
+    agent_id UInt32,
+    policy_type Enum8('Term Life' = 1, 'Whole Life' = 2, 'Universal Life' = 3, 'Variable Life' = 4, 'Endowment' = 5),
     policy_number String,
-    coverage_amount Decimal(15,2),
-    premium_amount Decimal(10,2),
-    policy_status Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3),
-    last_updated DateTime,
-    version UInt32
-) ENGINE = ReplacingMergeTree(version)
-PRIMARY KEY policy_id;
+    coverage_amount Decimal64(2),
+    premium_amount Decimal64(2),
+    deductible_amount Decimal64(2),
+    start_date Date,
+    end_date Date,
+    status Enum8('Active' = 1, 'Lapsed' = 2, 'Terminated' = 3, 'Matured' = 4, 'Pending' = 5),
+    created_at DateTime DEFAULT now(),
+    version UInt32 DEFAULT 1
+)
+ENGINE = ReplacingMergeTree(version)
+PARTITION BY (toYYYYMM(start_date), policy_type)
+ORDER BY (policy_id, customer_id, start_date);
 ```
 
 </div>
 
 ::right::
 
-<div class="text-sm">
+<div class="text-sm" style="height:500px;overflow-y:auto;">
 
 ## Example Operations
 ```sql
 -- Insert initial policy
-INSERT INTO policy_master VALUES
+INSERT INTO policies (policy_id, customer_id, agent_id, policy_type, policy_number, coverage_amount, premium_amount, deductible_amount, start_date, end_date, status, created_at, updated_at, version) VALUES
 ('550e8400-e29b-41d4-a716-446655440000', 
- 1001, 'LIFE-2024-001', 500000.00, 1200.00, 
- 'Active', '2024-01-01 10:00:00', 1);
+ 1001, 101, 'Term Life', 'LIFE-2024-001', 500000.00, 1200.00, 0.00, 
+ '2024-01-01', '2044-01-01', 'Active', '2024-01-01 10:00:00', '2024-01-01 10:00:00', 1);
 
 -- Update premium after underwriting review
-INSERT INTO policy_master VALUES
+INSERT INTO policies (policy_id, customer_id, agent_id, policy_type, policy_number, coverage_amount, premium_amount, deductible_amount, start_date, end_date, status, created_at, updated_at, version) VALUES
 ('550e8400-e29b-41d4-a716-446655440000', 
- 1001, 'LIFE-2024-001', 500000.00, 1350.00, 
- 'Active', '2024-01-15 14:30:00', 2);
+ 1001, 101, 'Term Life', 'LIFE-2024-001', 500000.00, 1350.00, 0.00, 
+ '2024-01-01', '2044-01-01', 'Active', '2024-01-01 10:00:00', '2024-01-15 14:30:00', 2);
+
+-- Update coverage amount after policy amendment
+INSERT INTO policies (policy_id, customer_id, agent_id, policy_type, policy_number, coverage_amount, premium_amount, deductible_amount, start_date, end_date, status, created_at, updated_at, version) VALUES
+('550e8400-e29b-41d4-a716-446655440000', 
+ 1001, 101, 'Term Life', 'LIFE-2024-001', 750000.00, 1800.00, 0.00, 
+ '2024-01-01', '2044-01-01', 'Active', '2024-01-01 10:00:00', '2024-02-01 09:15:00', 3);
+
+-- Query all versions (before optimization)
+SELECT policy_id, coverage_amount, premium_amount, updated_at, version 
+FROM policies 
+WHERE policy_id = '550e8400-e29b-41d4-a716-446655440000'
+ORDER BY version;
+
+-- Query latest version only
+SELECT policy_id, coverage_amount, premium_amount, updated_at, version 
+FROM policies FINAL
+WHERE policy_id = '550e8400-e29b-41d4-a716-446655440000';
 
 -- After optimization, only latest version remains
-OPTIMIZE TABLE policy_master FINAL;
+OPTIMIZE TABLE policies FINAL;
 ```
 
 </div>
@@ -2152,20 +2177,14 @@ INSERT INTO table_name
 VALUES (value1, value2, ...);
 
 -- Insert into policies table
-INSERT INTO life_insurance.policies 
-(policy_id, customer_id, agent_id, policy_number, 
- policy_type, coverage_amount, premium_amount, 
- policy_status, effective_date, sign)
-VALUES 
-(generateUUIDv4(), 1001, 201, 'LIFE-2024-001', 
- 'Term', 500000.00, 1200.00, 'Active', '2024-01-01', 1);
+INSERT INTO life_insurance.policies VALUES
+    (generateUUIDv4(), 1001, 201, 'Term Life', 'LIFE-2025-001', 500000.00, 1200.00, 0.00, today(), today() + INTERVAL 20 YEAR, 'Active', now(), now(), 1);
 
 -- Insert multiple policies
 INSERT INTO life_insurance.policies VALUES
-    (generateUUIDv4(), 1002, 201, 'LIFE-2024-002', 'Whole', 250000.00, 2400.00, 'Active', '2024-01-15', 1),
-    (generateUUIDv4(), 1003, 202, 'LIFE-2024-003', 'Universal', 750000.00, 3600.00, 'Active', '2024-02-01', 1),
-    (generateUUIDv4(), 1004, 203, 'LIFE-2024-004', 'Term', 1000000.00, 4800.00, 'Active', '2024-02-15', 1),
-    (generateUUIDv4(), 1005, 201, 'LIFE-2024-005', 'Variable', 300000.00, 1800.00, 'Active', '2024-03-01', 1);
+    (generateUUIDv4(), 1002, 201, 'Whole Life', 'LIFE-2025-002', 250000.00, 2400.00, 0.00, today(), today() + INTERVAL 20 YEAR, 'Active', now(), now(), 1),
+    (generateUUIDv4(), 1003, 202, 'Universal Life', 'LIFE-2025-003', 750000.00, 3600.00, 0.00, today(), today() + INTERVAL 20 YEAR, 'Active', now(), now(), 1),
+    (generateUUIDv4(), 1004, 203, 'Term Life', 'LIFE-2025-004', 1000000.00, 4800.00, 0.00, today(), today() + INTERVAL 20 YEAR, 'Active', now(), now(), 1);
 ```
 
 ::right::
@@ -2203,13 +2222,13 @@ layout: default
 
 ```sql{all|1-11|13-22|all}
 -- Insert multiple claim records
-INSERT INTO life_insurance.claims VALUES
-(generateUUIDv4(), '550e8400-e29b-41d4-a716-446655440000', 1001, 500000.00, 'Death', 
- 'Submitted', '2024-03-15', '2024-03-20 09:30:00', NULL, 1),
-(generateUUIDv4(), '660e8400-e29b-41d4-a716-446655440001', 1002, 25000.00, 'Disability', 
- 'Processing', '2024-02-10', '2024-02-15 14:20:00', '2024-02-20 11:45:00', 1),
-(generateUUIDv4(), '770e8400-e29b-41d4-a716-446655440002', 1003, 75000.00, 'Surrender', 
- 'Approved', '2024-01-25', '2024-01-30 16:10:00', '2024-02-05 10:30:00', 1);
+INSERT INTO claims VALUES
+    (generateUUIDv4(), generateUUIDv4(), 1001, 'Death', 'CLM-2025-001', toDate('2025-04-01'), parseDateTimeBestEffort('2025-04-01 10:00:00'), 500000, 500000, 'Paid', 'Death benefit claim', 301, 1),
+    (generateUUIDv4(), generateUUIDv4(), 1002, 'Disability', 'CLM-2025-002', toDate('2025-04-02'), parseDateTimeBestEffort('2025-04-02 10:00:00'), 60000, 60000, 'Paid', 'Disability insurance claim', 302, 1),
+    (generateUUIDv4(), generateUUIDv4(), 1003, 'Surrender', 'CLM-2025-003', toDate('2025-04-03'), parseDateTimeBestEffort('2025-04-03 10:00:00'), 75000, 75000, 'Under Review', 'Policy surrender request', 303, 1),
+    (generateUUIDv4(), generateUUIDv4(), 1004, 'Disability', 'CLM-2025-004', toDate('2025-04-04'), parseDateTimeBestEffort('2025-04-04 10:00:00'), 80000, 80000, 'Paid', 'Partial disability claim', 304, 1),
+    (generateUUIDv4(), generateUUIDv4(), 1005, 'Death', 'CLM-2025-005', toDate('2025-04-05'), parseDateTimeBestEffort('2025-04-05 10:00:00'), 90000, 90000, 'Paid', 'Life insurance death claim', 305, 1),
+    (generateUUIDv4(), generateUUIDv4(), 1006, 'Maturity', 'CLM-2025-006', toDate('2025-04-06'), parseDateTimeBestEffort('2025-04-06 10:00:00'), 100000, 0, 'Denied', 'Policy maturity claim - denied', 306, 1);
 ```
 
 <div class="mt-4 grid grid-cols-2 gap-4" >
@@ -2262,12 +2281,12 @@ LIMIT 5;
 SELECT 
     policy_id,
     customer_id,
-    policy_number,
+    agent_id,
     policy_type,
-    coverage_amount,
-    premium_amount
+    start_date
 FROM policies
 LIMIT 10;
+
 ```
 
 </div>
@@ -2318,10 +2337,15 @@ layout: default
 ```sql{all|1-6|8-13|15-21|all}
 -- Get all active policies
 SELECT 
-    policy_id, customer_id, policy_number, 
-    coverage_amount, premium_amount
+    policy_id, 
+    customer_id, 
+    policy_number,
+    policy_type,
+    coverage_amount,
+    premium_amount
 FROM policies
-WHERE policy_status = 'Active';
+WHERE status = 'Active';
+
 
 -- Find high-value policies
 SELECT 
@@ -2393,7 +2417,7 @@ layout: default
 
 ```sql{all|2|3|4|6-14|all}
 SELECT * FROM policies 
-WHERE policy_status = 'Active'
+WHERE status = 'Active'
   AND coverage_amount > 500000
   AND effective_date >= '2024-01-01'
   LIMIT 100;
@@ -2406,8 +2430,8 @@ SELECT
     premium_amount,
     effective_date
 FROM policies
-WHERE toYYYYMM(effective_date) = 202401
-  AND policy_type = 'Term'
+WHERE toYYYYMM(effective_date) = 202506
+  AND policy_type = 'Term Life'
   LIMIT 100;
 ```
 
@@ -2429,7 +2453,7 @@ OR policy_number LIKE 'TERM-%';
 -- Using functions in filters
 SELECT * FROM claims
 WHERE formatDateTime(reported_date, '%Y-%m-%d') = '2024-02-15' 
-AND (claim_status = 'Processing' 
+AND (claim_status = 'Under Review' 
 OR claim_status = 'Approved') 
 LIMIT 100;
 ```
@@ -2460,7 +2484,7 @@ layout: two-cols
 -- Finding large claims
 SELECT * FROM claims
 WHERE claim_amount > 100000
-  AND claim_status = 'Submitted'
+  AND claim_status = 'Reported'
 ORDER BY claim_amount DESC LIMIT 100;
 
 -- Time-based filtering with policy context
@@ -2523,7 +2547,7 @@ layout: default
 ```sql{all|4|8-12|all}
 -- Simple sorting
 SELECT * FROM policies
-WHERE policy_status = 'Active'
+WHERE status = 'Active'
 ORDER BY coverage_amount DESC
 LIMIT 10;
 
@@ -2551,7 +2575,7 @@ SELECT
     policy_id,
     coverage_amount,
     premium_amount,
-    policy_status
+    status
 FROM policies
 ORDER BY coverage_amount DESC;
 ```
@@ -2589,7 +2613,7 @@ SELECT
     customer_id,
     effective_date
 FROM policies
-WHERE policy_type = 'Term'
+WHERE policy_type = 'Whole Life'
 ORDER BY effective_date DESC
 LIMIT 100;
 ```
@@ -2661,7 +2685,6 @@ SELECT
     sum(coverage_amount) AS total_coverage,
     avg(premium_amount) AS average_premium
 FROM policies;
-
 -- Min, max, statistics
 SELECT
     min(coverage_amount) AS min_coverage,
@@ -2669,8 +2692,7 @@ SELECT
     stddevPop(premium_amount) AS premium_std_dev,
     median(coverage_amount) AS median_coverage
 FROM policies
-WHERE policy_status = 'Active';
-
+WHERE status = 'Active';
 -- Group by with multiple aggregates
 SELECT
     policy_type,
@@ -2720,7 +2742,7 @@ layout: default
 ```sql{all|2-5|7-15|all}
 -- Policy status distribution
 SELECT 
-    policy_status,
+    status as policy_status,
     count() AS count
 FROM policies
 GROUP BY policy_status;
@@ -2827,7 +2849,7 @@ SELECT
          ORDER BY toDate(effective_date) 
          ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_premium
 FROM policies
-WHERE policy_status = 'Active'
+WHERE status = 'Active'
 ORDER BY policy_type, date;
 ```
 
@@ -2869,7 +2891,7 @@ ORDER BY
 -- Using HAVING to filter groups
 SELECT 
     policy_type,
-    policy_status,
+    status as policy_status,
     count() AS count,
     sum(coverage_amount) AS total_coverage
 FROM policies
@@ -3000,7 +3022,7 @@ SELECT
     p.effective_date
 FROM policies p
 WHERE p.coverage_amount > 1000000
-  AND p.policy_status = 'Active'
+  AND p.status = 'Active'
 ORDER BY p.coverage_amount DESC;
 ```
 
@@ -3062,8 +3084,7 @@ LIMIT 10;
 </div>
 
 ---
-layout: center
-class: text-center
+layout: default
 ---
 <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
 <SlideCurrentNo /> / <SlidesTotal />
@@ -3317,13 +3338,13 @@ USING (policy_id);
 
 ## JOIN with Complex Conditions
 ```sql{all|4-6|all}
+
 -- Matching claims within policy coverage period
 SELECT p.policy_id, p.effective_date, p.policy_number, c.claim_amount, c.incident_date
 FROM policies p
 JOIN claims c
 ON c.policy_id = p.policy_id
-   AND c.incident_date >= p.effective_date
-   AND c.incident_date <= COALESCE(p.termination_date, today());
+   AND c.incident_date >= p.effective_date;
 ```
 
 ## ARRAY JOIN
@@ -3368,7 +3389,7 @@ FROM policies p
 JOIN agents a 
     ON p.agent_id = a.agent_id
     
-WHERE p.policy_status = 'Active'
+WHERE p.status = 'Active'
 GROUP BY month, a.agent_id, a.first_name, a.last_name
 ORDER BY month DESC, total_premiums DESC;
 ```
@@ -3456,7 +3477,7 @@ SELECT
     avg(premium_amount) OVER () AS overall_avg_premium
     
 FROM life_insurance.policies
-WHERE policy_status = 'Active'
+WHERE status = 'Active'
   AND date(effective_date) = '2024-04-15'
 ORDER BY policy_type, effective_date;
 ```
@@ -3516,7 +3537,7 @@ SELECT
     ) AS percentile
     
 FROM policies
-WHERE policy_status = 'Active' 
+WHERE status = 'Active' 
   AND date(effective_date) = '2024-04-15';
 ```
 
@@ -3549,7 +3570,7 @@ SELECT
     ) AS next_premium
     
 FROM policies
-WHERE policy_status = 'Active' 
+WHERE status = 'Active' 
   AND date(effective_date) = '2024-04-15'
 ORDER BY policy_type, effective_date;
 ```
@@ -3591,7 +3612,7 @@ SELECT
     ) AS daily_premium_total
     
 FROM policies
-WHERE policy_status = 'Active' 
+WHERE status = 'Active' 
   AND date(effective_date) = '2024-01-01' 
 ORDER BY policy_type, date;
 ```
@@ -3620,7 +3641,7 @@ SELECT
     ) AS moving_avg_7day_alt
 
 FROM policies
-WHERE policy_status = 'Active' 
+WHERE status = 'Active' 
   AND toDate(effective_date) >= '2024-01-01'
   AND toDate(effective_date) <= '2024-01-07'
 ORDER BY policy_type, date;
@@ -3636,10 +3657,6 @@ ORDER BY policy_type, date;
 ---
 layout: default
 ---
-
-<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
-<SlideCurrentNo /> / <SlidesTotal />
-</div>
 
 # Practical Window Function Examples for Insurance Analysis
 
@@ -3668,7 +3685,7 @@ SELECT
     ) AS month_to_date_total
     
 FROM policies p
-WHERE policy_status = 'Active' 
+WHERE status = 'Active' 
   AND toDate(effective_date) >= '2024-01-01'
   AND toDate(effective_date) <= '2024-01-07'
 GROUP BY 
@@ -3711,7 +3728,7 @@ SELECT
 
 FROM policies p
 JOIN customers c ON p.customer_id = c.customer_id
-WHERE p.policy_status = 'Active' 
+WHERE p.status = 'Active' 
   AND toDate(p.effective_date) >= '2024-01-01'
 ORDER BY c.customer_id, p.effective_date;
 ```
@@ -3854,7 +3871,7 @@ FROM claims
 WHERE claim_amount > ANY (
     SELECT premium_amount
     FROM policies
-    WHERE policy_type = 'Term'
+    WHERE policy_type = 'Universal Life'
 ) LIMIT 100;
 ```
 
@@ -3899,7 +3916,7 @@ FROM (
         ) AS type_rank
     FROM policies p
     JOIN customers c ON p.customer_id = c.customer_id
-    WHERE p.policy_status = 'Active'
+    WHERE p.status = 'Active'
     GROUP BY p.policy_type, c.customer_id, c.first_name, c.last_name
 ) AS type_ranking
 WHERE type_ranking.type_rank <= 3
@@ -4167,36 +4184,34 @@ WITH customer_first_policy AS (
     SELECT 
         customer_id,
         min(toStartOfMonth(p.effective_date)) AS first_policy_month
-    FROM messages m
-    JOIN attachments p ON m.message_id = p.message_id
-    WHERE p.payment_status = 'paid'
-    GROUP BY m.user_id
+    FROM policies p
+    WHERE p.status = 'Active'
+    GROUP BY p.customer_id
 ),
 
--- Step 2: Get all payments with cohort info
-user_payments_by_month AS (
+-- Step 2: Get all policies with cohort info
+customer_policies_by_month AS (
     SELECT 
-        ufp.first_payment_month AS cohort,
-        toStartOfMonth(p.uploaded_at) AS payment_month,
-        count(DISTINCT m.user_id) AS user_count,
-        sum(p.payment_amount) AS total_amount
-    FROM attachments p
-    JOIN messages m ON p.message_id = m.message_id
-    JOIN user_first_payment ufp ON m.user_id = ufp.user_id
-    WHERE p.payment_status = 'paid'
-    GROUP BY cohort, payment_month
+        cfp.first_policy_month AS cohort,
+        toStartOfMonth(p.effective_date) AS policy_month,
+        count(DISTINCT p.customer_id) AS customer_count,
+        sum(p.coverage_amount) AS total_coverage
+    FROM policies p
+    JOIN customer_first_policy cfp ON p.customer_id = cfp.customer_id
+    WHERE p.status = 'Active'
+    GROUP BY cohort, policy_month
 )
 
 -- Step 3: Calculate month number from cohort start
 SELECT 
     cohort,
-    payment_month,
-    dateDiff('month', cohort, payment_month) AS month_number,
-    user_count,
-    total_amount,
-    total_amount / user_count AS avg_payment_per_user
-FROM user_payments_by_month
-ORDER BY cohort, payment_month;
+    policy_month,
+    dateDiff('month', cohort, policy_month) AS month_number,
+    customer_count,
+    total_coverage,
+    total_coverage / customer_count AS avg_coverage_per_customer
+FROM customer_policies_by_month
+ORDER BY cohort, policy_month;
 ```
 
 </div>

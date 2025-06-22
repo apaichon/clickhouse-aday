@@ -4,74 +4,74 @@
 
 -- 1. Count, sum, average
 SELECT
-    count() AS total_payments,
-    sum(payment_amount) AS total_amount,
-    avg(payment_amount) AS average_amount
-FROM attachments;
+    count() AS total_claims,
+    sum(claim_amount) AS total_amount,
+    avg(claim_amount) AS average_amount
+FROM claims;
 
--- 2. Min, max, statistics for paid payments
+-- 2. Min, max, statistics for paid claims
 SELECT
-    min(payment_amount) AS min_amount,
-    max(payment_amount) AS max_amount,
-    stddevPop(payment_amount) AS std_deviation,
-    median(payment_amount) AS median_amount
-FROM attachments
-WHERE payment_status = 'paid';
+    min(claim_amount) AS min_amount,
+    max(claim_amount) AS max_amount,
+    stddevPop(claim_amount) AS std_deviation,
+    median(claim_amount) AS median_amount
+FROM claims
+WHERE claim_status = 'Paid';
 
--- 3. Group by currency with multiple aggregates
+-- 3. Group by claim type with multiple aggregates
 SELECT
-    payment_currency,
-    count() AS num_payments,
-    sum(payment_amount) AS total,
-    avg(payment_amount) AS average,
-    min(payment_amount) AS minimum,
-    max(payment_amount) AS maximum
-FROM attachments
-GROUP BY payment_currency;
+    claim_type,
+    count() AS num_claims,
+    sum(claim_amount) AS total,
+    avg(claim_amount) AS average,
+    min(claim_amount) AS minimum,
+    max(claim_amount) AS maximum
+FROM claims
+GROUP BY claim_type;
 
 -- =============================================
--- Advanced Aggregations for Payments Analysis
+-- Advanced Aggregations for Insurance Analysis
 -- =============================================
 
--- 4. Payment status distribution
+-- 4. Claim status distribution
 SELECT 
-    payment_status,
+    claim_status,
     count() AS count
-FROM attachments
-GROUP BY payment_status;
+FROM claims
+GROUP BY claim_status;
 
--- 5. Monthly payment totals
+-- 5. Monthly policy issuance
 SELECT 
-    toYear(uploaded_at) AS year,
-    toMonth(uploaded_at) AS month,
-    payment_currency,
-    count() AS payment_count,
-    sum(payment_amount) AS monthly_total,
-    round(avg(payment_amount), 2) AS avg_payment
-FROM attachments
-GROUP BY year, month, payment_currency
-ORDER BY year, month, payment_currency;
+    toYear(effective_date) AS year,
+    toMonth(effective_date) AS month,
+    policy_type,
+    count() AS policy_count,
+    sum(coverage_amount) AS monthly_coverage,
+    round(avg(premium_amount), 2) AS avg_premium
+FROM policies
+GROUP BY year, month, policy_type
+ORDER BY year, month, policy_type;
 
--- 6. Payments by user
+-- 6. Claims by customer
 SELECT 
-    m.user_id,
-    count() AS payment_count,
-    sum(p.payment_amount) AS total_spent,
-    avg(p.payment_amount) AS avg_payment
-FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-GROUP BY m.user_id
-ORDER BY total_spent DESC;
+    c.customer_id,
+    count() AS claim_count,
+    sum(c.claim_amount) AS total_claims,
+    avg(c.claim_amount) AS avg_claim
+FROM claims c
+JOIN policies p ON c.policy_id = p.policy_id
+GROUP BY c.customer_id
+ORDER BY total_claims DESC;
 
--- 7. Payment size categories
+-- 7. Coverage amount categories
 SELECT
-    multiIf(payment_amount < 100, 'Small',
-            payment_amount < 500, 'Medium',
-            payment_amount < 1000, 'Large',
-            'Very Large') AS payment_category,
+    multiIf(coverage_amount < 100000, 'Small',
+            coverage_amount < 500000, 'Medium',
+            coverage_amount < 1000000, 'Large',
+            'Very Large') AS coverage_category,
     count() AS count
-FROM attachments
-GROUP BY payment_category;
+FROM policies
+GROUP BY coverage_category;
 
 -- =============================================
 -- Time-based Aggregations
@@ -79,30 +79,30 @@ GROUP BY payment_category;
 
 -- 8. Count, sum, average (repeated for time-based context)
 SELECT
-    count() AS total_payments,
-    sum(payment_amount) AS total_amount,
-    avg(payment_amount) AS average_amount
-FROM attachments;
+    count() AS total_claims,
+    sum(claim_amount) AS total_amount,
+    avg(claim_amount) AS average_amount
+FROM claims;
 
--- 9. Min, max, statistics for paid payments (repeated)
+-- 9. Min, max, statistics for paid claims (repeated)
 SELECT
-    min(payment_amount) AS min_amount,
-    max(payment_amount) AS max_amount,
-    stddevPop(payment_amount) AS std_deviation,
-    median(payment_amount) AS median_amount
-FROM attachments
-WHERE payment_status = 'paid';
+    min(claim_amount) AS min_amount,
+    max(claim_amount) AS max_amount,
+    stddevPop(claim_amount) AS std_deviation,
+    median(claim_amount) AS median_amount
+FROM claims
+WHERE claim_status = 'Paid';
 
--- 10. Group by currency with multiple aggregates (repeated)
+-- 10. Group by claim type with multiple aggregates (repeated)
 SELECT
-    payment_currency,
-    count() AS num_payments,
-    sum(payment_amount) AS total,
-    avg(payment_amount) AS average,
-    min(payment_amount) AS minimum,
-    max(payment_amount) AS maximum
-FROM attachments
-GROUP BY payment_currency;
+    claim_type,
+    count() AS num_claims,
+    sum(claim_amount) AS total,
+    avg(claim_amount) AS average,
+    min(claim_amount) AS minimum,
+    max(claim_amount) AS maximum
+FROM claims
+GROUP BY claim_type;
 
 -- =============================================
 -- Hierarchical and Conditional Aggregations
@@ -110,72 +110,30 @@ GROUP BY payment_currency;
 
 -- 11. ROLLUP for hierarchical summaries
 SELECT 
-    payment_currency,
-        toYear(uploaded_at) AS year,
-        sum(payment_amount) AS total
-    FROM attachments
-    GROUP BY payment_currency, year
-    WITH ROLLUP
-    ORDER BY 
-        IF(payment_currency = '', 1, 0),
-        payment_currency ,
-        IF(year = 0, 1, 0),
-        year;
-
-       
+    claim_type,
+    toYear(reported_date) AS year,
+    sum(claim_amount) AS total
+FROM claims
+GROUP BY claim_type, year
+WITH ROLLUP
+ORDER BY 
+    IF(claim_type = '', 1, 0),
+    claim_type,
+    IF(year = 0, 1, 0),
+    year;
 
 -- 12. Aggregation with HAVING clause
 SELECT 
-    payment_currency,
-    payment_status,
+    claim_type,
+    claim_status,
     count() AS count,
-    sum(payment_amount) AS total
-FROM attachments
-GROUP BY payment_currency, payment_status
- HAVING count > 100 
-    AND total > 10000
+    sum(claim_amount) AS total
+FROM claims
+GROUP BY claim_type, claim_status
+HAVING count > 10 
+   AND total > 100000
 ORDER BY 
-    payment_currency, 
-    payment_status;
+    claim_type, 
+    claim_status;
 
-
--- Sample data for attachments table
-INSERT INTO attachments VALUES
-    (generateUUIDv4(), generateUUIDv4(), 5000, 'USD', '2023-04-01', 'paid', '/storage/inv1.pdf', 100000, '2023-04-01 10:00:00', 1),
-    (generateUUIDv4(), generateUUIDv4(), 6000, 'USD', '2023-04-02', 'paid', '/storage/inv2.pdf', 100000, '2023-04-02 10:00:00', 1),
-    (generateUUIDv4(), generateUUIDv4(), 7000, 'USD', '2023-04-03', 'pending', '/storage/inv3.pdf', 100000, '2023-04-03 10:00:00', 1),
-    (generateUUIDv4(), generateUUIDv4(), 8000, 'EUR', '2023-04-04', 'paid', '/storage/inv4.pdf', 100000, '2023-04-04 10:00:00', 1),
-    (generateUUIDv4(), generateUUIDv4(), 9000, 'EUR', '2023-04-05', 'paid', '/storage/inv5.pdf', 100000, '2023-04-05 10:00:00', 1),
-    (generateUUIDv4(), generateUUIDv4(), 10000, 'USD', '2023-04-06', 'canceled', '/storage/inv6.pdf', 100000, '2023-04-06 10:00:00', 1);
-
--- To ensure the HAVING clause is satisfied, insert many rows for a group:
--- For example, insert 10,000 rows of 'USD'/'paid' with payment_amount=2
-INSERT INTO attachments
-SELECT
-    generateUUIDv4(),
-    generateUUIDv4(),
-    2,                -- payment_amount
-    'USD',            -- payment_currency
-    '2023-04-10',     -- invoice_date
-    'paid',           -- payment_status
-    '/storage/bulk.pdf',
-    100000,
-    '2023-04-10 10:00:00',
-    1
-FROM numbers(10000);
-
--- And another group to cross the threshold
-INSERT INTO attachments
-SELECT
-    generateUUIDv4(),
-    generateUUIDv4(),
-    5,                -- payment_amount
-    'EUR',            -- payment_currency
-    '2023-04-11',     -- invoice_date
-    'paid',           -- payment_status
-    '/storage/bulk2.pdf',
-    100000,
-    '2023-04-11 10:00:00',
-    1
-FROM numbers(10000);
 

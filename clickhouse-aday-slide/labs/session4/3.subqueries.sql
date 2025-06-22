@@ -1,141 +1,253 @@
 -- =============================================
--- Subquery Basics
+-- ClickHouse Session 4: Advanced Querying - Subqueries
+-- Life Insurance Management System
 -- =============================================
 
--- Subquery in WHERE clause: Payments above average
+USE life_insurance;
+
+-- =============================================
+-- 1. Subquery Basics
+-- =============================================
+
+-- Subquery in WHERE clause
 SELECT *
-FROM attachments
-WHERE payment_amount > (
-    SELECT avg(payment_amount) FROM attachments
-)
+FROM policies
+WHERE coverage_amount > (
+    SELECT avg(coverage_amount) FROM policies
+) 
 LIMIT 100;
 
--- Subquery in FROM clause: Average by currency
-SELECT currency, avg_amount
+-- Subquery in FROM clause
+SELECT policy_type, avg_coverage
 FROM (
-    SELECT payment_currency AS currency, avg(payment_amount) AS avg_amount
-    FROM attachments
-    GROUP BY payment_currency
-) AS currency_avgs;
+    SELECT policy_type, avg(coverage_amount) AS avg_coverage
+    FROM policies
+    GROUP BY policy_type
+) AS type_averages;
 
--- Subquery in SELECT clause: Relative to average
+-- Subquery in SELECT clause
 SELECT 
-    payment_currency,
-    payment_amount,
-    payment_amount / (SELECT avg(payment_amount) FROM attachments) AS relative_to_avg
-FROM attachments
+    policy_type,
+    coverage_amount,
+    coverage_amount / (SELECT avg(coverage_amount) FROM policies) AS relative_to_avg
+FROM policies 
 LIMIT 100;
 
 -- =============================================
--- Correlated Subqueries
+-- 2. Advanced Subquery Techniques
 -- =============================================
 
--- Find payments above average for their currency
+-- Correlated Subqueries (rewritten as JOIN for ClickHouse optimization)
+-- Find policies above average for their type
 SELECT 
-    p1.payment_currency,
-    p1.payment_amount
-FROM attachments p1
+    p1.policy_type,
+    p1.coverage_amount
+FROM policies p1
 JOIN (
     SELECT 
-        payment_currency,
-        avg(payment_amount) as avg_amount
-    FROM attachments 
-    GROUP BY payment_currency
-) p2 ON p1.payment_currency = p2.payment_currency
-WHERE p1.payment_amount > p2.avg_amount
-ORDER BY p1.payment_currency, p1.payment_amount DESC
+        policy_type,
+        avg(coverage_amount) as avg_coverage
+    FROM policies 
+    GROUP BY policy_type
+) p2 ON p1.policy_type = p2.policy_type
+WHERE p1.coverage_amount > p2.avg_coverage
+ORDER BY p1.policy_type, p1.coverage_amount DESC
 LIMIT 100;
 
--- =============================================
--- Subqueries with EXISTS / IN
--- =============================================
-
--- Find users who have made payments
+-- Subqueries with EXISTS (rewritten as JOIN)
+-- Find customers who have filed claims
 SELECT DISTINCT
-    u.user_id,
-    u.username
-FROM users u
-JOIN messages m ON m.user_id = u.user_id
-JOIN attachments p ON m.message_id = p.message_id
-ORDER BY u.user_id;
+    c.customer_id,
+    c.first_name,
+    c.last_name
+FROM customers c
+JOIN policies p ON p.customer_id = c.customer_id
+JOIN claims cl ON p.policy_id = cl.policy_id
+ORDER BY c.customer_id;
 
--- Find messages with paid attachments over 1000
+-- Subqueries with IN
+-- Find policies with approved claims
 SELECT 
-    message_id,
-    content
-FROM messages
-WHERE message_id IN (
-    SELECT message_id
-    FROM attachments
-    WHERE payment_status = 'paid'
-    AND payment_amount > 1000
+    policy_id,
+    policy_number,
+    coverage_amount
+FROM policies
+WHERE policy_id IN (
+    SELECT policy_id
+    FROM claims
+    WHERE claim_status = 'Approved'
+    AND claim_amount > 50000
 );
 
--- =============================================
--- Data Preparation for Subquery Examples
--- =============================================
-
--- Insert messages with proper UUIDs
-INSERT INTO chat_payments.messages 
-(message_id, chat_id, user_id, sent_timestamp, message_type, content, sign) 
-VALUES
-    ('550e8400-e29b-41d4-a716-446655440001', 201, 1001, now(), 'invoice', 'Large Invoice #1 - $1500', 1),
-    ('550e8400-e29b-41d4-a716-446655440002', 201, 1001, now(), 'invoice', 'Small Invoice #2 - $500', 1),
-    ('550e8400-e29b-41d4-a716-446655440003', 202, 1002, now(), 'invoice', 'Large Invoice #3 - $2000', 1),
-    ('550e8400-e29b-41d4-a716-446655440004', 202, 1002, now(), 'invoice', 'Large Invoice #4 - $3000', 1),
-    ('550e8400-e29b-41d4-a716-446655440005', 203, 1003, now(), 'invoice', 'Large Invoice #5 - $2500', 1);
-
--- Insert corresponding attachments with matching UUIDs
-INSERT INTO chat_payments.attachments 
-(attachment_id, message_id, payment_amount, payment_currency, payment_status, uploaded_at, sign) 
-VALUES
-    (generateUUIDv4(), '550e8400-e29b-41d4-a716-446655440001', 1500.00, 'USD', 'paid', now(), 1),
-    (generateUUIDv4(), '550e8400-e29b-41d4-a716-446655440002', 500.00, 'USD', 'paid', now(), 1),
-    (generateUUIDv4(), '550e8400-e29b-41d4-a716-446655440003', 2000.00, 'USD', 'paid', now(), 1),
-    (generateUUIDv4(), '550e8400-e29b-41d4-a716-446655440004', 3000.00, 'USD', 'pending', now(), 1),
-    (generateUUIDv4(), '550e8400-e29b-41d4-a716-446655440005', 2500.00, 'USD', 'paid', now(), 1);
-
--- =============================================
 -- Subqueries with ANY/ALL
--- =============================================
-
--- Find payments greater than ANY USD payment
+-- Find claims greater than ANY Universal Life policy premium
 SELECT 
-    payment_currency,
-    payment_amount
-FROM attachments
-WHERE payment_amount > ANY (
-    SELECT payment_amount
-    FROM attachments
-    WHERE payment_currency = 'USD'
-)
+    claim_type,
+    claim_amount
+FROM claims
+WHERE claim_amount > ANY (
+    SELECT premium_amount
+    FROM policies
+    WHERE policy_type = 'Universal Life'
+) 
 LIMIT 100;
 
 -- =============================================
--- Top Paying Users by Currency (Window + Subquery)
+-- 3. Practical Subquery Examples for Insurance Analysis
 -- =============================================
 
--- Find top 3 users by total payment for each currency
+-- Top Customers by Coverage by Policy Type
 SELECT 
-    currency_ranking.payment_currency,
-    currency_ranking.user_id,
-    currency_ranking.username,
-    currency_ranking.total_amount
+    type_ranking.policy_type,
+    type_ranking.customer_id,
+    type_ranking.first_name,
+    type_ranking.last_name,
+    type_ranking.total_coverage
 FROM (
     SELECT 
-        p.payment_currency,
-        u.user_id as user_id,
-        u.username,
-        sum(p.payment_amount) AS total_amount,
+        p.policy_type,
+        c.customer_id,
+        c.first_name,
+        c.last_name,
+        sum(p.coverage_amount) AS total_coverage,
         row_number() OVER (
-            PARTITION BY p.payment_currency 
-            ORDER BY sum(p.payment_amount) DESC
-        ) AS currency_rank
-    FROM attachments p
-    JOIN messages m ON p.message_id = m.message_id
-    JOIN users u ON m.user_id = u.user_id
-    WHERE p.payment_status = 'paid'
-    GROUP BY p.payment_currency, u.user_id, u.username
-) AS currency_ranking
-WHERE currency_ranking.currency_rank <= 3
-ORDER BY currency_ranking.payment_currency, currency_ranking.currency_rank;
+            PARTITION BY p.policy_type 
+            ORDER BY sum(p.coverage_amount) DESC
+        ) AS type_rank
+    FROM policies p
+    JOIN customers c ON p.customer_id = c.customer_id
+    WHERE p.status = 'Active'
+    GROUP BY p.policy_type, c.customer_id, c.first_name, c.last_name
+) AS type_ranking
+WHERE type_ranking.type_rank <= 3
+ORDER BY type_ranking.policy_type, type_ranking.type_rank;
+
+-- Claims Above Daily Average
+-- Find claims that exceed the daily average by 50%+
+SELECT 
+    c1.claim_id,
+    c1.policy_id,
+    c1.claim_amount,
+    c1.claim_type,
+    c1.date,
+    p.policy_number,
+    cu.first_name,
+    c2.avg_claim_amount
+FROM (
+    SELECT 
+        claim_id,
+        policy_id,
+        toDate(reported_date) AS date,
+        claim_type,
+        claim_amount,
+        claim_status
+    FROM claims
+) c1
+JOIN policies p ON c1.policy_id = p.policy_id
+JOIN customers cu ON p.customer_id = cu.customer_id
+JOIN (
+    SELECT 
+        avg(claim_amount) * 1.5 as avg_claim_amount,
+        claim_type,
+        toDate(reported_date) AS date
+    FROM claims
+    GROUP BY claim_type, date
+) c2 ON c1.date = c2.date AND c1.claim_type = c2.claim_type
+WHERE c1.claim_amount > c2.avg_claim_amount
+LIMIT 100;
+
+-- =============================================
+-- 4. Complex Business Analysis with Subqueries
+-- =============================================
+
+-- High-Risk Customers Analysis
+-- Find customers with claims exceeding 80% of their total coverage
+SELECT 
+    customer_analysis.customer_id,
+    customer_analysis.first_name,
+    customer_analysis.last_name,
+    customer_analysis.total_coverage,
+    customer_analysis.total_claims,
+    customer_analysis.claim_ratio
+FROM (
+    SELECT 
+        c.customer_id,
+        c.first_name,
+        c.last_name,
+        sum(p.coverage_amount) AS total_coverage,
+        sum(cl.claim_amount) AS total_claims,
+        sum(cl.claim_amount) / sum(p.coverage_amount) AS claim_ratio
+    FROM customers c
+    JOIN policies p ON c.customer_id = p.customer_id
+    JOIN claims cl ON p.policy_id = cl.policy_id
+    WHERE p.status = 'Active'
+    AND cl.claim_status IN ('Approved', 'Paid')
+    GROUP BY c.customer_id, c.first_name, c.last_name
+) AS customer_analysis
+WHERE customer_analysis.claim_ratio > 0.8
+ORDER BY customer_analysis.claim_ratio DESC;
+
+-- Policy Performance by Agent Territory
+SELECT 
+    territory_stats.territory,
+    territory_stats.total_policies,
+    territory_stats.total_premiums,
+    territory_stats.avg_premium,
+    territory_stats.territory_rank
+FROM (
+    SELECT 
+        a.territory,
+        count(p.policy_id) AS total_policies,
+        sum(p.premium_amount) AS total_premiums,
+        avg(p.premium_amount) AS avg_premium,
+        rank() OVER (ORDER BY sum(p.premium_amount) DESC) AS territory_rank
+    FROM agents a
+    JOIN policies p ON a.agent_id = p.agent_id
+    WHERE p.status = 'Active'
+    GROUP BY a.territory
+) AS territory_stats
+WHERE territory_stats.territory_rank <= 5
+ORDER BY territory_stats.territory_rank;
+
+-- Seasonal Policy Trends
+-- Compare current month performance to historical averages
+SELECT 
+    current_month.month,
+    current_month.policy_type,
+    current_month.policies_issued,
+    current_month.total_premiums,
+    historical.avg_monthly_policies,
+    historical.avg_monthly_premiums,
+    round((current_month.policies_issued - historical.avg_monthly_policies) / historical.avg_monthly_policies * 100, 2) AS policy_growth_percent,
+    round((current_month.total_premiums - historical.avg_monthly_premiums) / historical.avg_monthly_premiums * 100, 2) AS premium_growth_percent
+FROM (
+    SELECT 
+        toStartOfMonth(start_date) AS month,
+        policy_type,
+        count() AS policies_issued,
+        sum(premium_amount) AS total_premiums
+    FROM policies
+    WHERE toStartOfMonth(start_date) = toStartOfMonth(today())
+    AND status = 'Active'
+    GROUP BY month, policy_type
+) AS current_month
+JOIN (
+    SELECT 
+        policy_type,
+        avg(monthly_policies) AS avg_monthly_policies,
+        avg(monthly_premiums) AS avg_monthly_premiums
+    FROM (
+        SELECT 
+            toStartOfMonth(start_date) AS month,
+            policy_type,
+            count() AS monthly_policies,
+            sum(premium_amount) AS monthly_premiums
+        FROM policies
+        WHERE start_date >= today() - INTERVAL 12 MONTH
+        AND start_date < toStartOfMonth(today())
+        AND status = 'Active'
+        GROUP BY month, policy_type
+    ) AS monthly_data
+    GROUP BY policy_type
+) AS historical ON current_month.policy_type = historical.policy_type
+ORDER BY current_month.policy_type;
