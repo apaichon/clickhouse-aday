@@ -1,3 +1,54 @@
+-- =============================================
+-- ClickHouse Session 6: Performance Optimization - Index Overview
+-- Life Insurance Management System
+-- =============================================
+
+USE life_insurance;
+
+-- =============================================
+-- Index Overview and Management
+-- =============================================
+
+-- Show all indexes in the life insurance database
+SELECT 
+    database,
+    table,
+    name as index_name,
+    type,
+    granularity,
+    query
+FROM system.data_skipping_indices
+WHERE database = 'life_insurance'
+ORDER BY table, name;
+
+-- Check index effectiveness
+SELECT 
+    table,
+    name as index_name,
+    type,
+    granularity
+FROM system.data_skipping_indices
+WHERE database = 'life_insurance'
+ORDER BY table, name;
+
+-- Monitor index usage and performance
+SELECT 
+    table,
+    count() as total_parts,
+    sum(rows) as total_rows,
+    formatReadableSize(sum(bytes_on_disk)) as total_size
+FROM system.parts
+WHERE database = 'life_insurance'
+  AND active = 1
+GROUP BY table
+ORDER BY total_size DESC;
+
+-- Show table structures with primary keys
+SHOW CREATE TABLE policies;
+SHOW CREATE TABLE claims;
+SHOW CREATE TABLE customers;
+SHOW CREATE TABLE agents;
+
 SELECT
     table,
     formatReadableSize(sum(primary_key_bytes_in_memory)) AS primary_index_size,

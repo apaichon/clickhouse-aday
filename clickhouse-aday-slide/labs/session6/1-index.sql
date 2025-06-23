@@ -1,153 +1,234 @@
 -- =============================================
--- Primary Key Optimization
+-- ClickHouse Session 6: Performance Optimization - Indexes
+-- Life Insurance Management System
 -- =============================================
 
-CREATE TABLE if not exists chat_payments.messages_optimized (
-    message_id UUID,
-    chat_id UInt64,
-    user_id UInt32,
-    sent_timestamp DateTime,
-    message_type Enum8(
-        'text' = 1, 'image' = 2, 
-        'invoice' = 3, 'receipt' = 4
-    ),
-    content String,
-    has_attachment UInt8,
-    sign Int8
-) ENGINE = CollapsingMergeTree(sign)
-PARTITION BY toYYYYMM(sent_timestamp)
-ORDER BY (chat_id, toStartOfDay(sent_timestamp), message_type, user_id);
-
--- Populate optimized messages table
-INSERT INTO messages_optimized
-SELECT * FROM messages;
-
--- Compare optimized and original table for daily invoice messages
-SELECT 
-    toDate(sent_timestamp) AS date,
-    count() AS message_count
-FROM messages_optimized
-WHERE chat_id = 100
-  AND sent_timestamp >= '2023-04-01'
-  AND sent_timestamp < '2023-04-30'
-  AND message_type = 'invoice' 
-GROUP BY date
-ORDER BY date;
-
-SELECT 
-    toDate(sent_timestamp) AS date,
-    count() AS message_count
-FROM messages
-WHERE chat_id = 100
-  AND sent_timestamp >= '2023-04-01'
-  AND sent_timestamp < '2023-04-30'
-  AND message_type = 'invoice' 
-GROUP BY date
-ORDER BY date;
-
+USE life_insurance;
 
 -- =============================================
--- Skip Index Recommendations
+-- 1. Primary Key Analysis
 -- =============================================
 
-CREATE TABLE if not exists chat_payments.attachments_optimized (
-    attachment_id UUID CODEC(ZSTD(1)),
-    message_id UUID CODEC(ZSTD(1)),
-    payment_amount Decimal64(2) CODEC(Delta, ZSTD(1)),
-    payment_currency LowCardinality(String) CODEC(ZSTD(1)),
-    invoice_date Date CODEC(Delta, ZSTD(1)),
-    payment_status Enum8(
-        'pending' = 1, 'paid' = 2, 'canceled' = 3
-    ) CODEC(ZSTD(1)),
-    file_path String CODEC(ZSTD(3)),
-    file_size UInt32 CODEC(Delta, ZSTD(1)),
-    uploaded_at DateTime CODEC(Delta, ZSTD(1)),
-    sign Int8 CODEC(Delta, ZSTD(1)),
-    -- Improved indexes
-    INDEX payment_status_idx payment_status TYPE minmax GRANULARITY 1,
-    INDEX currency_idx payment_currency TYPE set(8) GRANULARITY 1,
-    INDEX file_size_idx file_size TYPE minmax GRANULARITY 1,
-    INDEX payment_amount_idx payment_amount TYPE minmax GRANULARITY 1
-) ENGINE = CollapsingMergeTree(sign)
-PARTITION BY toYYYYMM(uploaded_at)
-ORDER BY (message_id, uploaded_at, attachment_id)
-SETTINGS 
-    index_granularity = 8192,
-    min_bytes_for_wide_part = 10485760,
-    enable_mixed_granularity_parts = 1;
+-- Show current table structures and primary keys
+SHOW CREATE TABLE customers;
+SHOW CREATE TABLE policies;
+SHOW CREATE TABLE claims;
+SHOW CREATE TABLE agents;
 
--- Populate optimized attachments table
-INSERT INTO attachments_optimized
-SELECT * FROM attachments;
-
--- Compare original and optimized attachments for daily counts
+-- Analyze primary key effectiveness for policies
 SELECT 
-    toDate(uploaded_at) AS date,
-    count() AS attachment_count
-FROM attachments
-WHERE uploaded_at >= '2023-04-01'
-  AND uploaded_at < '2023-04-30'
-GROUP BY date;
-
-SELECT 
-    toDate(uploaded_at) AS date,
-    count() AS attachment_count
-FROM attachments_optimized
-WHERE uploaded_at >= '2023-04-01'
-  AND uploaded_at < '2023-04-30'
-GROUP BY date;
-
--- Compression and storage analysis
-SELECT 
-    table,
-    formatReadableSize(sum(bytes)) as size,
-    sum(rows) as rows,
-    min(min_date) as min_date,
-    max(max_date) as max_date,
-    sum(bytes) as bytes_size,
-    sum(data_compressed_bytes) as compressed_size,
-    sum(data_uncompressed_bytes) as uncompressed_size,
-    round(sum(data_compressed_bytes) / sum(data_uncompressed_bytes), 3) as compression_ratio
+    partition,
+    name,
+    rows,
+    bytes_on_disk,
+    primary_key_bytes_in_memory,
+    marks_count
 FROM system.parts
-WHERE active AND database = 'chat_payments' AND table in ('attachments', 'attachments_optimized')
-GROUP BY table
-ORDER BY bytes_size DESC;
+WHERE database = 'life_insurance' 
+  AND table = 'policies'
+  AND active = 1
+ORDER BY partition;
 
 -- =============================================
--- Diagnosing Index Usage
+-- 2. Secondary Indexes
 -- =============================================
 
--- Check if a query uses the index
-EXPLAIN indexes = 1
-SELECT * FROM attachments_optimized WHERE payment_status = 'paid';
+-- Add secondary indexes for frequently queried columns
 
-SELECT * FROM system.parts
-WHERE table = 'attachments_optimized';
+-- Customer email index for login/lookup queries
+ALTER TABLE customers ADD INDEX idx_customer_email email TYPE bloom_filter() GRANULARITY 1;
 
+-- Policy number index for policy lookup
+ALTER TABLE policies ADD INDEX idx_policy_number policy_number TYPE bloom_filter() GRANULARITY 1;
+
+-- Agent license number index
+ALTER TABLE agents ADD INDEX idx_agent_license license_number TYPE bloom_filter() GRANULARITY 1;
+
+-- Claim number index for claim tracking
+ALTER TABLE claims ADD INDEX idx_claim_number claim_number TYPE bloom_filter() GRANULARITY 1;
+
+-- Coverage amount range index for policies
+ALTER TABLE policies ADD INDEX idx_coverage_amount coverage_amount TYPE minmax GRANULARITY 1;
+
+-- Claim amount range index
+ALTER TABLE claims ADD INDEX idx_claim_amount claim_amount TYPE minmax GRANULARITY 1;
+
+-- Premium amount range index
+ALTER TABLE policies ADD INDEX idx_premium_amount premium_amount TYPE minmax GRANULARITY 1;
+
+-- Date range indexes
+ALTER TABLE policies ADD INDEX idx_effective_date effective_date TYPE minmax GRANULARITY 1;
+ALTER TABLE claims ADD INDEX idx_reported_date reported_date TYPE minmax GRANULARITY 1;
+ALTER TABLE claims ADD INDEX idx_incident_date incident_date TYPE minmax GRANULARITY 1;
+
+-- =============================================
+-- 3. Index Usage Analysis
+-- =============================================
+
+-- Query to test policy number index
+SELECT 
+    policy_id,
+    customer_id,
+    policy_number,
+    coverage_amount,
+    status
+FROM policies
+WHERE policy_number = 'POL-2024-001';
+
+-- Query to test customer email index
+SELECT 
+    customer_id,
+    first_name,
+    last_name,
+    email,
+    customer_type
+FROM customers
+WHERE email = 'john.smith@email.com'
+  AND _sign > 0;
+
+-- Query to test coverage amount range index
+SELECT 
+    policy_id,
+    policy_number,
+    customer_id,
+    coverage_amount,
+    policy_type
+FROM policies
+WHERE coverage_amount BETWEEN 500000 AND 1000000
+  AND status = 'Active';
+
+-- Query to test claim amount range with date filter
+SELECT 
+    claim_id,
+    policy_id,
+    claim_number,
+    claim_amount,
+    claim_status,
+    reported_date
+FROM claims
+WHERE claim_amount > 100000
+  AND reported_date >= '2024-01-01'
+  AND _sign > 0;
+
+-- =============================================
+-- 4. Index Performance Comparison
+-- =============================================
+
+-- Query without using indexes (force full scan)
+SELECT 
+    count(*) as total_policies,
+    avg(coverage_amount) as avg_coverage,
+    sum(premium_amount) as total_premiums
+FROM policies
+WHERE policy_type = 'Term Life'
+  AND status = 'Active';
+
+-- Query using primary key efficiently
+SELECT 
+    p.policy_id,
+    p.policy_number,
+    p.coverage_amount,
+    c.first_name,
+    c.last_name
+FROM policies p
+JOIN customers c ON p.customer_id = c.customer_id
+WHERE p.policy_id = '550e8400-e29b-41d4-a716-446655440000';
+
+-- =============================================
+-- 5. Composite Index Examples
+-- =============================================
+
+-- Add composite index for common query patterns
+ALTER TABLE policies ADD INDEX idx_customer_status_type (customer_id, status, policy_type) TYPE bloom_filter() GRANULARITY 1;
+
+-- Add composite index for claims analysis
+ALTER TABLE claims ADD INDEX idx_policy_status_type (policy_id, claim_status, claim_type) TYPE bloom_filter() GRANULARITY 1;
+
+-- Add composite index for agent performance queries
+ALTER TABLE policies ADD INDEX idx_agent_effective_date (agent_id, effective_date) TYPE minmax GRANULARITY 1;
+
+-- Test composite index usage
+SELECT 
+    policy_id,
+    policy_number,
+    coverage_amount,
+    premium_amount
+FROM policies
+WHERE customer_id = 1001
+  AND status = 'Active'
+  AND policy_type = 'Term Life';
+
+-- =============================================
+-- 6. Index Maintenance and Monitoring
+-- =============================================
+
+-- Check index usage statistics
 SELECT 
     database,
     table,
-    sum(marks) as total_granules,
-    formatReadableSize(sum(data_compressed_bytes)) as compressed_size,
-    formatReadableSize(sum(data_uncompressed_bytes)) as uncompressed_size
+    name,
+    type,
+    granularity
+FROM system.data_skipping_indices
+WHERE database = 'life_insurance'
+ORDER BY table, name;
+
+-- Monitor index effectiveness
+SELECT 
+    table,
+    name as index_name,
+    type,
+    granularity,
+    marks_count
 FROM system.parts
-WHERE active = 1
-GROUP BY database, table
-ORDER BY total_granules DESC;
+JOIN system.data_skipping_indices ON 
+    system.parts.database = system.data_skipping_indices.database AND
+    system.parts.table = system.data_skipping_indices.table
+WHERE system.parts.database = 'life_insurance'
+  AND system.parts.active = 1;
 
--- Analyze missed index opportunities
-SELECT * FROM payment_attachments WHERE payment_status = 'paid';
+-- Analyze query performance with EXPLAIN
+EXPLAIN SYNTAX 
+SELECT 
+    p.policy_number,
+    p.coverage_amount,
+    c.claim_amount,
+    c.claim_status
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id
+WHERE p.policy_number LIKE 'POL-2024%'
+  AND c.claim_amount > 50000;
 
-SELECT
-    query_id,
+-- =============================================
+-- 7. Index Optimization Recommendations
+-- =============================================
+
+-- Find tables that might benefit from additional indexes
+SELECT 
+    table,
+    count(*) as query_count,
+    avg(read_rows) as avg_rows_read,
+    avg(query_duration_ms) as avg_duration_ms
+FROM system.query_log
+WHERE database = 'life_insurance'
+  AND type = 'QueryFinish'
+  AND event_time > now() - INTERVAL 1 DAY
+GROUP BY table
+HAVING avg_rows_read > 1000
+ORDER BY avg_duration_ms DESC;
+
+-- Identify slow queries that might benefit from indexes
+SELECT 
     query,
+    query_duration_ms,
     read_rows,
     read_bytes,
-    query_duration_ms
+    memory_usage
 FROM system.query_log
-WHERE query LIKE '%attachments%'
-    AND read_rows > 1000000
-    AND event_time > now() - INTERVAL 1 DAY
-    AND type = 'QueryFinish'
-ORDER BY query_duration_ms DESC;
+WHERE database = 'life_insurance'
+  AND type = 'QueryFinish'
+  AND query_duration_ms > 1000
+  AND event_time > now() - INTERVAL 1 HOUR
+ORDER BY query_duration_ms DESC
+LIMIT 10;
 

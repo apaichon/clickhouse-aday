@@ -4324,6 +4324,7 @@ layout: default
 ```sql{all|1-8|10-11|13-17|all}
 -- Prepare a large batch of policies
 INSERT INTO policies
+(policy_id, customer_id, agent_id, policy_number, policy_type, coverage_amount, premium_amount, deductible_amount, effective_date, end_date, status, created_at, updated_at, version)
 SELECT
     generateUUIDv4() as policy_id,
     toUInt64(rand() % 100000) as customer_id,
@@ -4331,22 +4332,31 @@ SELECT
     'LIFE-' || toString(toYear(now())) || '-' || toString(number) as policy_number,
     CAST(
         multiIf(
-            rand() % 4 = 0, 'Term',
-            rand() % 4 = 1, 'Whole',
-            rand() % 4 = 2, 'Universal',
-            'Variable'
-        ) AS Enum8('Term' = 1, 'Whole' = 2, 'Universal' = 3, 'Variable' = 4)
+            rand() % 5 = 0, 'Term Life',
+            rand() % 5 = 1, 'Whole Life',
+            rand() % 5 = 2, 'Universal Life',
+            rand() % 5 = 3, 'Variable Life',
+            'Endowment'
+        ) AS Enum8('Term Life' = 1, 'Whole Life' = 2, 'Universal Life' = 3, 'Variable Life' = 4, 'Endowment' = 5)
     ) as policy_type,
     round(rand() * 1000000 + 100000, 2) as coverage_amount,
     round(rand() * 5000 + 500, 2) as premium_amount,
-    CAST('Active' AS Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3)) as policy_status,
-    now() - toIntervalDay(rand() % 365) as effective_date,
-    1 as sign
-FROM numbers(1_000_000)  
-SETTINGS 
-    max_insert_block_size = 10_000_000,
-    min_insert_block_size_rows = 100_000,
-    min_insert_block_size_bytes = 100_000_000;
+    round(rand() * 1000, 2) as deductible_amount,
+    (now() - toIntervalDay(rand() % 365))::Date as effective_date,
+    (now() + toIntervalYear(20 + rand() % 20))::Date as end_date,
+    CAST(
+        multiIf(
+            rand() % 10 = 0, 'Pending',
+            rand() % 20 = 0, 'Lapsed',
+            rand() % 50 = 0, 'Terminated',
+            rand() % 100 = 0, 'Matured',
+            'Active'
+        ) AS Enum8('Active' = 1, 'Lapsed' = 2, 'Terminated' = 3, 'Matured' = 4, 'Pending' = 5)
+    ) as status,
+    now() as created_at,
+    now() as updated_at,
+    1 as version
+FROM numbers(1_000_000);
 ```
 </div>
 
@@ -4371,7 +4381,6 @@ WHERE query LIKE '%INSERT INTO policies%'
   AND type = 'QueryFinish'
 ORDER BY event_time DESC
 LIMIT 20;
-
 -- Check parts created by recent inserts
 SELECT
     table,
@@ -4413,7 +4422,6 @@ FROM policies
 GROUP BY policy_id
 HAVING count > 1
 ORDER BY count DESC;
-
 -- Check for duplicate claims
 SELECT
     claim_id,
@@ -4471,22 +4479,21 @@ CREATE TABLE claims_dedup
     claim_id UUID,
     policy_id UUID,
     customer_id UInt64,
-    claim_amount Decimal64(2),
-    claim_type Enum8(
-        'Death' = 1, 'Disability' = 2, 
-        'Maturity' = 3, 'Surrender' = 4
-    ),
-    claim_status Enum8(
-        'Submitted' = 1, 'Processing' = 2, 
-        'Approved' = 3, 'Paid' = 4, 'Denied' = 5
-    ),
+    claim_type Enum8('Death' = 1, 'Disability' = 2, 'Maturity' = 3, 'Surrender' = 4, 'Loan' = 5),
+    claim_number String,
     incident_date Date,
-    reported_date DateTime,
-    processed_date DateTime,
-    sign Int8
-) ENGINE = ReplacingMergeTree(reported_date)
-PARTITION BY toYYYYMM(reported_date)
-ORDER BY (policy_id, claim_id);
+    reported_date DateTime DEFAULT now(),
+    claim_amount Decimal64(2),
+    approved_amount Decimal64(2) DEFAULT 0,
+    claim_status Enum8('Reported' = 1, 'Under Review' = 2, 'Approved' = 3, 'Denied' = 4, 'Paid' = 5),
+    description String,
+    adjuster_id UInt32,
+    _sign Int8 DEFAULT 1
+)
+ENGINE = CollapsingMergeTree(_sign)
+PARTITION BY (toYYYYMM(reported_date), claim_status)
+ORDER BY (claim_id, policy_id, reported_date)
+SETTINGS index_granularity = 8192;
 
 -- Fill the table with deduplicated data
 INSERT INTO claims_dedup
@@ -4620,7 +4627,7 @@ CREATE TABLE claims_compressed
     claim_id UUID CODEC(ZSTD(1)),
     policy_id UUID CODEC(ZSTD(1)),
     customer_id UInt64 CODEC(Delta, ZSTD(1)),
-    claim_amount Decimal(18, 2) CODEC(Gorilla, ZSTD(1)),
+    claim_amount Decimal(18, 2) CODEC(Delta, ZSTD(1)),
     claim_type Enum8('Death' = 1, 'Disability' = 2, 'Maturity' = 3, 'Surrender' = 4) CODEC(ZSTD(1)),
     claim_status Enum8('Submitted' = 1, 'Processing' = 2, 'Approved' = 3, 'Paid' = 4, 'Denied' = 5) CODEC(ZSTD(1)),
     incident_date Date CODEC(Delta, ZSTD(1)),
@@ -5232,7 +5239,7 @@ CREATE TABLE life_insurance.claims_optimized (
     claim_id UUID CODEC(ZSTD(1)),
     policy_id UUID CODEC(ZSTD(1)),
     customer_id UInt64 CODEC(Delta, ZSTD(1)),
-    claim_amount Decimal64(2) CODEC(Gorilla, ZSTD(1)),
+    claim_amount Decimal64(2) CODEC(Delta, ZSTD(1)),
     claim_type Enum8(
         'Death' = 1, 'Disability' = 2, 
         'Maturity' = 3, 'Surrender' = 4
@@ -5244,16 +5251,16 @@ CREATE TABLE life_insurance.claims_optimized (
     incident_date Date CODEC(Delta, ZSTD(1)),
     reported_date DateTime CODEC(Delta, ZSTD(1)),
     processed_date DateTime CODEC(Delta, ZSTD(1)),
-    sign Int8 CODEC(Delta, ZSTD(1)),
+    sign Int8 CODEC(ZSTD(1)),
     
     -- Improved indexes
-    INDEX claim_status_idx claim_status TYPE minmax GRANULARITY 1,
-    INDEX claim_type_idx claim_type TYPE set(8) GRANULARITY 1,
+    INDEX claim_status_idx claim_status TYPE set(0) GRANULARITY 1,
+    INDEX claim_type_idx claim_type TYPE set(0) GRANULARITY 1,
     INDEX claim_amount_idx claim_amount TYPE minmax GRANULARITY 1,
     INDEX customer_idx customer_id TYPE minmax GRANULARITY 1
 ) ENGINE = CollapsingMergeTree(sign)
 PARTITION BY toYYYYMM(reported_date)
-ORDER BY (policy_id, reported_date, claim_id)
+ORDER BY (policy_id, reported_date, claim_id, sign)
 SETTINGS 
     index_granularity = 8192,
     min_bytes_for_wide_part = 10485760,
@@ -5436,7 +5443,7 @@ layout: default
 ```sql{all|3-5|7-10|12-16|all}
 -- Bad: Non-indexed filter first
 SELECT count(*) FROM policies
-WHERE policy_type = 'Term'
+WHERE policy_type = 'Term Life'
   AND customer_id = 1001
   AND effective_date >= '2024-01-01';
 
@@ -5444,7 +5451,7 @@ WHERE policy_type = 'Term'
 SELECT count(*) FROM policies
 WHERE customer_id = 1001
   AND effective_date >= '2024-01-01'
-  AND policy_type = 'Term';
+  AND policy_type = 'Term Life';
 
 -- Avoid transformations on indexed columns
 -- Bad:
@@ -5527,7 +5534,7 @@ FROM policies p
 JOIN claims c
 USING (policy_id)
 JOIN customers cu
-USING (customer_id)
+ON p.customer_id = cu.customer_id
 WHERE c.claim_type = 'Death';
 ```
 

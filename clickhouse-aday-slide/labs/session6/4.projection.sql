@@ -1,74 +1,153 @@
-CREATE TABLE chat_payments.messages_projection (
-    message_id UUID,
-    chat_id UInt64,
-    user_id UInt32,
-    sent_timestamp DateTime,
-    message_type Enum8(
-        'text' = 1, 'image' = 2, 
-        'invoice' = 3, 'receipt' = 4
-    ),
-    content String,
-    has_attachment UInt8,
-    sign Int8,
-    PROJECTION user_message_counts_proj (
-        SELECT
-            user_id,
-            count() AS message_count
-        GROUP BY user_id
-    ),
+-- =============================================
+-- ClickHouse Session 6: Performance Optimization - Projections
+-- Life Insurance Management System
+-- =============================================
 
-    INDEX message_type_idx message_type TYPE bloom_filter GRANULARITY 1
-) ENGINE = CollapsingMergeTree(sign)
-Primary Key (message_id)
-PARTITION BY toYYYYMM(sent_timestamp)
-ORDER BY (message_id, chat_id, sent_timestamp)
-SETTINGS deduplicate_merge_projection_mode = 'drop';
+USE life_insurance;
 
+-- =============================================
+-- 1. Basic Projections for Policies Table
+-- =============================================
 
-INSERT INTO chat_payments.messages_projection 
-    (message_id, chat_id, user_id, sent_timestamp, message_type, content, sign)
-    WITH 
-    toDate('2023-04-01') as start_date,
-    toDate('2025-05-01') as end_date,
-    1_000_000 as num_records,
+-- Create projection for policy type analysis
+ALTER TABLE policies ADD PROJECTION policy_type_projection (
+    SELECT 
+        policy_type,
+        status,
+        toStartOfMonth(effective_date) as month,
+        count(),
+        sum(coverage_amount),
+        sum(premium_amount),
+        avg(coverage_amount)
+    GROUP BY policy_type, status, month
+);
 
-    messages_data as (
-        SELECT 
-            generateUUIDv4() as message_id,
-            100 + intDiv(number, 5) as chat_id,  
-            1000 + intDiv(number, 10) as user_id, 
-            start_date + toIntervalDay(rand() % dateDiff('day', start_date, end_date)) + 
-                toIntervalSecond(rand() % 86400) as sent_timestamp,
-            arrayElement(['text', 'image', 'invoice', 'receipt'], 1 + number % 4) as message_type,
-            concat('Message content #', toString(number)) as content,
-            1 as sign,  -- Added sign column
-            number  
-        FROM numbers(num_records)
-    )
+-- Create projection for customer analysis
+ALTER TABLE policies ADD PROJECTION customer_projection (
+    SELECT 
+        customer_id,
+        agent_id,
+        count(),
+        sum(coverage_amount),
+        sum(premium_amount),
+        max(effective_date)
+    GROUP BY customer_id, agent_id
+);
 
+-- =============================================
+-- 2. Claims Table Projections
+-- =============================================
+
+-- Create projection for claims analysis by type and status
+ALTER TABLE claims ADD PROJECTION claims_analysis_projection (
+    SELECT 
+        claim_type,
+        claim_status,
+        toStartOfMonth(reported_date) as month,
+        count(),
+        sum(claim_amount),
+        sum(approved_amount),
+        avg(claim_amount)
+    GROUP BY claim_type, claim_status, month
+);
+
+-- Create projection for policy-based claims analysis
+ALTER TABLE claims ADD PROJECTION policy_claims_projection (
+    SELECT 
+        policy_id,
+        customer_id,
+        count(),
+        sum(claim_amount),
+        sum(approved_amount),
+        max(reported_date)
+    GROUP BY policy_id, customer_id
+);
+
+-- =============================================
+-- 3. Materialized Projections
+-- =============================================
+
+-- Materialize the projections to improve query performance
+ALTER TABLE policies MATERIALIZE PROJECTION policy_type_projection;
+ALTER TABLE policies MATERIALIZE PROJECTION customer_projection;
+ALTER TABLE claims MATERIALIZE PROJECTION claims_analysis_projection;
+ALTER TABLE claims MATERIALIZE PROJECTION policy_claims_projection;
+
+-- =============================================
+-- 4. Querying with Projections
+-- =============================================
+
+-- Query that will use policy_type_projection
 SELECT 
-    message_id,
-    chat_id,
-    user_id,
-    sent_timestamp,
-    message_type,
-    content,
-    1 as sign
-FROM messages_data
+    policy_type,
+    status,
+    toStartOfMonth(effective_date) as month,
+    count() as policy_count,
+    sum(coverage_amount) as total_coverage,
+    avg(coverage_amount) as avg_coverage
+FROM policies
+WHERE effective_date >= '2024-01-01'
+GROUP BY policy_type, status, month
+ORDER BY month DESC, policy_type;
 
+-- Query that will use customer_projection
+SELECT 
+    customer_id,
+    agent_id,
+    count() as policy_count,
+    sum(coverage_amount) as total_coverage,
+    sum(premium_amount) as total_premiums
+FROM policies
+WHERE customer_id IN (1001, 1002, 1003)
+GROUP BY customer_id, agent_id;
 
-SELECT
-    user_id,
-    count() AS message_count
-FROM chat_payments.messages_projection
-GROUP BY user_id
+-- Query that will use claims_analysis_projection
+SELECT 
+    claim_type,
+    claim_status,
+    toStartOfMonth(reported_date) as month,
+    count() as claim_count,
+    sum(claim_amount) as total_claimed,
+    sum(approved_amount) as total_approved
+FROM claims
+WHERE reported_date >= '2024-01-01'
+  AND _sign > 0
+GROUP BY claim_type, claim_status, month
+ORDER BY month DESC, claim_type;
 
-select * from chat_payments.messages_projection 
-where user_id = 35096
+-- =============================================
+-- 5. Projection Management
+-- =============================================
 
-SELECT query, projections FROM system.query_log 
+-- Check projection status
+SELECT 
+    database,
+    table,
+    name,
+    type,
+    query
+FROM system.projections
+WHERE database = 'life_insurance'
+ORDER BY table, name;
 
+-- Monitor projection usage and performance
+SELECT 
+    table,
+    name,
+    sum(rows) as total_rows,
+    sum(bytes_on_disk) as size_on_disk
+FROM system.projection_parts
+WHERE database = 'life_insurance'
+  AND active = 1
+GROUP BY table, name
+ORDER BY table, name;
 
+-- =============================================
+-- 6. Cleanup (Optional)
+-- =============================================
 
--- Then add the projection
-SET deduplicate_merge_projection_mode = 'drop';
+-- Drop projections if needed
+-- ALTER TABLE policies DROP PROJECTION policy_type_projection;
+-- ALTER TABLE policies DROP PROJECTION customer_projection;
+-- ALTER TABLE claims DROP PROJECTION claims_analysis_projection;
+-- ALTER TABLE claims DROP PROJECTION policy_claims_projection;
