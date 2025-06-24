@@ -5725,35 +5725,42 @@ layout: two-cols
 ---
 
 # Materialized View Basics
-
+<div style="height:400px;overflow-y:auto;">
 ```sql{all|1-9|11-21|all}
--- Simple materialized view for policy counts
-CREATE MATERIALIZED VIEW policy_counts_mv
+-- Daily policy issuance summary
+CREATE MATERIALIZED VIEW daily_policy_summary
 ENGINE = SummingMergeTree()
-ORDER BY (customer_id, date)
+PARTITION BY toYYYYMM(policy_date)
+ORDER BY (policy_date, policy_type, agent_id)
 AS
-SELECT
-    customer_id,
-    toDate(effective_date) AS date,
-    count() AS policy_count
+SELECT 
+    toDate(effective_date) as policy_date,
+    policy_type,
+    agent_id,
+    count() as policies_issued,
+    sum(coverage_amount) as total_coverage,
+    sum(premium_amount) as total_premiums
 FROM policies
-GROUP BY customer_id, date;
-
+WHERE status = 'Active'
+GROUP BY policy_date, policy_type, agent_id;
 -- Materialized view for claims statistics
-CREATE MATERIALIZED VIEW claims_stats_mv
+CREATE MATERIALIZED VIEW monthly_claims_summary
 ENGINE = SummingMergeTree()
-PARTITION BY toYYYYMM(date)
-ORDER BY (claim_type, claim_status, date)
+PARTITION BY toYYYYMM(claim_month)
+ORDER BY (claim_month, claim_type, claim_status)
 AS
-SELECT
-    toDate(reported_date) AS date,
+SELECT 
+    toStartOfMonth(reported_date) as claim_month,
     claim_type,
     claim_status,
-    count() AS claim_count,
-    sum(claim_amount) AS total_amount
+    count() as claims_count,
+    sum(claim_amount) as total_claim_amount,
+    sum(approved_amount) as total_approved_amount
 FROM claims
-GROUP BY date, claim_type, claim_status;
+WHERE _sign > 0
+GROUP BY claim_month, claim_type, claim_status;
 ```
+</div>
 
 ::right::
 
@@ -5863,11 +5870,11 @@ layout: default
 
 # Real-Time Materialized Views
 
-<div class="grid grid-cols-2 gap-4" style="height:400;overflow-y:auto;">
-<div>
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
+<div >
 
 ## TO Syntax for Automatic Updates
-```sql{all|1-9|all}
+```sql
 -- Creates view and populates from new inserts
 CREATE MATERIALIZED VIEW policy_summary_mv
 TO policy_summary
@@ -5877,7 +5884,7 @@ SELECT
     count() AS policy_count,
     sum(p.coverage_amount) AS total_coverage
 FROM policies p 
-WHERE p.policy_type = 'Term'
+WHERE p.policy_type = 'Term Life'
 GROUP BY date;
 
 -- View will be populated automatically when
@@ -5887,13 +5894,13 @@ GROUP BY date;
 ## Initial Population
 ```sql{all}
 -- Populate view with existing data
-INSERT INTO policy_summary_mv
+INSERT INTO policy_summary
 SELECT
     toDate(p.effective_date) AS date,
     count() AS policy_count,
     sum(p.coverage_amount) AS total_coverage
 FROM policies p 
-WHERE p.policy_type = 'Term'
+WHERE p.policy_type = 'Term Life'
 GROUP BY date;
 ```
 
@@ -5901,7 +5908,7 @@ GROUP BY date;
 <div>
 
 ## Live Dashboards with Materialized Views
-```sql{all|1-12|14-22|all}
+```sql
 -- Creating a real-time regulatory dashboard source
 CREATE MATERIALIZED VIEW regulatory_dashboard_mv
 ENGINE = SummingMergeTree()
@@ -5970,9 +5977,9 @@ WHERE database = currentDatabase()
   AND engine LIKE '%Materialized%';
 
 -- Drop a materialized view
-DROP TABLE claims_stats_mv;
+DROP TABLE claims_stats_aggr_mv;
 -- or
-DROP VIEW claims_stats_mv;
+DROP VIEW claims_stats_aggr_mv;
 ```
 
 ## Refreshing a Materialized View
@@ -6038,29 +6045,71 @@ layout: two-cols
 
 # Introduction to Projections
 
+<div style="height:400px;overflow-y:auto;">
 ```sql{all|1-8|10-19|all}
 -- Understanding projections vs materialized views
 -- Materialized view: separate table
-CREATE MATERIALIZED VIEW customer_policy_counts_mv
-ENGINE = SummingMergeTree()
-ORDER BY customer_id
-AS SELECT
-    customer_id, count() AS policy_count
-FROM policies GROUP BY customer_id;
-
--- Projection: alternate physical representation
-ALTER TABLE policies
-    ADD PROJECTION customer_policy_counts_proj (
-        SELECT
-            customer_id,
-            count() AS policy_count
-        GROUP BY customer_id
-    );
+CREATE TABLE policies_projection
+(
+   ... 
+    -- Projection 1: Policy Type Analysis
+    PROJECTION policy_type_analysis (
+        SELECT 
+            policy_type,
+            status,
+            toStartOfMonth(effective_date) as month,
+            count() as policy_count,
+            sum(coverage_amount) as total_coverage,
+            sum(premium_amount) as total_premiums,
+            avg(coverage_amount) as avg_coverage
+        GROUP BY policy_type, status, month
+    ),
     
--- Build the projection
-ALTER TABLE policies
-    MATERIALIZE PROJECTION customer_policy_counts_proj;
+    -- Projection 2: Customer Portfolio
+    PROJECTION customer_portfolio (
+        SELECT 
+            customer_id,
+            agent_id,
+            count() as policy_count,
+            sum(coverage_amount) as total_coverage,
+            sum(premium_amount) as total_premiums,
+            groupUniqArray(policy_type) as policy_types,
+            max(effective_date) as latest_policy_date
+        GROUP BY customer_id, agent_id
+    ),
+    
+    -- Projection 3: Agent Performance
+    PROJECTION agent_performance (
+        SELECT 
+            agent_id,
+            policy_type,
+            toStartOfMonth(effective_date) as month,
+            count() as policies_sold,
+            sum(coverage_amount) as total_coverage,
+            sum(premium_amount) as total_premiums,
+            uniq(customer_id) as unique_customers
+        GROUP BY agent_id, policy_type, month
+    ),
+    
+    -- Projection 4: Time-based Analysis
+    PROJECTION time_analysis (
+        SELECT 
+            toStartOfMonth(effective_date) as month,
+            toStartOfWeek(effective_date) as week,
+            policy_type,
+            status,
+            count() as policy_count,
+            sum(coverage_amount) as total_coverage
+        GROUP BY month, week, policy_type, status
+    )
+)
+ENGINE = MergeTree()
+PARTITION BY (toYYYYMM(effective_date), policy_type)
+ORDER BY (effective_date, customer_id, policy_type, policy_id)
+PRIMARY KEY (effective_date, customer_id)
+SETTINGS index_granularity = 8192;
 ```
+</div>
 
 ::right::
 
@@ -6441,7 +6490,7 @@ GRANT DROP USER ON *.* TO user_admin_role;
 
 -- Checking permissions
 SHOW GRANTS FOR agent_john;
-SHOW GRANTS FOR ROLE agent_role;
+SHOW GRANTS FOR agent_role;
 
 -- Check current user permissions
 SHOW GRANTS;
@@ -6468,11 +6517,13 @@ layout: default
 ## Row Policy Basics
 ```sql{all|1-6|8-15|17-23|all}
 -- Create row policy for agent territory restrictions
+
 CREATE ROW POLICY agent_territory_policy ON life_insurance.policies
 FOR SELECT USING agent_id = currentUser()
 TO agent_role;
 
 -- Row policy with custom conditions
+DROP ROW POLICY IF EXISTS agent_access_policy ON life_insurance.policies;
 CREATE ROW POLICY agent_access_policy ON life_insurance.policies
 FOR SELECT USING agent_id IN (
     SELECT agent_id FROM life_insurance.agent_territories 
