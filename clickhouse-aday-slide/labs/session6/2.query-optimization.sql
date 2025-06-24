@@ -2,26 +2,26 @@
 -- Query Execution Plan Analysis
 -- =============================================
 
-EXPLAIN SELECT * FROM chat_payments.attachments WHERE payment_status = 'paid';
+EXPLAIN SELECT * FROM life_insurance.claims WHERE claim_status = 'Approved';
 
 -- More detailed explain with settings
 EXPLAIN pipeline 
 SELECT
-    user_id,
-    count() AS message_count,
-    sum(if(message_type = 'invoice', 1, 0)) AS invoice_count
-FROM chat_payments.messages
-WHERE chat_id IN (100, 101, 102)
-GROUP BY user_id;
+    customer_id,
+    count() AS policy_count,
+    sum(if(policy_type = 'Term Life', 1, 0)) AS term_life_count
+FROM life_insurance.policies
+WHERE customer_id IN (1001, 1002, 1003)
+GROUP BY customer_id;
 
 EXPLAIN query tree
 SELECT
-    user_id,
-    count() AS message_count,
-    sum(if(message_type = 'invoice', 1, 0)) AS invoice_count
-FROM chat_payments.messages
-WHERE chat_id IN (100, 101, 102)
-GROUP BY user_id;
+    customer_id,
+    count() AS policy_count,
+    sum(if(policy_type = 'Term Life', 1, 0)) AS term_life_count
+FROM life_insurance.policies
+WHERE customer_id IN (1001, 1002, 1003)
+GROUP BY customer_id;
 
 -- =============================================
 -- Optimizing WHERE Clauses
@@ -30,100 +30,102 @@ GROUP BY user_id;
 -- Filter Optimization Principles
 
 -- Bad: Non-indexed filter first
-SELECT count(*) FROM messages
-WHERE message_type = 'invoice'
-  AND chat_id = 100
-  AND sent_timestamp >= '2023-04-01';
+SELECT count(*) FROM policies
+WHERE policy_type = 'Term Life'
+  AND customer_id = 1001
+  AND effective_date >= '2025-01-01';
+
 
 -- Good: Primary key columns first
-SELECT count(*) FROM messages
-WHERE chat_id = 100
-  AND sent_timestamp >= '2023-04-01'
-  AND message_type = 'invoice';
+SELECT count(*) FROM policies
+WHERE customer_id = 1001
+  AND effective_date >= '2025-01-01'
+  AND policy_type = 'Term Life';
 
 -- Avoid transformations on indexed columns
 -- Bad:
-SELECT count(*) FROM messages
-WHERE toDate(sent_timestamp) = '2023-04-01';
+SELECT count(*) FROM policies
+WHERE toDate(effective_date) = '2025-01-01';
 -- Good:
-SELECT count(*) FROM messages
-WHERE sent_timestamp >= '2023-04-01 00:00:00'
-  AND sent_timestamp < '2023-04-02 00:00:00';
+    SELECT count(*) FROM policies
+    WHERE effective_date >= '2025-01-01'
+    AND effective_date < '2025-01-02';
 
 -- Partition Pruning
-SELECT count(*) FROM messages
-WHERE toYYYYMM(sent_timestamp) = 202304
-  AND chat_id = 100;
+SELECT count(*) FROM policies
+WHERE toYYYYMM(effective_date) = 202501
+  AND customer_id = 1001;
 
-SELECT count(*) FROM attachments
-WHERE toYYYYMM(uploaded_at) = 202304
+SELECT count(*) FROM claims
+WHERE toYYYYMM(reported_date) = 202501
 SETTINGS force_optimize_skip_unused_shards = 1;
 
 -- IN Clause Optimization
 -- Bad: Large inline list
-SELECT count(*) FROM messages
-WHERE chat_id IN (
-    100, 101, 102, 103, 104, 105, 106, 107, 108, 109
+SELECT count(*) FROM policies
+WHERE customer_id IN (
+    1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010
     /* hundreds more values */
 );
 
 -- Better: Use a temporary table
-WITH [100, 101, 102, 103, 104, 105, 106, 107, 108, 109] as ids
-SELECT count(*) FROM messages
-WHERE chat_id IN ids;
+WITH [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010] as customer_ids
+SELECT count(*) FROM policies
+WHERE customer_id IN customer_ids;
 
 -- =============================================
 -- JOIN Optimization
 -- =============================================
 
 -- Filter before joining
-SELECT m.chat_id, p.payment_amount
+SELECT p.customer_id, c.claim_amount
 FROM (
-    SELECT * FROM messages 
-    WHERE chat_id = 100 
-) AS m
-JOIN attachments p ON m.message_id = p.message_id;
+    SELECT * FROM policies 
+    WHERE customer_id = 1001 
+) AS p
+JOIN claims c ON p.policy_id = c.policy_id;
 
 -- Use JOIN hints
-SELECT m.chat_id, p.payment_amount
-FROM messages m
-JOIN /* LOCAL */ attachments p
-ON m.message_id = p.message_id
-WHERE m.chat_id = 100;
+SELECT p.customer_id, c.claim_amount
+FROM policies p
+JOIN /* LOCAL */ claims c
+ON p.policy_id = c.policy_id
+WHERE p.customer_id = 1001;
 
 -- JOIN for time-based matching
-SELECT m.user_id, m.sent_timestamp, a.payment_amount
-FROM messages m
-JOIN attachments a USING (message_id)
-JOIN users u USING (user_id)
-WHERE m.message_type = 'receipt'
-  AND m.sent_timestamp >= a.uploaded_at;
+SELECT p.customer_id, p.effective_date, c.claim_amount
+FROM policies p
+JOIN claims c
+USING (policy_id)
+JOIN customers cu
+ON p.customer_id = cu.customer_id
+WHERE c.claim_type = 'Death';
 
-SELECT * FROM messages LIMIT 10;
-SELECT * FROM users LIMIT 10;
-SELECT * FROM attachments LIMIT 10;
+SELECT * FROM policies LIMIT 10;
+SELECT * FROM customers LIMIT 10;
+SELECT * FROM claims LIMIT 10;
 
 -- JOIN Algorithm Selection
 
 -- Hash join (default, good for equality joins)
-SELECT toDate(invoice_date) AS invoice_date, sum(payment_amount) AS total_amount, payment_currency
-FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-GROUP BY invoice_date, payment_currency
+SELECT toDate(incident_date) AS incident_date, sum(claim_amount) AS total_amount, claim_type
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id
+GROUP BY incident_date, claim_type
 SETTINGS join_algorithm = 'hash', use_query_cache = true, query_cache_min_query_duration = 5000;
 
 -- Grace hash join (for large tables)
-SELECT toDate(invoice_date) AS invoice_date, sum(payment_amount) AS total_amount, payment_currency
-FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-GROUP BY invoice_date, payment_currency
+SELECT toDate(incident_date) AS incident_date, sum(claim_amount) AS total_amount, claim_type
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id
+GROUP BY incident_date, claim_type
 SETTINGS join_algorithm = 'grace_hash';
 
 -- Parallel hash join
-SELECT toDate(invoice_date) AS invoice_date, sum(payment_amount) AS total_amount, payment_currency
-FROM messages m
-JOIN attachments p ON m.message_id = p.message_id
-GROUP BY invoice_date, payment_currency
+SELECT toDate(incident_date) AS incident_date, sum(claim_amount) AS total_amount, claim_type
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id
+GROUP BY incident_date, claim_type
 SETTINGS join_algorithm = 'parallel_hash';
 
 -- Memory Management for JOINs
@@ -143,40 +145,42 @@ SET optimize_distributed_group_by_sharding_key = 1;
 -- Efficient Aggregation
 
 -- Use specialized aggregate functions
-SELECT uniq(user_id) FROM messages;
--- Instead of: SELECT count(DISTINCT user_id) FROM messages;
+SELECT uniq(customer_id) FROM policies;
+-- Instead of: SELECT count(DISTINCT customer_id) FROM policies;
 
 -- For quantiles
-SELECT quantileTDigest(0.95)(toFloat64(payment_amount)) FROM attachments;
+SELECT quantileTDigest(0.95)(toFloat64(coverage_amount)) FROM policies;
 
 -- Combine multiple aggregations
 SELECT
-    payment_status,
+    policy_type,
     count() AS count,
-    sum(payment_amount) AS total,
-    round(avg(payment_amount), 2) AS average
-FROM attachments
-GROUP BY payment_status;
+    sum(coverage_amount) AS total_coverage,
+    round(avg(premium_amount), 2) AS average_premium
+FROM policies
+WHERE status = 'Active'
+GROUP BY policy_type;
 
 -- GROUP BY Optimization
 SELECT
-    chat_id,
-    toDate(sent_timestamp) AS date,
-    count() AS message_count
-FROM messages
-WHERE chat_id IN (100, 101, 102)
-GROUP BY chat_id, date
-ORDER BY chat_id, date;
+    customer_id,
+    toDate(effective_date) AS date,
+    count() AS policy_count
+FROM policies
+WHERE customer_id IN (1001, 1002, 1003)
+GROUP BY customer_id, date
+ORDER BY customer_id, date;
 
 -- Use WITH TOTALS for summary rows
 SELECT
-    payment_currency,
-    payment_status,
-    sum(payment_amount) AS total
-FROM attachments
-GROUP BY payment_currency, payment_status
+    policy_type,
+    claim_status,
+    sum(claim_amount) AS total
+FROM policies p
+JOIN claims c ON p.policy_id = c.policy_id
+GROUP BY policy_type, claim_status
 WITH TOTALS
-ORDER BY payment_currency, payment_status;
+ORDER BY policy_type, claim_status;
 
 -- Memory Settings for Aggregation
 SET max_bytes_before_external_group_by = 2000000000;
@@ -189,46 +193,58 @@ SET group_by_overflow_mode = 'any';
 -- LIMIT Optimization
 
 -- Use LIMIT with ORDER BY
-SELECT * FROM messages
-WHERE chat_id = 100
-ORDER BY sent_timestamp DESC
+SELECT * FROM policies
+WHERE customer_id = 1001
+ORDER BY effective_date DESC
 LIMIT 100;
 
 -- Using LIMIT BY for top-N per group
 SELECT
-    user_id,
-    sent_timestamp,
-    content
-FROM messages
-ORDER BY user_id, sent_timestamp DESC
-LIMIT 5 BY user_id;
+    customer_id,
+    effective_date,
+    policy_number
+FROM policies
+ORDER BY effective_date DESC
+LIMIT 5 BY customer_id;
+
 
 -- Optimizing String Operations
 
 -- Bad
-SELECT count(*) FROM messages WHERE content LIKE '%payment%';
+SELECT count(*) FROM policy_documents WHERE file_path LIKE '%application%';
 
 -- Better - use a secondary index
-ALTER TABLE messages
-ADD INDEX content_idx content TYPE tokenbf_v1(512, 3, 0)
+ALTER TABLE policy_documents
+ADD INDEX file_path_idx file_path TYPE tokenbf_v1(512, 3, 0)
 GRANULARITY 4;
 
-DROP INDEX content_idx ON messages;
+DROP INDEX file_path_idx ON policy_documents;
 
 -- =============================================
 -- Query Cache
 -- =============================================
 
 -- Enable query cache (if supported in your version)
-SELECT some_expensive_calculation(column_1, column_2)
-FROM table
-SETTINGS use_query_cache = true, query_cache_min_query_duration = 5000;
+SELECT *
+FROM policies
+WHERE customer_id = 1001
+SETTINGS use_query_cache = true, query_cache_min_query_duration = 50000;
 
+
+ALTER TABLE policies ADD INDEX idx_customer_id customer_id TYPE minmax  GRANULARITY 1;
+
+SELECT 
+    table,
+    name as index_name,
+    type,
+    granularity
+FROM system.data_skipping_indices
+WHERE database = 'life_insurance'
+ORDER BY table, name;
 -- =============================================
 -- Kill Long-Running Query Example
 -- =============================================
 
-SELECT * FROM messages;
 
 SELECT
     query_id,
@@ -277,6 +293,7 @@ WHERE c.customer_id = 1001
   AND c._sign > 0
   AND p.status = 'Active';
 
+
 -- =============================================
 -- 2. WHERE Clause Optimization
 -- =============================================
@@ -316,6 +333,9 @@ WHERE claim_status IN ('Approved', 'Paid')
 
 -- Optimize JOIN order - put smallest table first
 -- Policy and claims analysis with proper JOIN order
+
+-- Bad
+
 SELECT 
     p.policy_type,
     count(p.policy_id) as policy_count,
@@ -326,7 +346,7 @@ FROM (
     SELECT policy_id, policy_type, coverage_amount
     FROM policies 
     WHERE status = 'Active'
-    AND effective_date >= '2024-01-01'
+    AND effective_date >= '2025-01-01'
 ) p
 LEFT JOIN (
     SELECT policy_id, claim_id, claim_amount
@@ -334,7 +354,8 @@ LEFT JOIN (
     WHERE _sign > 0
     AND claim_status IN ('Approved', 'Paid')
 ) c ON p.policy_id = c.policy_id
-GROUP BY p.policy_type;
+GROUP BY p.policy_type
+
 
 -- Use GLOBAL JOIN for distributed queries
 SELECT 
@@ -492,6 +513,22 @@ HAVING unique_customers > 10;
 -- 9. Query Performance Analysis
 -- =============================================
 
+-- Analyze table access patterns
+SELECT 
+    arrayJoin(tables) as table_name,
+    count(*) as query_count,
+    avg(read_rows) as avg_rows_read,
+    avg(query_duration_ms) as avg_duration_ms,
+    avg(memory_usage) as avg_memory_usage
+FROM system.query_log
+WHERE current_database = 'life_insurance'
+  AND type = 'QueryFinish'
+  AND event_time > now() - INTERVAL 1 DAY
+  AND length(tables) > 0
+GROUP BY table_name
+HAVING avg_rows_read > 1000 AND table_name != ''
+ORDER BY avg_duration_ms DESC;
+
 -- Analyze query execution plan
 EXPLAIN PLAN 
 SELECT 
@@ -506,7 +543,7 @@ WHERE c._sign > 0
   AND p.effective_date >= '2024-01-01'
 GROUP BY c.customer_type, p.policy_type;
 
--- Check query statistics
+-- Check query statistics for policy queries
 EXPLAIN SYNTAX
 SELECT 
     policy_id,
@@ -517,52 +554,10 @@ WHERE policy_number LIKE 'POL-2024%'
   AND coverage_amount > 500000;
 
 -- =============================================
--- 10. Optimization Best Practices Examples
+-- Insurance-Specific Query Optimizations
 -- =============================================
 
--- Efficient customer policy summary
-WITH customer_summary AS (
-    SELECT 
-        customer_id,
-        count() as policy_count,
-        sum(coverage_amount) as total_coverage,
-        sum(premium_amount) as total_premiums
-    FROM policies
-    WHERE status = 'Active'
-    GROUP BY customer_id
-),
-claim_summary AS (
-    SELECT 
-        p.customer_id,
-        count(c.claim_id) as claim_count,
-        sum(c.claim_amount) as total_claims
-    FROM policies p
-    LEFT JOIN claims c ON p.policy_id = c.policy_id AND c._sign > 0
-    WHERE p.status = 'Active'
-    GROUP BY p.customer_id
-)
-SELECT 
-    cu.customer_id,
-    cu.first_name,
-    cu.last_name,
-    cs.policy_count,
-    cs.total_coverage,
-    cs.total_premiums,
-    COALESCE(cls.claim_count, 0) as claim_count,
-    COALESCE(cls.total_claims, 0) as total_claims,
-    CASE 
-        WHEN cs.total_coverage > 0 
-        THEN COALESCE(cls.total_claims, 0) / cs.total_coverage * 100
-        ELSE 0 
-    END as claim_ratio_percent
-FROM customers cu
-JOIN customer_summary cs ON cu.customer_id = cs.customer_id
-LEFT JOIN claim_summary cls ON cu.customer_id = cls.customer_id
-WHERE cu._sign > 0
-ORDER BY cs.total_coverage DESC
-LIMIT 100;
-
--- Efficient agent performance report
+-- Efficient agent performance analysis
 SELECT 
     a.agent_id,
     a.first_name,
@@ -580,4 +575,80 @@ WHERE a._sign > 0
   AND p.effective_date >= '2024-01-01'
 GROUP BY a.agent_id, a.first_name, a.last_name, a.territory
 HAVING policies_sold > 0
-ORDER BY total_premiums DESC;
+ORDER BY total_premiums DESC    ;
+
+-- Claims analysis with proper optimization
+SELECT 
+    c.claim_type,
+    c.claim_status,
+    count() as claim_count,
+    sum(c.claim_amount) as total_claimed,
+    sum(c.approved_amount) as total_approved,
+    avg(c.claim_amount) as avg_claim_amount,
+    avg(dateDiff('day', c.incident_date, c.reported_date)) as avg_reporting_delay
+FROM claims c
+WHERE c._sign > 0
+  AND c.reported_date >= '2024-01-01'
+GROUP BY c.claim_type, c.claim_status
+ORDER BY total_claimed DESC;
+
+-- Customer policy portfolio analysis
+WITH customer_summary AS (
+    SELECT 
+        customer_id,
+        count() as policy_count,
+        sum(coverage_amount) as total_coverage,
+        sum(premium_amount) as total_premiums,
+        arrayReduce('groupUniqArray', [policy_type]) as policy_types
+    FROM policies
+    WHERE status = 'Active'
+    GROUP BY customer_id
+),
+claim_summary AS (
+    SELECT 
+        p.customer_id,
+        count(c.claim_id) as claim_count,
+        sum(c.claim_amount) as total_claims,
+        sum(c.approved_amount) as total_approved
+    FROM policies p
+    LEFT JOIN claims c ON p.policy_id = c.policy_id AND c._sign > 0
+    WHERE p.status = 'Active'
+    GROUP BY p.customer_id
+)
+SELECT 
+    cu.customer_id,
+    cu.first_name,
+    cu.last_name,
+    cu.customer_type,
+    cs.policy_count,
+    cs.total_coverage,
+    cs.total_premiums,
+    cs.policy_types,
+    COALESCE(cls.claim_count, 0) as claim_count,
+    COALESCE(cls.total_claims, 0) as total_claims,
+    COALESCE(cls.total_approved, 0) as total_approved,
+    CASE 
+        WHEN cs.total_coverage > 0 
+        THEN COALESCE(cls.total_claims, 0) / cs.total_coverage * 100
+        ELSE 0 
+    END as claim_ratio_percent
+FROM customers cu
+JOIN customer_summary cs ON cu.customer_id = cs.customer_id
+LEFT JOIN claim_summary cls ON cu.customer_id = cls.customer_id
+WHERE cu._sign > 0
+  AND cu.is_active = 1
+ORDER BY cs.total_coverage DESC
+LIMIT 100;
+
+-- Document processing optimization
+SELECT 
+    d.document_type,
+    count() as document_count,
+    sum(d.file_size) as total_file_size,
+    avg(d.file_size) as avg_file_size,
+    uniq(d.policy_id) as unique_policies
+FROM policy_documents d
+WHERE d._sign > 0
+  AND d.upload_date >= '2024-01-01'
+GROUP BY d.document_type
+ORDER BY document_count DESC;

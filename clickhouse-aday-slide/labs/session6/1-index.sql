@@ -21,8 +21,7 @@ SELECT
     name,
     rows,
     bytes_on_disk,
-    primary_key_bytes_in_memory,
-    marks_count
+    primary_key_bytes_in_memory
 FROM system.parts
 WHERE database = 'life_insurance' 
   AND table = 'policies'
@@ -66,14 +65,14 @@ ALTER TABLE claims ADD INDEX idx_incident_date incident_date TYPE minmax GRANULA
 -- =============================================
 
 -- Query to test policy number index
-SELECT 
-    policy_id,
-    customer_id,
-    policy_number,
-    coverage_amount,
-    status
-FROM policies
-WHERE policy_number = 'POL-2024-001';
+    SELECT 
+        policy_id,
+        customer_id,
+        policy_number,
+        coverage_amount,
+        status
+    FROM policies
+    WHERE policy_number = 'LIFE-2025-013';
 
 -- Query to test customer email index
 SELECT 
@@ -178,8 +177,7 @@ SELECT
     table,
     name as index_name,
     type,
-    granularity,
-    marks_count
+    granularity
 FROM system.parts
 JOIN system.data_skipping_indices ON 
     system.parts.database = system.data_skipping_indices.database AND
@@ -204,31 +202,67 @@ WHERE p.policy_number LIKE 'POL-2024%'
 -- =============================================
 
 -- Find tables that might benefit from additional indexes
+
 SELECT 
-    table,
+    table_name,
     count(*) as query_count,
     avg(read_rows) as avg_rows_read,
     avg(query_duration_ms) as avg_duration_ms
 FROM system.query_log
-WHERE database = 'life_insurance'
+ARRAY JOIN tables as table_name
+WHERE current_database = 'life_insurance'
   AND type = 'QueryFinish'
   AND event_time > now() - INTERVAL 1 DAY
-GROUP BY table
+  AND table_name != ''  -- Filter out empty table names
+GROUP BY table_name
 HAVING avg_rows_read > 1000
 ORDER BY avg_duration_ms DESC;
 
 -- Identify slow queries that might benefit from indexes
+
 SELECT 
-    query,
-    query_duration_ms,
+    arrayJoin(tables) as table_name,
+    count(*) as query_count,
+    avg(read_rows) as avg_rows_read,
+    avg(query_duration_ms) as avg_duration_ms
+FROM system.query_log
+WHERE current_database = 'life_insurance'
+  AND type = 'QueryFinish'
+  AND event_time > now() - INTERVAL 1 DAY
+  AND length(tables) > 0  -- Only queries that accessed tables
+GROUP BY table_name
+HAVING avg_rows_read > 1000 AND table_name != ''
+ORDER BY avg_duration_ms DESC;
+
+SELECT 
+    query_id,
+    user,
+    arrayJoin(tables) as table_name,
     read_rows,
     read_bytes,
-    memory_usage
+    query_duration_ms,
+    memory_usage,
+    query
 FROM system.query_log
-WHERE database = 'life_insurance'
+WHERE current_database = 'life_insurance'
   AND type = 'QueryFinish'
-  AND query_duration_ms > 1000
-  AND event_time > now() - INTERVAL 1 HOUR
+  AND event_time > now() - INTERVAL 1 DAY
+  AND length(tables) > 0
+  AND read_rows > 1000
 ORDER BY query_duration_ms DESC
-LIMIT 10;
+LIMIT 100;
 
+SELECT 
+    query_id,
+    tables as all_tables,          -- Original array
+    arrayJoin(tables) as table_name, -- Individual table
+    read_rows,
+    query_duration_ms,
+    formatDateTime(event_time, '%Y-%m-%d %H:%M:%S') as query_time
+FROM system.query_log
+WHERE current_database = 'life_insurance'
+  AND type = 'QueryFinish'
+  AND event_time > now() - INTERVAL 1 DAY
+  AND length(tables) > 0
+ORDER BY query_duration_ms DESC
+LIMIT 50;

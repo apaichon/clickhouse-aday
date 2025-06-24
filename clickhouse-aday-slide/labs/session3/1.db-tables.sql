@@ -115,6 +115,40 @@ ORDER BY (policy_id, customer_id, effective_date)
 SETTINGS index_granularity = 8192;
 
 
+-- Option 1: Customer-First Design (Recommended for Customer-Centric Queries)
+CREATE TABLE policies_optimized
+(
+    policy_id UUID,
+    customer_id UInt64,
+    agent_id UInt32,
+    policy_type Enum8('Term Life' = 1, 'Whole Life' = 2, 'Universal Life' = 3, 'Variable Life' = 4, 'Endowment' = 5),
+    policy_number String,
+    coverage_amount Decimal64(2),
+    premium_amount Decimal64(2),
+    deductible_amount Decimal64(2),
+    effective_date Date,
+    end_date Date,
+    status Enum8('Active' = 1, 'Lapsed' = 2, 'Terminated' = 3, 'Matured' = 4, 'Pending' = 5),
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    version UInt32 DEFAULT 1
+)
+ENGINE = ReplacingMergeTree(version)
+PARTITION BY (toYYYYMM(effective_date), policy_type)
+ORDER BY (customer_id, effective_date, policy_type, policy_id)  -- Customer-first ordering
+PRIMARY KEY (customer_id, effective_date)  -- Explicit primary key
+SETTINGS index_granularity = 8192;
+
+-- Option 2: Time-First Design (Recommended for Time-Based Queries)
+CREATE TABLE policies_time_optimized
+(
+    -- same columns as above
+)
+ENGINE = ReplacingMergeTree(version)
+PARTITION BY (toYYYYMM(effective_date), policy_type)
+ORDER BY (effective_date, customer_id, policy_type, policy_id)  -- Time-first ordering
+PRIMARY KEY (effective_date, customer_id)  -- Explicit primary key for time-based queries
+SETTINGS index_granularity = 8192;
 
 -- 6. Claims Table
 CREATE TABLE claims

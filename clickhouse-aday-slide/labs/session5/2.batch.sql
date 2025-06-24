@@ -41,7 +41,7 @@ SELECT
         'Corporate'
     ),
     concat('Beneficiary', toString(number), ',Spouse', toString(number))
-FROM numbers(1000);
+FROM numbers(1_000_000);
 
 -- Batch insert agents with territories
 INSERT INTO agents (
@@ -114,7 +114,12 @@ SELECT
         'Active'
     )
 FROM customers c
-WHERE c.customer_id >= 6000;
+WHERE c.customer_id >= 6000
+SETTINGS max_execution_time = 1800;
+
+
+
+
 
 -- =============================================
 -- 3. Batch Claims Generation
