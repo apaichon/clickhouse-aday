@@ -4,8 +4,8 @@ async function insertData() {
     const clickhouse = createClient({
         url: 'http://localhost:8123',
         database: 'life_insurance',
-        username: 'admin',
-        password: 'P@ssw0rd',
+        username: 'default',
+        password: 'default',
         compression: {
             response: true,
             request: false
@@ -26,12 +26,14 @@ async function insertData() {
             console.time(`Batch ${batch + 1}`);
 
             const query = `
+
                 INSERT INTO policies
                 (policy_id, customer_id, agent_id, policy_type, policy_number, coverage_amount, premium_amount, deductible_amount, effective_date, end_date, status, created_at, updated_at, version)
                 SELECT
                     generateUUIDv4() as policy_id,
                     toUInt64(rand() % 1000) as customer_id,
                     toUInt32(rand() % 10000) as agent_id,
+                    policy_type,
                     now() - toIntervalDay(rand() % 30) as effective_date,
                     CAST(
                         multiIf(
@@ -47,8 +49,6 @@ async function insertData() {
                     now() as updated_at,
                     1 as version
                 FROM numbers(${batchSize})
-
-    
             `;
 
             await clickhouse.exec({

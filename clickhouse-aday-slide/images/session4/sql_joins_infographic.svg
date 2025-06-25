@@ -1,0 +1,216 @@
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: 'Arial', sans-serif; font-size: 32px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: 'Arial', sans-serif; font-size: 18px; font-weight: bold; fill: #34495e; }
+      .text { font-family: 'Arial', sans-serif; font-size: 14px; fill: #2c3e50; }
+      .code { font-family: 'Courier New', monospace; font-size: 12px; fill: #e74c3c; }
+      .table-header { font-family: 'Arial', sans-serif; font-size: 12px; font-weight: bold; fill: white; }
+      .table-cell { font-family: 'Arial', sans-serif; font-size: 11px; fill: #2c3e50; }
+      .circle-a { fill: #3498db; fill-opacity: 0.7; stroke: #2980b9; stroke-width: 2; }
+      .circle-b { fill: #e74c3c; fill-opacity: 0.7; stroke: #c0392b; stroke-width: 2; }
+      .result-area { fill: #f1c40f; fill-opacity: 0.8; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="900" fill="#ecf0f1"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" class="title">SQL JOINs Visual Guide</text>
+  <text x="600" y="65" text-anchor="middle" class="text">Understanding how different JOIN types combine data from two tables</text>
+  
+  <!-- Sample Tables -->
+  <g id="sample-tables">
+    <text x="120" y="110" class="subtitle">Sample Data:</text>
+    
+    <!-- Table A: Users -->
+    <rect x="50" y="130" width="140" height="20" fill="#3498db" stroke="#2980b9"/>
+    <text x="120" y="145" text-anchor="middle" class="table-header">Users (Table A)</text>
+    
+    <rect x="50" y="150" width="70" height="15" fill="white" stroke="#bdc3c7"/>
+    <text x="85" y="162" text-anchor="middle" class="table-cell">ID</text>
+    <rect x="120" y="150" width="70" height="15" fill="white" stroke="#bdc3c7"/>
+    <text x="155" y="162" text-anchor="middle" class="table-cell">Name</text>
+    
+    <rect x="50" y="165" width="70" height="15" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="85" y="177" text-anchor="middle" class="table-cell">1</text>
+    <rect x="120" y="165" width="70" height="15" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="155" y="177" text-anchor="middle" class="table-cell">Alice</text>
+    
+    <rect x="50" y="180" width="70" height="15" fill="white" stroke="#bdc3c7"/>
+    <text x="85" y="192" text-anchor="middle" class="table-cell">2</text>
+    <rect x="120" y="180" width="70" height="15" fill="white" stroke="#bdc3c7"/>
+    <text x="155" y="192" text-anchor="middle" class="table-cell">Bob</text>
+    
+    <rect x="50" y="195" width="70" height="15" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="85" y="207" text-anchor="middle" class="table-cell">3</text>
+    <rect x="120" y="195" width="70" height="15" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="155" y="207" text-anchor="middle" class="table-cell">Charlie</text>
+    
+    <!-- Table B: Orders -->
+    <rect x="220" y="130" width="140" height="20" fill="#e74c3c" stroke="#c0392b"/>
+    <text x="290" y="145" text-anchor="middle" class="table-header">Orders (Table B)</text>
+    
+    <rect x="220" y="150" width="70" height="15" fill="white" stroke="#bdc3c7"/>
+    <text x="255" y="162" text-anchor="middle" class="table-cell">UserID</text>
+    <rect x="290" y="150" width="70" height="15" fill="white" stroke="#bdc3c7"/>
+    <text x="325" y="162" text-anchor="middle" class="table-cell">Product</text>
+    
+    <rect x="220" y="165" width="70" height="15" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="255" y="177" text-anchor="middle" class="table-cell">1</text>
+    <rect x="290" y="165" width="70" height="15" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="325" y="177" text-anchor="middle" class="table-cell">Laptop</text>
+    
+    <rect x="220" y="180" width="70" height="15" fill="white" stroke="#bdc3c7"/>
+    <text x="255" y="192" text-anchor="middle" class="table-cell">2</text>
+    <rect x="290" y="180" width="70" height="15" fill="white" stroke="#bdc3c7"/>
+    <text x="325" y="192" text-anchor="middle" class="table-cell">Mouse</text>
+    
+    <rect x="220" y="195" width="70" height="15" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="255" y="207" text-anchor="middle" class="table-cell">4</text>
+    <rect x="290" y="195" width="70" height="15" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="325" y="207" text-anchor="middle" class="table-cell">Phone</text>
+  </g>
+  
+  <!-- INNER JOIN -->
+  <g id="inner-join">
+    <text x="50" y="260" class="subtitle">1. INNER JOIN</text>
+    <text x="50" y="280" class="text">Returns only matching records from both tables</text>
+    
+    <!-- Venn Diagram -->
+    <circle cx="120" cy="320" r="35" class="circle-a"/>
+    <circle cx="150" cy="320" r="35" class="circle-b"/>
+    <path d="M 135 285 A 35 35 0 0 1 135 355 A 35 35 0 0 1 135 285" class="result-area" stroke="#f39c12" stroke-width="2"/>
+    
+    <text x="100" y="325" class="text" fill="white">A</text>
+    <text x="170" y="325" class="text" fill="white">B</text>
+    
+    <!-- SQL Code -->
+    <rect x="220" y="285" width="280" height="70" fill="#2c3e50" rx="5"/>
+    <text x="230" y="305" class="code" fill="#f1c40f">SELECT u.Name, o.Product</text>
+    <text x="230" y="320" class="code" fill="#f1c40f">FROM Users u</text>
+    <text x="230" y="335" class="code" fill="#f1c40f">INNER JOIN Orders o ON u.ID = o.UserID</text>
+    
+    <!-- Result -->
+    <text x="530" y="300" class="text" font-weight="bold">Result:</text>
+    <rect x="530" y="305" width="160" height="50" fill="white" stroke="#bdc3c7"/>
+    <text x="540" y="320" class="table-cell">Alice - Laptop</text>
+    <text x="540" y="335" class="table-cell">Bob - Mouse</text>
+  </g>
+  
+  <!-- LEFT JOIN -->
+  <g id="left-join">
+    <text x="50" y="400" class="subtitle">2. LEFT JOIN (LEFT OUTER JOIN)</text>
+    <text x="50" y="420" class="text">Returns all records from left table, matching from right</text>
+    
+    <!-- Venn Diagram -->
+    <circle cx="120" cy="460" r="35" class="circle-a result-area" stroke="#f39c12" stroke-width="2"/>
+    <circle cx="150" cy="460" r="35" class="circle-b"/>
+    
+    <text x="100" y="465" class="text">A</text>
+    <text x="170" y="465" class="text" fill="white">B</text>
+    
+    <!-- SQL Code -->
+    <rect x="220" y="425" width="280" height="70" fill="#2c3e50" rx="5"/>
+    <text x="230" y="445" class="code" fill="#f1c40f">SELECT u.Name, o.Product</text>
+    <text x="230" y="460" class="code" fill="#f1c40f">FROM Users u</text>
+    <text x="230" y="475" class="code" fill="#f1c40f">LEFT JOIN Orders o ON u.ID = o.UserID</text>
+    
+    <!-- Result -->
+    <text x="530" y="440" class="text" font-weight="bold">Result:</text>
+    <rect x="530" y="445" width="160" height="65" fill="white" stroke="#bdc3c7"/>
+    <text x="540" y="460" class="table-cell">Alice - Laptop</text>
+    <text x="540" y="475" class="table-cell">Bob - Mouse</text>
+    <text x="540" y="490" class="table-cell">Charlie - NULL</text>
+  </g>
+  
+  <!-- RIGHT JOIN -->
+  <g id="right-join">
+    <text x="50" y="540" class="subtitle">3. RIGHT JOIN (RIGHT OUTER JOIN)</text>
+    <text x="50" y="560" class="text">Returns all records from right table, matching from left</text>
+    
+    <!-- Venn Diagram -->
+    <circle cx="120" cy="600" r="35" class="circle-a"/>
+    <circle cx="150" cy="600" r="35" class="circle-b result-area" stroke="#f39c12" stroke-width="2"/>
+    
+    <text x="100" y="605" class="text" fill="white">A</text>
+    <text x="170" y="605" class="text">B</text>
+    
+    <!-- SQL Code -->
+    <rect x="220" y="565" width="280" height="70" fill="#2c3e50" rx="5"/>
+    <text x="230" y="585" class="code" fill="#f1c40f">SELECT u.Name, o.Product</text>
+    <text x="230" y="600" class="code" fill="#f1c40f">FROM Users u</text>
+    <text x="230" y="615" class="code" fill="#f1c40f">RIGHT JOIN Orders o ON u.ID = o.UserID</text>
+    
+    <!-- Result -->
+    <text x="530" y="580" class="text" font-weight="bold">Result:</text>
+    <rect x="530" y="585" width="160" height="65" fill="white" stroke="#bdc3c7"/>
+    <text x="540" y="600" class="table-cell">Alice - Laptop</text>
+    <text x="540" y="615" class="table-cell">Bob - Mouse</text>
+    <text x="540" y="630" class="table-cell">NULL - Phone</text>
+  </g>
+  
+  <!-- FULL OUTER JOIN -->
+  <g id="full-join">
+    <text x="50" y="680" class="subtitle">4. FULL OUTER JOIN</text>
+    <text x="50" y="700" class="text">Returns all records from both tables</text>
+    
+    <!-- Venn Diagram -->
+    <circle cx="120" cy="740" r="35" class="circle-a result-area" stroke="#f39c12" stroke-width="2"/>
+    <circle cx="150" cy="740" r="35" class="circle-b result-area" stroke="#f39c12" stroke-width="2"/>
+    
+    <text x="100" y="745" class="text">A</text>
+    <text x="170" y="745" class="text">B</text>
+    
+    <!-- SQL Code -->
+    <rect x="220" y="705" width="280" height="70" fill="#2c3e50" rx="5"/>
+    <text x="230" y="725" class="code" fill="#f1c40f">SELECT u.Name, o.Product</text>
+    <text x="230" y="740" class="code" fill="#f1c40f">FROM Users u</text>
+    <text x="230" y="755" class="code" fill="#f1c40f">FULL OUTER JOIN Orders o ON u.ID = o.UserID</text>
+    
+    <!-- Result -->
+    <text x="530" y="720" class="text" font-weight="bold">Result:</text>
+    <rect x="530" y="725" width="160" height="80" fill="white" stroke="#bdc3c7"/>
+    <text x="540" y="740" class="table-cell">Alice - Laptop</text>
+    <text x="540" y="755" class="table-cell">Bob - Mouse</text>
+    <text x="540" y="770" class="table-cell">Charlie - NULL</text>
+    <text x="540" y="785" class="table-cell">NULL - Phone</text>
+  </g>
+  
+  <!-- Legend -->
+  <g id="legend">
+    <rect x="750" y="130" width="400" height="200" fill="white" stroke="#bdc3c7" rx="10"/>
+    <text x="950" y="155" text-anchor="middle" class="subtitle">Key Points</text>
+    
+    <circle cx="770" cy="180" r="8" class="circle-a"/>
+    <text x="790" y="185" class="text">Table A (Left Table)</text>
+    
+    <circle cx="770" cy="205" r="8" class="circle-b"/>
+    <text x="790" y="210" class="text">Table B (Right Table)</text>
+    
+    <rect x="762" y="225" width="16" height="16" class="result-area" stroke="#f39c12" stroke-width="1"/>
+    <text x="790" y="237" class="text">Returned Data</text>
+    
+    <text x="770" y="265" class="text">• INNER: Only matching records</text>
+    <text x="770" y="280" class="text">• LEFT: All from A + matching from B</text>
+    <text x="770" y="295" class="text">• RIGHT: All from B + matching from A</text>
+    <text x="770" y="310" class="text">• FULL OUTER: All records from both</text>
+  </g>
+  
+  <!-- Tips Box -->
+  <g id="tips">
+    <rect x="750" y="350" width="400" height="180" fill="#3498db" fill-opacity="0.1" stroke="#3498db" rx="10"/>
+    <text x="950" y="375" text-anchor="middle" class="subtitle" fill="#3498db">Pro Tips</text>
+    
+    <text x="770" y="400" class="text">1. Use INNER JOIN for exact matches</text>
+    <text x="770" y="420" class="text">2. LEFT JOIN keeps all "main" table records</text>
+    <text x="770" y="440" class="text">3. Consider NULL values in outer joins</text>
+    <text x="770" y="460" class="text">4. JOIN conditions typically use = operator</text>
+    <text x="770" y="480" class="text">5. Multiple tables can be joined together</text>
+    <text x="770" y="500" class="text">6. Index JOIN columns for better performance</text>
+  </g>
+  
+  <!-- Footer -->
+  <text x="600" y="870" text-anchor="middle" class="text" fill="#7f8c8d">Understanding SQL JOINs is essential for combining data from multiple tables effectively</text>
+</svg>

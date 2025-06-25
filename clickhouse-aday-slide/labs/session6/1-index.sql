@@ -29,240 +29,102 @@ WHERE database = 'life_insurance'
 ORDER BY partition;
 
 -- =============================================
--- 2. Secondary Indexes
+-- 2. Time-based Indexing
 -- =============================================
 
--- Add secondary indexes for frequently queried columns
 
--- Customer email index for login/lookup queries
-ALTER TABLE customers ADD INDEX idx_customer_email email TYPE bloom_filter() GRANULARITY 1;
+CREATE TABLE policies_time_optimized
+(
+    -- same columns as above
+    policy_id UUID,
+    customer_id UInt64,
+    agent_id UInt32,
+    policy_type Enum8('Term Life' = 1, 'Whole Life' = 2, 'Universal Life' = 3, 'Variable Life' = 4, 'Endowment' = 5),
+    policy_number String,
+    coverage_amount Decimal64(2),
+    premium_amount Decimal64(2),
+    deductible_amount Decimal64(2),
+    effective_date Date,
+    end_date Date,
+    status Enum8('Active' = 1, 'Lapsed' = 2, 'Terminated' = 3, 'Matured' = 4, 'Pending' = 5),
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    version UInt32 DEFAULT 1
+)
+ENGINE = ReplacingMergeTree(version)
+PARTITION BY (toYYYYMM(effective_date), policy_type)
+ORDER BY (effective_date, customer_id, policy_type, policy_id)  -- Time-first ordering
+PRIMARY KEY (effective_date, customer_id)  -- Explicit primary key for time-based queries
+SETTINGS index_granularity = 8192;
 
--- Policy number index for policy lookup
-ALTER TABLE policies ADD INDEX idx_policy_number policy_number TYPE bloom_filter() GRANULARITY 1;
-
--- Agent license number index
-ALTER TABLE agents ADD INDEX idx_agent_license license_number TYPE bloom_filter() GRANULARITY 1;
-
--- Claim number index for claim tracking
-ALTER TABLE claims ADD INDEX idx_claim_number claim_number TYPE bloom_filter() GRANULARITY 1;
-
--- Coverage amount range index for policies
-ALTER TABLE policies ADD INDEX idx_coverage_amount coverage_amount TYPE minmax GRANULARITY 1;
-
--- Claim amount range index
-ALTER TABLE claims ADD INDEX idx_claim_amount claim_amount TYPE minmax GRANULARITY 1;
-
--- Premium amount range index
-ALTER TABLE policies ADD INDEX idx_premium_amount premium_amount TYPE minmax GRANULARITY 1;
-
--- Date range indexes
-ALTER TABLE policies ADD INDEX idx_effective_date effective_date TYPE minmax GRANULARITY 1;
-ALTER TABLE claims ADD INDEX idx_reported_date reported_date TYPE minmax GRANULARITY 1;
-ALTER TABLE claims ADD INDEX idx_incident_date incident_date TYPE minmax GRANULARITY 1;
-
--- =============================================
--- 3. Index Usage Analysis
--- =============================================
-
--- Query to test policy number index
-    SELECT 
-        policy_id,
-        customer_id,
-        policy_number,
-        coverage_amount,
-        status
-    FROM policies
-    WHERE policy_number = 'LIFE-2025-013';
-
--- Query to test customer email index
+-- Query using optimized primary key
 SELECT 
-    customer_id,
-    first_name,
-    last_name,
-    email,
-    customer_type
-FROM customers
-WHERE email = 'john.smith@email.com'
-  AND _sign > 0;
-
--- Query to test coverage amount range index
-SELECT 
-    policy_id,
-    policy_number,
-    customer_id,
-    coverage_amount,
-    policy_type
+    toDate(effective_date) AS date,
+    count() AS policies_issued
 FROM policies
-WHERE coverage_amount BETWEEN 500000 AND 1000000
-  AND status = 'Active';
+WHERE customer_id >= 1001 and customer_id <= 1000000
+  AND effective_date >= '2024-01-01'
+  AND effective_date < '2024-12-31'
+  AND policy_type = 'Term Life' 
+GROUP BY date
+ORDER BY date;
 
--- Query to test claim amount range with date filter
+-- Copy data to time-optimized table
+insert into policies_time_optimized
+select * from policies;
+
+-- Query using time-optimized table
 SELECT 
-    claim_id,
-    policy_id,
-    claim_number,
-    claim_amount,
-    claim_status,
-    reported_date
-FROM claims
-WHERE claim_amount > 100000
-  AND reported_date >= '2024-01-01'
-  AND _sign > 0;
+    toDate(effective_date) AS date,
+    count() AS policies_issued
+FROM policies_time_optimized
+WHERE customer_id >= 1001 and customer_id <= 1000000
+  AND effective_date >= '2024-01-01'
+  AND effective_date < '2024-12-31'
+  AND policy_type = 'Term Life' 
+GROUP BY date
+ORDER BY date;
 
 -- =============================================
--- 4. Index Performance Comparison
+-- 3. Skipping Indexing
 -- =============================================
 
--- Query without using indexes (force full scan)
-SELECT 
-    count(*) as total_policies,
-    avg(coverage_amount) as avg_coverage,
-    sum(premium_amount) as total_premiums
-FROM policies
-WHERE policy_type = 'Term Life'
-  AND status = 'Active';
+CREATE TABLE claims
+(
+    claim_id UUID,
+    policy_id UUID,
+    customer_id UInt64,
+    claim_type Enum8('Death' = 1, 'Disability' = 2, 'Maturity' = 3, 'Surrender' = 4, 'Loan' = 5),
+    claim_number String,
+    incident_date Date,
+    reported_date DateTime DEFAULT now(),
+    claim_amount Decimal64(2),
+    approved_amount Decimal64(2) DEFAULT 0,
+    claim_status Enum8('Reported' = 1, 'Under Review' = 2, 'Approved' = 3, 'Denied' = 4, 'Paid' = 5),
+    description String,
+    adjuster_id UInt32,
+    _sign Int8 DEFAULT 1
+)
+ENGINE = CollapsingMergeTree(_sign)
+PARTITION BY (toYYYYMM(reported_date), claim_status)
+ORDER BY (claim_id, policy_id, reported_date)
+SETTINGS index_granularity = 8192;
 
--- Query using primary key efficiently
-SELECT 
-    p.policy_id,
-    p.policy_number,
-    p.coverage_amount,
-    c.first_name,
-    c.last_name
-FROM policies p
-JOIN customers c ON p.customer_id = c.customer_id
-WHERE p.policy_id = '550e8400-e29b-41d4-a716-446655440000';
+ALTER TABLE claims
+ADD INDEX claim_status_idx claim_status TYPE set(0) GRANULARITY 4;
 
--- =============================================
--- 5. Composite Index Examples
--- =============================================
-
--- Add composite index for common query patterns
-ALTER TABLE policies ADD INDEX idx_customer_status_type (customer_id, status, policy_type) TYPE bloom_filter() GRANULARITY 1;
-
--- Add composite index for claims analysis
-ALTER TABLE claims ADD INDEX idx_policy_status_type (policy_id, claim_status, claim_type) TYPE bloom_filter() GRANULARITY 1;
-
--- Add composite index for agent performance queries
-ALTER TABLE policies ADD INDEX idx_agent_effective_date (agent_id, effective_date) TYPE minmax GRANULARITY 1;
-
--- Test composite index usage
-SELECT 
-    policy_id,
-    policy_number,
-    coverage_amount,
-    premium_amount
-FROM policies
-WHERE customer_id = 1001
-  AND status = 'Active'
-  AND policy_type = 'Term Life';
-
--- =============================================
--- 6. Index Maintenance and Monitoring
--- =============================================
-
--- Check index usage statistics
 SELECT 
     database,
-    table,
-    name,
-    type,
-    granularity
-FROM system.data_skipping_indices
-WHERE database = 'life_insurance'
-ORDER BY table, name;
-
--- Monitor index effectiveness
-SELECT 
     table,
     name as index_name,
     type,
     granularity
-FROM system.parts
-JOIN system.data_skipping_indices ON 
-    system.parts.database = system.data_skipping_indices.database AND
-    system.parts.table = system.data_skipping_indices.table
-WHERE system.parts.database = 'life_insurance'
-  AND system.parts.active = 1;
+FROM system.data_skipping_indices
+WHERE database = 'life_insurance' 
+  AND table = 'claims'
+ORDER BY name;
 
--- Analyze query performance with EXPLAIN
-EXPLAIN SYNTAX 
-SELECT 
-    p.policy_number,
-    p.coverage_amount,
-    c.claim_amount,
-    c.claim_status
-FROM policies p
-JOIN claims c ON p.policy_id = c.policy_id
-WHERE p.policy_number LIKE 'POL-2024%'
-  AND c.claim_amount > 50000;
 
--- =============================================
--- 7. Index Optimization Recommendations
--- =============================================
 
--- Find tables that might benefit from additional indexes
 
-SELECT 
-    table_name,
-    count(*) as query_count,
-    avg(read_rows) as avg_rows_read,
-    avg(query_duration_ms) as avg_duration_ms
-FROM system.query_log
-ARRAY JOIN tables as table_name
-WHERE current_database = 'life_insurance'
-  AND type = 'QueryFinish'
-  AND event_time > now() - INTERVAL 1 DAY
-  AND table_name != ''  -- Filter out empty table names
-GROUP BY table_name
-HAVING avg_rows_read > 1000
-ORDER BY avg_duration_ms DESC;
 
--- Identify slow queries that might benefit from indexes
-
-SELECT 
-    arrayJoin(tables) as table_name,
-    count(*) as query_count,
-    avg(read_rows) as avg_rows_read,
-    avg(query_duration_ms) as avg_duration_ms
-FROM system.query_log
-WHERE current_database = 'life_insurance'
-  AND type = 'QueryFinish'
-  AND event_time > now() - INTERVAL 1 DAY
-  AND length(tables) > 0  -- Only queries that accessed tables
-GROUP BY table_name
-HAVING avg_rows_read > 1000 AND table_name != ''
-ORDER BY avg_duration_ms DESC;
-
-SELECT 
-    query_id,
-    user,
-    arrayJoin(tables) as table_name,
-    read_rows,
-    read_bytes,
-    query_duration_ms,
-    memory_usage,
-    query
-FROM system.query_log
-WHERE current_database = 'life_insurance'
-  AND type = 'QueryFinish'
-  AND event_time > now() - INTERVAL 1 DAY
-  AND length(tables) > 0
-  AND read_rows > 1000
-ORDER BY query_duration_ms DESC
-LIMIT 100;
-
-SELECT 
-    query_id,
-    tables as all_tables,          -- Original array
-    arrayJoin(tables) as table_name, -- Individual table
-    read_rows,
-    query_duration_ms,
-    formatDateTime(event_time, '%Y-%m-%d %H:%M:%S') as query_time
-FROM system.query_log
-WHERE current_database = 'life_insurance'
-  AND type = 'QueryFinish'
-  AND event_time > now() - INTERVAL 1 DAY
-  AND length(tables) > 0
-ORDER BY query_duration_ms DESC
-LIMIT 50;

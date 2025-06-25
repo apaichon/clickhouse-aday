@@ -15,7 +15,7 @@ INSERT INTO customers (
     date_of_birth, address, city, state, zip_code, customer_type, beneficiaries
 ) 
 SELECT 
-    6000 + number,
+    10000 + number,
     concat('Customer', toString(number)),
     concat('LastName', toString(number)),
     concat('customer', toString(number), '@email.com'),
@@ -43,6 +43,7 @@ SELECT
     concat('Beneficiary', toString(number), ',Spouse', toString(number))
 FROM numbers(1_000_000);
 
+-- truncate table agents;
 -- Batch insert agents with territories
 INSERT INTO agents (
     agent_id, first_name, last_name, email, phone,
@@ -64,13 +65,14 @@ SELECT
     ),
     0.0200 + (number % 10) * 0.0010,
     today() - INTERVAL (number % 1000) DAY
-FROM numbers(50);
+FROM numbers(50000);
 
 -- =============================================
 -- 2. Batch Policy Generation
 -- =============================================
 
 -- Generate policies for customers
+-- truncate table policies;
 INSERT INTO policies (
     policy_id, customer_id, agent_id, policy_type, policy_number,
     coverage_amount, premium_amount, deductible_amount,
@@ -114,8 +116,9 @@ SELECT
         'Active'
     )
 FROM customers c
-WHERE c.customer_id >= 6000
+WHERE c.customer_id >= 10000
 SETTINGS max_execution_time = 1800;
+
 
 
 
@@ -126,6 +129,7 @@ SETTINGS max_execution_time = 1800;
 -- =============================================
 
 -- Generate sample claims for some policies
+-- truncate table claims;
 INSERT INTO claims (
     claim_id, policy_id, customer_id, claim_type, claim_number,
     incident_date, claim_amount, approved_amount, claim_status, 
@@ -174,7 +178,7 @@ FROM policies p
 WHERE p.customer_id >= 6000
   AND p.status = 'Active'
   AND (p.customer_id % 4) = 0  -- Only generate claims for 25% of policies
-LIMIT 250;
+LIMIT 1_000_000;
 
 -- =============================================
 -- 4. Batch Policy Documents Generation

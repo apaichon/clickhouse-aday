@@ -89,8 +89,6 @@ layout: image-right
 image: ./images/session1/stack-integration-graph.svg
 ---
 
-
-
 ## What is ClickHouse?
 
 - Open-source column-oriented DBMS
@@ -109,12 +107,9 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
-
-
 <div style="display: flex; justify-content: center; align-items: center; margin: 0.5rem auto;">
   <img src="./images/session1/database_architecture_infographic.svg" style="width: 100%; height: 500px;" />
 </div>
-
 
 ---
 layout: default
@@ -124,6 +119,18 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
+# Clickhouse Architecture
+<div style="display: flex; justify-content: center; align-items: center; margin: 0.5rem auto;">
+  <img src="./images/session1/overview-architecture.png" style="width: 100%; height: 420px;" />
+</div>
+
+---
+layout: default
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
 
 <div style="display: flex; justify-content: center; align-items: center; margin: -2rem auto;">
   <img src="./images/session1/clickhouse-features.svg" style="width: 90%; height: 500px;" />
@@ -5000,25 +5007,29 @@ layout: default
 
 ## Policies Table
 ```sql
-CREATE TABLE life_insurance.policies (
+CREATE TABLE policies
+(
+    -- same columns as above
     policy_id UUID,
     customer_id UInt64,
     agent_id UInt32,
+    policy_type Enum8('Term Life' = 1, 'Whole Life' = 2, 'Universal Life' = 3, 'Variable Life' = 4, 'Endowment' = 5),
     policy_number String,
-    policy_type Enum8(
-        'Term' = 1, 'Whole' = 2, 
-        'Universal' = 3, 'Variable' = 4
-    ),
     coverage_amount Decimal64(2),
     premium_amount Decimal64(2),
-    policy_status Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3),
+    deductible_amount Decimal64(2),
     effective_date Date,
-    sign Int8,
-    INDEX policy_type_idx policy_type TYPE bloom_filter GRANULARITY 1
-) ENGINE = CollapsingMergeTree(sign)
-PRIMARY KEY (policy_id)
-PARTITION BY toYYYYMM(effective_date)
-ORDER BY (policy_id, customer_id, effective_date);
+    end_date Date,
+    status Enum8('Active' = 1, 'Lapsed' = 2, 'Terminated' = 3, 'Matured' = 4, 'Pending' = 5),
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    version UInt32 DEFAULT 1
+)
+ENGINE = ReplacingMergeTree(version)
+PARTITION BY (toYYYYMM(effective_date), policy_type)
+ORDER BY (effective_date, customer_id, policy_type, policy_id)  -- Time-first ordering
+PRIMARY KEY (effective_date, customer_id)  -- Explicit primary key for time-based queries
+SETTINGS index_granularity = 8192;
 ```
 
 </div>
@@ -5026,29 +5037,26 @@ ORDER BY (policy_id, customer_id, effective_date);
 
 ## Claims Table
 ```sql
-CREATE TABLE life_insurance.claims (
+CREATE TABLE claims
+(
     claim_id UUID,
     policy_id UUID,
     customer_id UInt64,
-    claim_amount Decimal64(2),
-    claim_type Enum8(
-        'Death' = 1, 'Disability' = 2, 
-        'Maturity' = 3, 'Surrender' = 4
-    ),
-    claim_status Enum8(
-        'Submitted' = 1, 'Processing' = 2, 
-        'Approved' = 3, 'Paid' = 4, 'Denied' = 5
-    ),
+    claim_type Enum8('Death' = 1, 'Disability' = 2, 'Maturity' = 3, 'Surrender' = 4, 'Loan' = 5),
+    claim_number String,
     incident_date Date,
-    reported_date DateTime,
-    processed_date DateTime,
-    sign Int8,
-    INDEX claim_status_idx claim_status TYPE set(0) GRANULARITY 1,
-    INDEX claim_type_idx claim_type TYPE set(0) GRANULARITY 1
-) ENGINE = CollapsingMergeTree(sign)
-PRIMARY KEY (claim_id)
-PARTITION BY toYYYYMM(reported_date)
-ORDER BY (claim_id, policy_id, reported_date);
+    reported_date DateTime DEFAULT now(),
+    claim_amount Decimal64(2),
+    approved_amount Decimal64(2) DEFAULT 0,
+    claim_status Enum8('Reported' = 1, 'Under Review' = 2, 'Approved' = 3, 'Denied' = 4, 'Paid' = 5),
+    description String,
+    adjuster_id UInt32,
+    _sign Int8 DEFAULT 1
+)
+ENGINE = CollapsingMergeTree(_sign)
+PARTITION BY (toYYYYMM(reported_date), claim_status)
+ORDER BY (claim_id, policy_id, reported_date)
+SETTINGS index_granularity = 8192;
 ```
 
 </div>
@@ -5071,19 +5079,30 @@ layout: default
 
 ## Primary Key (Sparse Index)
 ```sql{all|9|all}
--- Primary key defined by ORDER BY
-CREATE TABLE policies (
+-- Primary Key is Sparse Index
+CREATE TABLE policies_time_optimized
+(
+    -- same columns as above
     policy_id UUID,
     customer_id UInt64,
     agent_id UInt32,
+    policy_type Enum8('Term Life' = 1, 'Whole Life' = 2, 'Universal Life' = 3, 'Variable Life' = 4, 'Endowment' = 5),
     policy_number String,
-    policy_type Enum8('Term'=1, 'Whole'=2, 
-                    'Universal'=3, 'Variable'=4),
     coverage_amount Decimal64(2),
-    /* other fields */
-) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(effective_date)
-ORDER BY (customer_id, effective_date);
+    premium_amount Decimal64(2),
+    deductible_amount Decimal64(2),
+    effective_date Date,
+    end_date Date,
+    status Enum8('Active' = 1, 'Lapsed' = 2, 'Terminated' = 3, 'Matured' = 4, 'Pending' = 5),
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    version UInt32 DEFAULT 1
+)
+ENGINE = ReplacingMergeTree(version)
+PARTITION BY (toYYYYMM(effective_date), policy_type)
+ORDER BY (effective_date, customer_id, policy_type, policy_id)  -- Time-first ordering
+PRIMARY KEY (effective_date, customer_id)  -- Explicit primary key for time-based queries
+SETTINGS index_granularity = 8192;
 
 -- Primary key doesn't have to match ORDER BY
 -- But it usually should
@@ -5198,29 +5217,35 @@ layout: default
 ## Primary Key Optimization
 ```sql{all|4-5|all}
 -- Optimizing policies table primary key
-CREATE TABLE life_insurance.policies_optimized (
+CREATE TABLE policies_time_optimized
+(
+    -- same columns as above
     policy_id UUID,
     customer_id UInt64,
     agent_id UInt32,
+    policy_type Enum8('Term Life' = 1, 'Whole Life' = 2, 'Universal Life' = 3, 'Variable Life' = 4, 'Endowment' = 5),
     policy_number String,
-    policy_type Enum8(
-        'Term' = 1, 'Whole' = 2, 
-        'Universal' = 3, 'Variable' = 4
-    ),
     coverage_amount Decimal64(2),
     premium_amount Decimal64(2),
-    policy_status Enum8('Active'=1, 'Lapsed'=2, 'Terminated'=3),
+    deductible_amount Decimal64(2),
     effective_date Date,
-    sign Int8
-) ENGINE = CollapsingMergeTree(sign)
-PARTITION BY toYYYYMM(effective_date)
-ORDER BY (customer_id, toStartOfMonth(effective_date), policy_type, agent_id);
+    end_date Date,
+    status Enum8('Active' = 1, 'Lapsed' = 2, 'Terminated' = 3, 'Matured' = 4, 'Pending' = 5),
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    version UInt32 DEFAULT 1
+)
+ENGINE = ReplacingMergeTree(version)
+PARTITION BY (toYYYYMM(effective_date), policy_type)
+ORDER BY (effective_date, customer_id, policy_type, policy_id)  -- Time-first ordering
+PRIMARY KEY (effective_date, customer_id)  -- Explicit primary key for time-based queries
+SETTINGS index_granularity = 8192;
 
 -- Query using optimized primary key
 SELECT 
     toDate(effective_date) AS date,
     count() AS policies_issued
-FROM policies_optimized
+FROM policies_time_optimized
 WHERE customer_id = 1001
   AND effective_date >= '2024-01-01'
   AND effective_date < '2024-12-31'
@@ -5234,47 +5259,23 @@ ORDER BY date;
 
 ## Skip Index Recommendations
 ```sql{all|10-12|all}
--- Optimized claims with strategic indexes
-CREATE TABLE life_insurance.claims_optimized (
-    claim_id UUID CODEC(ZSTD(1)),
-    policy_id UUID CODEC(ZSTD(1)),
-    customer_id UInt64 CODEC(Delta, ZSTD(1)),
-    claim_amount Decimal64(2) CODEC(Delta, ZSTD(1)),
-    claim_type Enum8(
-        'Death' = 1, 'Disability' = 2, 
-        'Maturity' = 3, 'Surrender' = 4
-    ) CODEC(ZSTD(1)),
-    claim_status Enum8(
-        'Submitted' = 1, 'Processing' = 2, 
-        'Approved' = 3, 'Paid' = 4, 'Denied' = 5
-    ) CODEC(ZSTD(1)),
-    incident_date Date CODEC(Delta, ZSTD(1)),
-    reported_date DateTime CODEC(Delta, ZSTD(1)),
-    processed_date DateTime CODEC(Delta, ZSTD(1)),
-    sign Int8 CODEC(ZSTD(1)),
-    
-    -- Improved indexes
-    INDEX claim_status_idx claim_status TYPE set(0) GRANULARITY 1,
-    INDEX claim_type_idx claim_type TYPE set(0) GRANULARITY 1,
-    INDEX claim_amount_idx claim_amount TYPE minmax GRANULARITY 1,
-    INDEX customer_idx customer_id TYPE minmax GRANULARITY 1
-) ENGINE = CollapsingMergeTree(sign)
-PARTITION BY toYYYYMM(reported_date)
-ORDER BY (policy_id, reported_date, claim_id, sign)
-SETTINGS 
-    index_granularity = 8192,
-    min_bytes_for_wide_part = 10485760,
-    enable_mixed_granularity_parts = 1;
+ALTER TABLE claims
+ADD INDEX claim_status_idx claim_status TYPE set(0) GRANULARITY 4;
 
--- Analyzing the effectiveness of indexes
-SELECT
+SELECT 
+    database,
+    table,
+    name as index_name,
     type,
-    name,
-    data_uncompressed_bytes,
-    data_compressed_bytes,
-    data_compressed_bytes / data_uncompressed_bytes as ratio
+    granularity
 FROM system.data_skipping_indices
-WHERE table = 'claims_optimized';
+WHERE database = 'life_insurance' 
+  AND table = 'claims'
+ORDER BY name;
+
+SELECT  count(*) FROM claims 
+WHERE claim_status = 'Approved';
+
 ```
 
 </div>
