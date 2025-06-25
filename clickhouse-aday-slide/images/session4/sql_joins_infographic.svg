@@ -14,7 +14,7 @@
   </defs>
   
   <!-- Background -->
-  <rect width="1200" height="900" fill="#ecf0f1"/>
+  <rect width="1200" height="900" fill="#ffffff"/>
   
   <!-- Title -->
   <text x="600" y="40" text-anchor="middle" class="title">SQL JOINs Visual Guide</text>

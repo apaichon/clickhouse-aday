@@ -33,6 +33,3 @@ DEFAULT DATABASE life_insurance
 SETTINGS readonly = 2, -- Can change session settings
          max_result_rows = 1000000,
          max_execution_time = 300; -- 5 minutes
-
-
-Show Tables

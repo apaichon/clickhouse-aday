@@ -15,7 +15,7 @@ INSERT INTO customers (
     date_of_birth, address, city, state, zip_code, customer_type, beneficiaries
 ) 
 SELECT 
-    10000 + number,
+    1000999 + number,
     concat('Customer', toString(number)),
     concat('LastName', toString(number)),
     concat('customer', toString(number), '@email.com'),
@@ -50,7 +50,7 @@ INSERT INTO agents (
     license_number, territory, commission_rate, hire_date
 )
 SELECT 
-    600 + number,
+    5000 + number,
     concat('Agent', toString(number)),
     concat('AgentLast', toString(number)),
     concat('agent', toString(number), '@insurance.com'),
@@ -81,7 +81,7 @@ INSERT INTO policies (
 SELECT 
     generateUUIDv4(),
     c.customer_id,
-    600 + (c.customer_id % 50),  -- Assign to available agents
+    50000 + (c.customer_id % 50000),  -- Assign to available agents
     multiIf(
         (c.customer_id % 5) = 0, 'Term Life',
         (c.customer_id % 5) = 1, 'Whole Life',
@@ -130,6 +130,7 @@ SETTINGS max_execution_time = 1800;
 
 -- Generate sample claims for some policies
 -- truncate table claims;
+
 INSERT INTO claims (
     claim_id, policy_id, customer_id, claim_type, claim_number,
     incident_date, claim_amount, approved_amount, claim_status, 
@@ -178,7 +179,7 @@ FROM policies p
 WHERE p.customer_id >= 6000
   AND p.status = 'Active'
   AND (p.customer_id % 4) = 0  -- Only generate claims for 25% of policies
-LIMIT 1_000_000;
+LIMIT 100000;
 
 -- =============================================
 -- 4. Batch Policy Documents Generation
@@ -217,6 +218,29 @@ SELECT
 FROM policies p
 WHERE p.customer_id >= 6000
   AND p.status IN ('Active', 'Pending');
+
+-- Remove existing backup if it exists
+-- DROP TABLE IF EXISTS system.backups WHERE name = 'daily_backup_2025_06_25_2';
+
+-- Optimized backup with longer timeout and compression
+BACKUP DATABASE life_insurance 
+TO Disk('backups', 'life_insurance2.tar')
+SETTINGS 
+    max_execution_time = 900,           -- 15 minutes timeout
+    backup_threads = 4,                  -- Use multiple threads
+    compression_method = 'lz4',          -- Fast compression
+    compression_level = 1;               -- Low compression for speed
+
+SELECT * FROM system.backups;
+
+ALTER TABLE system.backups DELETE WHERE name = 'life_insurance2.tar';
+
+ALTER TABLE life_insurance.customers FREEZE;
+ALTER TABLE life_insurance.agents FREEZE;
+ALTER TABLE life_insurance.policies FREEZE;
+ALTER TABLE life_insurance.claims FREEZE;
+ALTER TABLE life_insurance.policy_documents FREEZE;
+
 
 -- =============================================
 -- 5. Performance Monitoring for Batch Operations

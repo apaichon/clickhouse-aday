@@ -1571,6 +1571,19 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
+<div style="display: flex; justify-content: center; align-items: center; margin:0rem auto;">
+  <img src="./images/session2/clickhouse_dual_view_svg.svg" style="width: 90%; height: 450px;" />
+</div>
+
+
+---
+layout: default
+---
+
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
 ## 2.5 Table engines 
 <div style="display: flex; justify-content: center; align-items: center; margin:0rem auto;">
   <img src="./images/session2/clickhouse-mergetree-engines-1024x768.svg" style="width: 90%; height: 450px;" />
@@ -2058,7 +2071,7 @@ layout: two-cols
 
 # Table Creation: Policies
 
-```sql{all|1|3-17|6|8-10|12-13|16|all}
+```sql
 USE life_insurance;
 
 CREATE TABLE policies (
@@ -2112,7 +2125,7 @@ layout: two-cols
 
 # Table Creation: Claims
 
-```sql{all|1-12|4-7|10|14-15|17|all}
+```sql
 CREATE TABLE life_insurance.claims (
     claim_id UUID,
     policy_id UUID,
@@ -2177,7 +2190,7 @@ layout: two-cols
 
 # Basic INSERT Syntax
 
-```sql{all|1-4|6-13|15-20|all}
+```sql
 -- Basic syntax
 INSERT INTO table_name 
 (column1, column2, ...)
@@ -2227,7 +2240,7 @@ layout: default
 # Inserting Claims Data
 <div style="height:500px; overflow-y:auto">
 
-```sql{all|1-11|13-22|all}
+```sql
 -- Insert multiple claim records
 INSERT INTO claims VALUES
     (generateUUIDv4(), generateUUIDv4(), 1001, 'Death', 'CLM-2025-001', toDate('2025-04-01'), parseDateTimeBestEffort('2025-04-01 10:00:00'), 500000, 500000, 'Paid', 'Death benefit claim', 301, 1),
@@ -2279,7 +2292,7 @@ layout: default
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-```sql{all|1|2|3|all}
+```sql
 SELECT *
 FROM policies
 LIMIT 5;
@@ -2341,7 +2354,7 @@ layout: default
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-```sql{all|1-6|8-13|15-21|all}
+```sql
 -- Get all active policies
 SELECT 
     policy_id, 
@@ -2375,7 +2388,7 @@ LIMIT 10;
 </div>
 <div>
 
-```sql{all|1-7|9-14|all}
+```sql
 -- Join policies with claims data
 SELECT 
     p.policy_number,
@@ -2422,7 +2435,7 @@ layout: default
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-```sql{all|2|3|4|6-14|all}
+```sql
 SELECT * FROM policies 
 WHERE status = 'Active'
   AND coverage_amount > 500000
@@ -2445,7 +2458,7 @@ WHERE toYYYYMM(effective_date) = 202506
 </div>
 <div>
 
-```sql{all|2-4|6-9|11-15|all}
+```sql
 -- Multiple conditions
 SELECT * FROM claims
 WHERE claim_type IN ('Death', 'Disability')
@@ -2487,7 +2500,7 @@ layout: two-cols
 
 # Advanced Filtering Examples
 
-```sql{all|1-5|7-12|14-20|all}
+```sql
 -- Finding large claims
 SELECT * FROM claims
 WHERE claim_amount > 100000
@@ -2551,7 +2564,7 @@ layout: default
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-```sql{all|4|8-12|all}
+```sql
 -- Simple sorting
 SELECT * FROM policies
 WHERE status = 'Active'
@@ -2570,7 +2583,7 @@ LIMIT 20;
 </div>
 <div>
 
-```sql{all|2-4|8-13|all}
+```sql
 -- Order by premium amounts
 SELECT * FROM policies
 ORDER BY policy_type ASC, 
@@ -2685,7 +2698,7 @@ layout: two-cols
 # Basic Aggregation
 
 <div style="height:400px;overflow-y:auto">
-```sql{all|1-6|8-14|16-23|all}
+```sql
 -- Count, sum, average
 SELECT
     count() AS total_policies,
@@ -2746,7 +2759,7 @@ layout: default
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-```sql{all|2-5|7-15|all}
+```sql
 -- Policy status distribution
 SELECT 
     status as policy_status,
@@ -2770,7 +2783,7 @@ ORDER BY year, month, policy_type;
 </div>
 <div>
 
-```sql{all|1-9|11-18|all}
+```sql
 -- Claims by customer
 SELECT 
     c.customer_id,
@@ -2808,7 +2821,7 @@ layout: default
 <div class="grid grid-cols-2 gap-4" >
 <div>
 
-```sql{all|2-8|10-17|all}
+```sql
 -- Daily policy issuance
 SELECT 
     toDate(effective_date) AS date,
@@ -2833,7 +2846,7 @@ ORDER BY week_start DESC, claim_type;
 </div>
 <div style="height:350px;overflow-y:auto">
 
-```sql{all|2-11|13-21|all}
+```sql
 -- Claims processing efficiency by month
 SELECT 
     toStartOfMonth(reported_date) AS month,
@@ -2875,7 +2888,7 @@ layout: default
 <div class="grid grid-cols-2 gap-4">
 <div>
 
-```sql{all|6|7-12|all}
+```sql
 -- ROLLUP for hierarchical summaries
 SELECT 
     policy_type,
@@ -2894,7 +2907,7 @@ ORDER BY
 </div>
 <div>
 
-```sql{all|7|9-13|all}
+```sql
 -- Using HAVING to filter groups
 SELECT 
     policy_type,
@@ -3191,13 +3204,27 @@ layout: default
 <SlideCurrentNo /> / <SlidesTotal />
 </div>
 
+
+
+<div style="display: flex; justify-content: center; align-items: center; margin:0rem auto;">
+  <img src="./images/session4/sql_joins_infographic.svg" style="width: 90%; height: 500px;" />
+</div>
+
+---
+layout: default
+---
+<div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.8em; opacity: 0.6;">
+<SlideCurrentNo /> / <SlidesTotal />
+</div>
+
+
 # Basic JOIN Types
 
 <div class="grid grid-cols-2 gap-4">
 <div>
 
 ## INNER JOIN
-```sql{all|1-2|3|4-6|all}
+```sql
 -- Match policies with their claims
 SELECT p.policy_id, p.customer_id, p.policy_number, 
        c.claim_amount, c.claim_type
@@ -3207,7 +3234,7 @@ ON p.policy_id = c.policy_id;
 ```
 
 ## LEFT JOIN
-```sql{all|3|4-6|all}
+```sql
 -- Get all policies and any claims
 SELECT p.policy_id, p.policy_number, 
        c.claim_amount, c.claim_status
@@ -3220,7 +3247,7 @@ ON p.policy_id = c.policy_id;
 <div>
 
 ## RIGHT JOIN
-```sql{all|4-6|all}
+```sql
 -- Get all claims and their policies
 SELECT p.policy_id, p.policy_number, 
        c.claim_amount, c.claim_status
@@ -3231,7 +3258,7 @@ LIMIT 100;
 ```
 
 ## FULL JOIN
-```sql{all|4-6|all}
+```
 -- Get all policies and all claims
 SELECT p.policy_id, p.policy_number, 
        c.claim_id, c.claim_amount
@@ -3255,7 +3282,7 @@ layout: two-cols
 
 <div style="height:400px;overflow-y:auto;">
 
-```sql{all|1-2|4-10|12-14|all}
+```sql
 -- Claims data with policy and customer information
 SELECT 
     -- Customer information
@@ -3321,7 +3348,7 @@ layout: default
 <div>
 
 ## CROSS JOIN
-```sql{all|3-5|all}
+```sql
 -- All possible combinations of policy types and agents
 SELECT pt.policy_type, a.agent_id, a.first_name
 FROM 
@@ -3332,7 +3359,7 @@ CROSS JOIN
 ```
 
 ## JOIN with USING
-```sql{all|4|all}
+```sql
 -- Simplified join syntax when column names match
 SELECT p.policy_number, p.customer_id, c.claim_amount
 FROM policies p
@@ -3344,7 +3371,7 @@ USING (policy_id);
 <div>
 
 ## JOIN with Complex Conditions
-```sql{all|4-6|all}
+```sql
 
 -- Matching claims within policy coverage period
 SELECT p.policy_id, p.effective_date, p.policy_number, c.claim_amount, c.incident_date
@@ -3355,7 +3382,7 @@ ON c.policy_id = p.policy_id
 ```
 
 ## ARRAY JOIN
-```sql{all|2-3|all}
+```sql
 -- Explode beneficiary arrays into rows
 SELECT customer_id, beneficiary
 FROM customers
@@ -3383,7 +3410,7 @@ layout: default
 <div>
 
 ## Monthly Premium Collection by Agent
-```sql{all|1-5|7-11|13-15|all}
+```sql
 SELECT 
     toStartOfMonth(p.effective_date) AS month,
     a.agent_id,
@@ -3405,7 +3432,7 @@ ORDER BY month DESC, total_premiums DESC;
 <div>
 
 ## Customer Policy History with Claims
-```sql{all|1-8|10-13|15-16|all}
+```sql
 SELECT 
     c.first_name,
     c.last_name,
@@ -3461,7 +3488,7 @@ layout: two-cols
 
 <div style="height:400px;overflow-y:auto;">
 
-```sql{all|6-9|11-14|16-18|20|all}
+```sql
 -- Basic window function example
 SELECT 
     policy_type,
@@ -3521,7 +3548,7 @@ layout: default
 <div>
 
 ## Ranking Functions
-```sql{all|4-8|10-14|16-20|all}
+```sql
 SELECT 
     policy_type,
     coverage_amount,
@@ -3552,7 +3579,7 @@ WHERE status = 'Active'
 <div>
 
 ## Row Position Functions
-```sql{all|4-8|10-15|17-22|all}
+```sql
 SELECT 
     policy_type,
     effective_date,
@@ -3602,7 +3629,7 @@ layout: default
 <div>
 
 ## Running Aggregates
-```sql{all|4-8|10-14|all}
+```sql
 SELECT 
     toDate(effective_date) AS date,
     policy_type,
@@ -3628,7 +3655,7 @@ ORDER BY policy_type, date;
 <div>
 
 ## Moving Averages
-```sql{all|4-9|11-16|all}
+```sql
 SELECT 
     toDate(effective_date) AS date,
     policy_type,
@@ -3671,7 +3698,7 @@ layout: default
 <div>
 
 ## Policy Issuance Trend Analysis
-```sql{all|1-6|8-13|15-20|all}
+```sql
 SELECT 
     toDate(p.effective_date) AS date,
     p.policy_type,
@@ -3705,7 +3732,7 @@ ORDER BY p.policy_type, date;
 <div>
 
 ## Customer Policy Pattern Analysis
-```sql{all|1-4|6-11|13-19|all}
+```sql
 SELECT 
     c.customer_id,
     c.first_name,
@@ -3761,7 +3788,7 @@ layout: two-cols
 
 # Subquery Basics
 
-```sql{all|2-5|7-11|13-16|all}
+```sql
 -- Subquery in WHERE clause
 SELECT *
 FROM policies
@@ -3818,7 +3845,7 @@ layout: default
 <div>
 
 ## Correlated Subqueries
-```sql{all|5-9|all}
+```sql
 -- Find policies above average for their type
 SELECT 
     p1.policy_type,
@@ -3837,7 +3864,7 @@ LIMIT 100;
 ```
 
 ## Subqueries with EXISTS
-```sql{all|5-9|all}
+```sql
 -- Find customers who have filed claims
 SELECT DISTINCT
     c.customer_id,
@@ -3853,7 +3880,7 @@ ORDER BY c.customer_id;
 <div>
 
 ## Subqueries with IN
-```sql{all|5-10|all}
+```sql
 -- Find policies with approved claims
 SELECT 
     policy_id,
@@ -3869,7 +3896,7 @@ WHERE policy_id IN (
 ```
 
 ## Subqueries with ANY/ALL
-```sql{all|5-9|all}
+```sql
 -- Find claims greater than ANY Term policy premium
 SELECT 
     claim_type,
@@ -3902,7 +3929,7 @@ layout: default
 <div>
 
 ## Top Customers by Coverage by Policy Type
-```sql{all|1-7|9-17|all}
+```sql
 -- Find top 3 customers by total coverage for each policy type
 SELECT 
     type_ranking.policy_type,
@@ -3934,7 +3961,7 @@ ORDER BY type_ranking.policy_type, type_ranking.type_rank;
 <div>
 
 ## Claims Above Daily Average
-```sql{all|1-8|10-16|all}
+```sql
 -- Find claims that exceed the daily average by 50%+
 SELECT c1.*, p.policy_number, cu.first_name
 FROM (
@@ -3981,7 +4008,7 @@ layout: two-cols
 
 # CTE Basics
 
-```sql{all|1-5|7-13|15-19|all}
+```sql
 -- Basic WITH clause example
 WITH avg_by_policy_type AS (
     SELECT policy_type, avg(premium_amount) AS avg_premium
@@ -4037,7 +4064,7 @@ layout: default
 <div>
 
 ## Multiple CTEs
-```sql{all|1-5|7-12|14-19|21-27|all}
+```sql
 -- Calculate daily policy issuance
 WITH daily_policies AS (
     SELECT toDate(effective_date) AS date, count() AS policies_issued
@@ -4071,7 +4098,7 @@ ORDER BY d.date;
 <div>
 
 ## Chained CTEs
-```sql{all|1-6|8-15|17-25|all}
+```sql
 -- Step 1: Get policy data by customer
 WITH customer_policies AS (
     SELECT customer_id, coverage_amount, premium_amount, policy_type
@@ -4123,7 +4150,7 @@ layout: default
 <div>
 
 ## Monthly Policy Performance Trends
-```sql{all|1-10|12-22|24-33|all}
+```sql
 -- Step 1: Calculate monthly totals by policy type
 WITH monthly_by_type AS (
     SELECT 
@@ -4185,7 +4212,7 @@ ORDER BY month DESC, policy_type;
 <div>
 
 ## Customer Risk Cohort Analysis
-```sql{all|1-9|11-20|22-31|all}
+```sql
 -- Step 1: Get customer's first policy month
 WITH customer_first_policy AS (
     SELECT 
@@ -4302,7 +4329,7 @@ layout: default
 <div>
 
 ## INSERT FROM SELECT
-```sql{all|1-7|all}
+```sql
 -- Copy data from one table to another
 CREATE TABLE claims_backup AS claims;
 
@@ -4328,7 +4355,7 @@ layout: default
 
 # Batch Insert Best Practices
 <div style="height:400px; overflow-y:auto;">
-```sql{all|1-8|10-11|13-17|all}
+```sql
 -- Prepare a large batch of policies
 INSERT INTO policies
 (policy_id, customer_id, agent_id, policy_number, policy_type, coverage_amount, premium_amount, deductible_amount, effective_date, end_date, status, created_at, updated_at, version)
@@ -4373,7 +4400,7 @@ layout: default
 
 ## Monitoring Batch Operations
 <div style="height:350px; overflow-y:auto;">
-```sql{all|2-8|10-18|all}
+```sql
 -- Check recent insertion performance
 SELECT
     query_start_time,
@@ -4420,7 +4447,7 @@ layout: two-cols
 
 # Understanding Duplication Challenges
 
-```sql{all|1-8|10-17|all}
+```sql
 -- Check for duplicate policies
 SELECT
     policy_id,
@@ -4479,7 +4506,7 @@ layout: default
 <div>
 
 ## Basic Implementation
-```sql{all|1-10|12-16|all}
+```sql
 -- Using ReplacingMergeTree for claims
 CREATE TABLE claims_dedup
 (
@@ -4529,7 +4556,7 @@ ORDER BY claim_id;
 <div>
 
 ## Force Merge for Deduplication
-```sql{all|2|all}
+```sql
 -- Trigger merges to eliminate duplicates
 OPTIMIZE TABLE claims_dedup FINAL;
 
@@ -4543,7 +4570,7 @@ HAVING count > 1;
 ```
 
 ## Limitations
-```sql{all|1-9|11-15|all}
+```sql
 -- ReplacingMergeTree doesn't guarantee deduplication
 -- This query can still return duplicates before merge
 SELECT * FROM claims_dedup 
@@ -4570,7 +4597,7 @@ layout: two-cols
 
 # ClickHouse Compression Overview
 
-```sql{all|1-8|10-16|all}
+```sql
 -- Check current compression settings
 SELECT
     name,
@@ -4627,7 +4654,7 @@ layout: default
 <div>
 
 ## Column-Specific Compression
-```sql{all|1-11|13-24|all}
+```sql
 -- Create table with column-specific compression
 CREATE TABLE claims_compressed
 (
@@ -4669,7 +4696,7 @@ ORDER BY bytes_size DESC;
 <div>
 
 ## Configure Global Compression
-```sql{all|2-4|6-9|all}
+```sql
 -- Set default compression at server level
 SET default_compression_codec = 'ZSTD';
 
@@ -4790,7 +4817,7 @@ layout: two-cols
 # ClickHouse Backup Approaches
 <div style="height:400px;overflow-y:auto;">
 
-```sql{all|1-5|7-12|14-19|all}
+```sql
 -- 1. Using clickhouse-backup tool (external)
 -- Install from https://github.com/AlexAkulov/clickhouse-backup
 
@@ -4860,7 +4887,7 @@ layout: default
 <div>
 
 ## Regulatory Compliance Backup
-```sql{all|1-8|10-15|17-22|all}
+```sql
 -- Backup critical regulatory data
 BACKUP TABLE life_insurance.policies 
 TO Disk('compliance_backups', 'policies_regulatory_2024')
@@ -4888,7 +4915,7 @@ SETTINGS
 <div>
 
 ## Point-in-Time Recovery
-```sql{all|1-6|8-13|15-20|all}
+```sql
 -- Create incremental backup
 BACKUP DATABASE life_insurance 
 TO Disk('incremental_backups', 'daily_backup_2024_03_15')
@@ -5069,16 +5096,28 @@ layout: section
 # 1. Index Types and Usage
 
 ---
-layout: default
+layout: two-cols
 ---
 
 # ClickHouse Indexing Overview
+
+<img src="https://clickhouse.com/docs/assets/images/primary-index-light_01-5a18496d90cc75c60217aeb16d24b3ba.gif" width="400" height="200" alt="index" />
+
+::right::
+
+<img src="https://clickhouse.com/docs/assets/images/primary-index-light_02-f88242b8a3446e5ad795f75f2cdaaff0.gif" width="400" height="200" alt="index" />
+
+
+---
+layout: default
+---
 
 <div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Primary Key (Sparse Index)
-```sql{all|9|all}
+
+```sql
 -- Primary Key is Sparse Index
 CREATE TABLE policies_time_optimized
 (
@@ -5148,7 +5187,7 @@ layout: two-cols
 
 <div style="height:400px;overflow-y:auto;">
 
-```sql{all|1-6|8-18|20-25|all}
+```sql
 -- Create a new index on an existing table
 ALTER TABLE claims
 ADD INDEX claim_status_idx
@@ -5215,7 +5254,7 @@ layout: default
 <div>
 
 ## Primary Key Optimization
-```sql{all|4-5|all}
+```sql
 -- Optimizing policies table primary key
 CREATE TABLE policies_time_optimized
 (
@@ -5258,7 +5297,7 @@ ORDER BY date;
 <div>
 
 ## Skip Index Recommendations
-```sql{all|10-12|all}
+```sql
 ALTER TABLE claims
 ADD INDEX claim_status_idx claim_status TYPE set(0) GRANULARITY 4;
 
@@ -5295,7 +5334,7 @@ layout: default
 <div>
 
 ## Diagnosing Index Usage
-```sql{all|2-3|5-13|all}
+```sql
 -- Check if a query uses the index
 EXPLAIN indexes = 1
 SELECT * FROM claims WHERE claim_status = 'Approved';
@@ -5326,7 +5365,7 @@ ORDER BY query_duration_ms DESC;
 <div>
 
 ## Index Maintenance
-```sql{all}
+```sql
 -- Rebuild all secondary indexes
 ALTER TABLE claims
 DROP INDEX claim_status_idx,
@@ -5373,7 +5412,7 @@ layout: two-cols
 
 # Understanding ClickHouse Query Execution
 
-```sql{all|1-2|4-12|all}
+```sql
 -- View the query execution plan
 EXPLAIN SELECT * FROM life_insurance.claims WHERE claim_status = 'Approved';
 -- More detailed explain with settings
@@ -5441,7 +5480,7 @@ layout: default
 <div>
 
 ## Filter Optimization Principles
-```sql{all|3-5|7-10|12-16|all}
+```sql
 -- Bad: Non-indexed filter first
 SELECT count(*) FROM policies
 WHERE policy_type = 'Term Life'
@@ -5468,7 +5507,7 @@ WHERE effective_date >= '2024-01-01'
 <div>
 
 ## Partition Pruning
-```sql{all|3|all}
+```sql
 -- Efficient: Scans only specific partitions
 SELECT * FROM policies
 WHERE toYYYYMM(effective_date) = 202401
@@ -5481,7 +5520,7 @@ SETTINGS force_optimize_skip_unused_shards = 1;
 ```
 
 ## IN Clause Optimization
-```sql{all|3-7|9-12|all}
+```sql
 -- Optimize large IN lists
 -- Bad: Large inline list
 SELECT count(*) FROM policies
@@ -5513,7 +5552,7 @@ layout: default
 <div>
 
 ## JOIN Strategies
-```sql{all|3-6|8-12|14-19|all}
+```sql
 -- Filter before joining
 SELECT p.customer_id, c.claim_amount
 FROM (
@@ -5543,7 +5582,7 @@ WHERE c.claim_type = 'Death';
 <div>
 
 ## JOIN Algorithm Selection
-```sql{all|3|9|all}
+```sql
 -- Hash join (default, good for equality joins)
 SELECT toDate(incident_date) incident_date, sum(claim_amount) total_amount, claim_type 
 FROM policies p
@@ -5566,7 +5605,7 @@ SETTINGS join_algorithm = 'parallel_hash';
 ```
 
 ## Memory Management for JOINs
-```sql{all|1-4|6-9|all}
+```sql
 -- Limit memory for large joins
 SET max_bytes_in_join = 1000000000; -- 1GB
 SET join_overflow_mode = 'break';
@@ -5591,11 +5630,11 @@ layout: default
 
 # Aggregation and GROUP BY Optimization
 
-<div class="grid grid-cols-2 gap-4">
+<div  class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;" >
 <div>
 
 ## Efficient Aggregation
-```sql{all|3-4|6-7|9-13|all}
+```sql
 -- Use specialized aggregate functions
 -- For approximate distinct counts
 SELECT uniq(customer_id) FROM policies;
@@ -5617,10 +5656,10 @@ GROUP BY claim_status;
 ```
 
 </div>
-<div>
+<div >
 
 ## GROUP BY Optimization
-```sql{all|1-8|10-17|all}
+```sql
 -- Leverage ORDER BY for grouped data
 SELECT
     customer_id,
@@ -5644,7 +5683,7 @@ ORDER BY policy_type, claim_status;
 ```
 
 ## Memory Settings for Aggregation
-```sql{all}
+```sql
 -- Control memory usage for aggregations
 SET max_bytes_before_external_group_by = 2000000000;
 SET group_by_overflow_mode = 'any';
@@ -5667,7 +5706,7 @@ layout: default
 <div>
 
 ## LIMIT Optimization
-```sql{all|1-5|7-12|all}
+```sql
 -- Use LIMIT with ORDER BY
 SELECT * FROM policies
 WHERE customer_id = 1001
@@ -5688,7 +5727,7 @@ LIMIT 5 BY customer_id;
 <div>
 
 ## Optimizing String Operations
-```sql{all|3-4|6-8|all}
+```sql
 -- Avoid expensive string operations
 -- Bad
 SELECT * FROM policies WHERE policy_number LIKE '%TERM%';
@@ -5702,7 +5741,7 @@ GRANULARITY 4;
 ```
 
 ## Query Cache
-```sql{all}
+```sql
 SELECT some_expensive_calculation(coverage_amount, premium_amount)
 FROM policies
 SETTINGS use_query_cache = true, query_cache_min_query_duration = 5000;
@@ -5722,12 +5761,19 @@ layout: section
 # 3. Materialized Views
 
 ---
+layout: default
+---
+
+<img src="./images/session6/materialized-view-diagram.2f51a54.600.png" width="400" height="200" alt="index" />
+
+
+---
 layout: two-cols
 ---
 
 # Materialized View Basics
 <div style="height:400px;overflow-y:auto;">
-```sql{all|1-9|11-21|all}
+```sql
 -- Daily policy issuance summary
 CREATE MATERIALIZED VIEW daily_policy_summary
 ENGINE = SummingMergeTree()
@@ -5803,7 +5849,7 @@ layout: default
 <div>
 
 ## SummingMergeTree
-```sql{all|2|8-17|all}
+```sql
 -- Aggregates numeric columns during merges
 CREATE MATERIALIZED VIEW daily_claims_mv
 ENGINE = SummingMergeTree()
@@ -5828,7 +5874,7 @@ GROUP BY date, claim_type;
 <div>
 
 ## AggregatingMergeTree
-```sql{all|2|5-12|all}
+```sql
 -- More flexible aggregation with state functions
 CREATE MATERIALIZED VIEW claims_stats_aggr_mv
 ENGINE = AggregatingMergeTree()
@@ -5893,7 +5939,7 @@ GROUP BY date;
 ```
 
 ## Initial Population
-```sql{all}
+```sql
 -- Populate view with existing data
 INSERT INTO policy_summary
 SELECT
@@ -5967,7 +6013,7 @@ layout: default
 <div>
 
 ## Managing Materialized Views
-```sql{all|1-3|5-8|10-13|all}
+```sql
 -- List all materialized views
 SELECT name, engine FROM system.tables
 WHERE engine LIKE '%Materialized%';
@@ -5984,7 +6030,7 @@ DROP VIEW claims_stats_aggr_mv;
 ```
 
 ## Refreshing a Materialized View
-```sql{all|1-5|7-13|all}
+```sql
 -- Force a full refresh by recreating
 DROP TABLE claims_stats_mv;
 CREATE MATERIALIZED VIEW claims_stats_mv
@@ -6002,7 +6048,7 @@ OPTIMIZE TABLE claims_stats_mv FINAL;
 <div>
 
 ## Performance Monitoring
-```sql{all|2-9|11-17|all}
+```sql
 -- Monitor materialized view usage
 SELECT 
     database,
@@ -6047,7 +6093,7 @@ layout: two-cols
 # Introduction to Projections
 
 <div style="height:400px;overflow-y:auto;">
-```sql{all|1-8|10-19|all}
+```sql
 -- Understanding projections vs materialized views
 -- Materialized view: separate table
 CREATE TABLE policies_projection
@@ -6259,11 +6305,11 @@ layout: default
 
 # Creating and Managing Users
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:400px;overflow-y:auto;">
 <div>
 
 ## Basic User Creation
-```sql{all|1-4|6-10|12-16|all}
+```sql
 -- Create a basic user
 CREATE USER agent_john 
 IDENTIFIED WITH plaintext_password BY 'SecurePass123!'
@@ -6286,7 +6332,7 @@ SETTINGS max_memory_usage = 1000000000; -- 1GB limit
 <div>
 
 ## Advanced User Configuration
-```sql{all|1-8|10-16|18-22|all}
+```sql
 -- Create user with profile and default database
 CREATE USER policy_analyst_alice
 IDENTIFIED WITH sha256_password BY 'Analyst_Pass2024!'
@@ -6335,7 +6381,7 @@ layout: default
 <div>
 
 ## Basic Role Creation
-```sql{all|1-3|5-8|10-13|all}
+```sql
 -- Create roles for different job functions
 CREATE ROLE agent_role;
 CREATE ROLE underwriter_role;
@@ -6356,7 +6402,7 @@ SETTINGS readonly = 0,
 <div>
 
 ## Role Assignment
-```sql{all|1-4|6-10|12-16|all}
+```sql
 -- Assign roles to users
 GRANT agent_role TO agent_john;
 GRANT underwriter_role TO underwriter_mary;
@@ -6395,7 +6441,7 @@ layout: default
 <div>
 
 ## Database Level Permissions
-```sql{all|1-4|6-9|11-14|all}
+```sql
 -- Grant database access
 GRANT SHOW DATABASES ON *.* TO agent_role;
 GRANT SHOW TABLES ON life_insurance.* TO agent_role;
@@ -6415,7 +6461,7 @@ REVOKE DROP ON life_insurance.* FROM dba_role; -- Except DROP
 <div>
 
 ## Table Level Permissions
-```sql{all|1-5|7-12|14-18|all}
+```sql
 -- Grant table-specific permissions
 GRANT SELECT ON life_insurance.policies TO agent_role;
 GRANT INSERT ON life_insurance.policies TO underwriter_role;
@@ -6445,11 +6491,11 @@ layout: default
 
 # Advanced Permission Control
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4" style="height:380px;overflow-y:auto;">
 <div>
 
 ## SELECT, INSERT, ALTER Examples
-```sql{all|1-6|8-13|15-20|all}
+```sql
 -- Detailed SELECT permissions
 GRANT SELECT ON life_insurance.policies TO agent_role;
 GRANT SELECT(policy_id, coverage_amount, premium_amount) 
@@ -6476,7 +6522,7 @@ GRANT ALTER MODIFY COLUMN ON life_insurance.claims TO claims_manager_role;
 <div>
 
 ## System and Administrative Permissions
-```sql{all|1-5|7-11|13-17|all}
+```sql
 -- System monitoring permissions
 GRANT SELECT ON system.query_log TO monitoring_role;
 GRANT SELECT ON system.processes TO monitoring_role;
@@ -6512,11 +6558,11 @@ layout: default
 
 # Implementing Row-Level Security
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4"  style="height:400px;overflow-y:auto;">
 <div>
 
 ## Row Policy Basics
-```sql{all|1-6|8-15|17-23|all}
+```sql
 -- Create row policy for agent territory restrictions
 
 CREATE ROW POLICY agent_territory_policy ON life_insurance.policies
@@ -6547,7 +6593,7 @@ TO agent_role;
 <div>
 
 ## Advanced Row Limitations
-```sql{all|1-10|12-19|21-26|all}
+```sql
 -- Time-based and status-based access control
 CREATE ROW POLICY recent_claims_policy ON life_insurance.claims
 FOR SELECT USING 
@@ -6590,11 +6636,11 @@ layout: default
 
 # Memory and Execution Limits
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4"  style="height:380px;overflow-y:auto;">
 <div>
 
 ## User-Level Resource Limits
-```sql{all|1-8|10-17|19-24|all}
+```sql
 -- Set memory limits for users
 ALTER USER agent_john 
 SETTINGS max_memory_usage = 1000000000, -- 1GB
@@ -6623,7 +6669,7 @@ SETTINGS max_memory_usage = 8000000000, -- 8GB
 <div>
 
 ## Role-Level Resource Limits
-```sql{all|1-7|9-15|17-22|all}
+```sql
 -- Set limits for roles
 ALTER ROLE analyst_role
 SETTINGS max_memory_usage = 2000000000,
@@ -6655,11 +6701,11 @@ layout: default
 
 # Query and Connection Quotas
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4"  style="height:380px;overflow-y:auto;">
 <div>
 
 ## Query Quotas
-```sql{all|1-7|9-14|16-21|all}
+```sql
 -- Create quota for different user types
 CREATE QUOTA agent_quota 
 FOR INTERVAL 1 HOUR MAX queries = 1000, errors = 100, result_rows = 10000000
@@ -6687,7 +6733,7 @@ SHOW CREATE QUOTA agent_quota;
 <div>
 
 ## Quota Management
-```sql{all|1-5|7-11|13-17|all}
+```sql
 -- Modify existing quota
 ALTER QUOTA agent_quota 
 FOR INTERVAL 1 HOUR MAX queries = 1500, errors = 150
@@ -6723,11 +6769,11 @@ layout: default
 
 # Security Implementation Best Practices
 
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4"  style="height:380px;overflow-y:auto;">
 <div>
 
 ## Authentication and Authorization
-```sql{all|1-8|10-17|19-25|all}
+```sql
 -- 1. Use strong authentication
 CREATE USER secure_analyst
 IDENTIFIED WITH sha256_password BY 'StrongP@ssw0rd2024!'
@@ -6758,7 +6804,7 @@ TO insurance_agent_role;
 <div>
 
 ## Monitoring and Auditing
-```sql{all|1-8|10-16|18-23|all}
+```sql
 -- 1. Monitor user activities
 SELECT 
     user,
